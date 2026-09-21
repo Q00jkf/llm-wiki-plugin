@@ -175,6 +175,7 @@ def collect(root: Path):
         "days_since_commit": _git_last_commit_age(root),
         "broken_sources": [],
         "broken_repos": [],
+        "orphan_cards": [],
         "guard_stale": [],
         "raw_pending": 0,
     }
@@ -238,6 +239,19 @@ def collect(root: Path):
         if p and not resolve_repo_path(root, p).exists():  # #27
             s["broken_repos"].append(alias)
 
+    # 🔴 #28 反向對帳：catalog 卡存在、manifest 卻沒有對應的 sources 條目。
+    # broken_sources 抓的是 manifest → 檔案不見；這裡抓的是卡 → 沒有來源紀錄。
+    # 後者更陰險：卡看起來在，但 scan 永遠不會說它過期 —— 死卡，會無聲腐爛。
+    # （2026-09-21 踩到：AS9100 指標卡手寫進 catalog/ 卻漏了 ingest 的 Step 4。）
+    cited = {v.get("catalog_page", "").replace("\\", "/")
+             for v in manifest.get("sources", {}).values()}
+    cat = root / "wiki" / "catalog"
+    if cat.is_dir():
+        for f in sorted(cat.glob("*.md")):
+            rel = f.relative_to(root).as_posix()
+            if rel not in cited:
+                s["orphan_cards"].append(rel)
+
     return s
 
 
@@ -270,6 +284,12 @@ def aging_flags(s):
         f.append(("從未健檢", f"{s['pages']} 頁但找不到健檢紀錄 — 跑 /wiki-doctor 並存 doctor-report"))
     elif s["days_since_lint"] and s["days_since_lint"] > LINT_STALE_DAYS:
         f.append(("健檢過期", f"上次健檢在 {int(s['days_since_lint'])} 天前 — 跑 /wiki-doctor"))
+    if s["orphan_cards"]:
+        n = len(s["orphan_cards"])
+        head = "、".join(Path(c).stem for c in s["orphan_cards"][:3])
+        f.append(("孤兒卡",
+                  f"{n} 張 catalog 卡沒有 manifest 紀錄（{head}{'…' if n > 3 else ''}）"
+                  f" — scan 追不到它們過期，補 sources 條目或刪卡"))
     if s["broken_repos"]:
         f.append(("repo 路徑失效", f"{', '.join(s['broken_repos'])} — 跑 /wiki-repo scan"))
     n = len(s["broken_sources"])
