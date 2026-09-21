@@ -1,0 +1,16 @@
+# 🔴 raw/ 是正本 —— git 不得改寫行尾（2026-09-21 驗收 #19）
+#
+# 溯源靠 md5：Windows 上 core.autocrlf 預設會在 checkout 時把文字檔轉成 CRLF，
+# 內容沒變但 hash 變了，stale_check 會把整個 raw/ 報成「需要重新 ingest」，
+# 而 git status 比的是正規化後的內容、顯示乾淨，使用者看不出發生什麼事。
+# 腳本端已正規化行尾再 hash，這裡是第二道：讓 git 根本不要改檔。
+raw/** -text
+
+# 二進位正本明確標記，避免被當文字處理
+*.pdf  binary
+*.docx binary
+*.xlsx binary
+*.pptx binary
+*.doc  binary
+*.xls  binary
+*.ppt  binary

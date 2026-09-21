@@ -1,0 +1,17 @@
+{
+  "config": {
+    "big_read_limit_bytes": 100000,
+    "max_slice_lines": 2000
+  },
+  "repos": {
+    "_scope_note": "外部來源 repo 註冊表。檔案留在原地，wiki 只存指標。sources 的 key 用 {alias}::{repo內相對路徑}；無 :: 者等同 _self。管理用 /wiki-repo。",
+    "_self": {
+      "path": ".",
+      "desc": "本 vault（raw/ 底下的素材）",
+      "git": true
+    }
+  },
+  "sources": {},
+  "_doc_index_note": "以「文件身分」為 key 的版本索引，處理同一份文件換版（hash 變了）的 supersession。key = name:<slug>（slug 取自文件名，去掉版次與日期）。value = {current_file: 現行正本路徑, current_summary: 現行摘要／卡片路徑, wiki_pages: [引用它的 wiki 頁], revision: 現行版次, history: [舊的 {file, summary, revision, superseded_at}]}。ingest 時 hash 不同 → 舊 current 推進 history、current 指新檔、wiki 卡加「版本更新 vN→vM」note；只改版本／日期／狀態／hash，不重抽內容。sources 記「哪個檔 ingest 過」，doc_index 記「哪份文件現在是哪一版」，兩者互補。",
+  "doc_index": {}
+}

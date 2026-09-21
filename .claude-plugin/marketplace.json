@@ -1,0 +1,15 @@
+{
+  "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
+  "name": "llm-wiki",
+  "description": "以資料溯源為核心的 Obsidian 知識庫系統（wiki 只存指標、多 repo、依成熟度換檔）",
+  "owner": {
+    "name": "llm-wiki"
+  },
+  "plugins": [
+    {
+      "name": "llm-wiki",
+      "source": "./",
+      "category": "Productivity"
+    }
+  ]
+}

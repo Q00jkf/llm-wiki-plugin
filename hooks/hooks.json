@@ -1,0 +1,42 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/scripts/vault_state.py\" --brief",
+            "timeout": 20,
+            "statusMessage": "偵測 vault 成熟度"
+          },
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/scripts/tidy_check.py\" --quiet",
+            "timeout": 10,
+            "statusMessage": "快照檔整理提醒"
+          },
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/scripts/agenda.py\"",
+            "timeout": 10,
+            "statusMessage": "日程窗口"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/scripts/big_read_guard.py\"",
+            "timeout": 10,
+            "statusMessage": "檢查檔案大小"
+          }
+        ]
+      }
+    ]
+  }
+}
