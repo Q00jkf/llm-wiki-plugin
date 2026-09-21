@@ -27,7 +27,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 import _guard_status  # noqa: E402
-from _lib.vaultpaths import find_vault_root  # noqa: E402
+from _lib.vaultpaths import find_vault_root, resolve_source  # noqa: E402
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -192,6 +192,19 @@ def check_filenames(lines, md: Path):
         for m in FNAME.finditer(l):
             name = m.group(1).strip()
             if FNAME_SKIP.search(name):
+                continue
+            # 🔴 #29：`{alias}::{路徑}` 是 source key（見 wiki-repo skill「Source key 格式」），
+            # 不是 vault 相對路徑。不解析就會把「檔案明明在外部 repo 裡」誤報成不存在
+            # —— 而且愈照慣例寫愈會被罵，等於在懲罰正確用法。
+            if "::" in name:
+                try:
+                    tgt = resolve_source(ROOT, name)
+                except Exception:
+                    tgt = None
+                if tgt is None:
+                    hits.append((i, f"source key 的 alias 未註冊：{name}"))
+                elif not tgt.exists():
+                    hits.append((i, f"source key 指向的檔案不存在：{name}"))
                 continue
             if "/" in name or "\\" in name:
                 name = name.replace("\\", "/")
