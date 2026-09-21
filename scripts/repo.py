@@ -25,6 +25,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from _lib import filehash as _filehash  # noqa: E402
 from _lib.vaultpaths import (find_vault_root, load_manifest, save_manifest,  # noqa: E402
+                             resolve_source,
                              resolve_repo_path, portable_path, is_hardcoded)
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -401,7 +402,7 @@ def cmd_add(root, args):
     print(f"✅ 已註冊：{alias}")
     print(f"   路徑：{entry['path']}   （本機：{src}）")
     if is_hardcoded(entry["path"]):
-        print(f"   {R} 這條壓不成可攜路徑（多半是跨磁碟機）—— 換機器會失效。")
+        print(f"   🔴 這條壓不成可攜路徑（多半是跨磁碟機）—— 換機器會失效。")
         print("      建議改用環境變數：手動把 path 改成 ${你的變數}/子路徑，並在兩台機器都設好。")
     print(f"   Git：{'是' if is_git else '否'}　擁有者：{entry['owner']['name']} @ {entry['owner']['machine']}")
     print(f"   Remote：{entry['owner']['remote']}")
@@ -697,6 +698,148 @@ def cmd_remove(root, args):
     return 0
 
 
+# 🔴 #31：重掛 alias（例如把整包掛的 vault 拆成 raw／wiki 兩個）時，source key 要跟著搬。
+# 0.4.19 之前沒有這支，只能自己開 JSON 改 —— 而 skill 第一行就寫「不要手改 manifest」。
+# 規則叫人別做的事，工具卻不提供替代方案，那條規則就一定會被違反。
+# 🔴 #32：建卡的 manifest 登記（ingest Step 4）原本全靠手寫，漏了就是孤兒卡 ——
+# 卡在、內容也對，但 scan 永遠不會說它過期。#28 加了偵測，這支負責預防。
+def cmd_link(root, args):
+    key = args.key
+    card = Path(args.card)
+    if not card.is_absolute():
+        card = root / card
+    if not card.is_file():
+        print(f"🔴 卡片不存在：{args.card}")
+        return 1
+    rel_card = card.resolve().relative_to(root.resolve()).as_posix()
+
+    tgt = resolve_source(root, key)
+    if tgt is None:
+        print(f"🔴 source key 的 alias 未註冊：{key}")
+        return 1
+    if not tgt.exists():
+        print(f"🔴 source key 指向的檔案不存在：{key}")
+        print(f"   解析為：{tgt}")
+        return 1
+
+    m = load_manifest(root)
+    src = m.setdefault("sources", {})
+    h = _md5(tgt)
+    entry = src.get(key, {})
+    was = bool(entry)
+    entry.update({"hash": h, "ingested_at": date.today().isoformat(),
+                  "catalog_page": rel_card, "tier": args.tier})
+    if "::" in key:
+        entry["repo"] = key.split("::", 1)[0]
+    if args.topics:
+        entry["topics_updated"] = [t.strip() for t in args.topics.split(",") if t.strip()]
+    src[key] = entry
+    save_manifest(root, m)
+    write_repos_page(root)
+    print(f"✅ {'更新' if was else '登記'}：{key}")
+    print(f"   卡片：{rel_card}")
+    print(f"   hash：{h}　tier：{args.tier}")
+    print("   scan 從現在起會在正本改動時報這張卡過期。")
+    return 0
+
+
+def cmd_rename(root, args):
+    m = load_manifest(root)
+    repos = m.setdefault("repos", {})
+    old, new = args.old, args.new
+    # 已被 remove 的 alias 仍可能殘留在 sources／doc_index 裡（remove 預設保留紀錄）。
+    # 那正是最需要修的情況 —— 要求「old 必須已註冊」等於把工具擋在問題外面。
+    orphan_mode = old not in repos
+    if orphan_mode:
+        refs = sum(1 for k in m.get("sources", {}) if k.startswith(f"{old}::"))
+        refs += sum(
+            1 for e in m.get("doc_index", {}).values()
+            if str(e.get("current_file", "")).startswith(f"{old}::")
+            or any(str(h.get("file", "")).startswith(f"{old}::") for h in e.get("history", []))
+        )
+        if not refs:
+            print(f"🔴 repo `{old}` 未註冊，且 sources／doc_index 也沒有任何 `{old}::` 紀錄")
+            return 1
+        print(f"⚠️ `{old}` 已不在 repos（大概被 remove 過），但還有 {refs} 處殘留紀錄 —— 只搬紀錄。")
+    elif new in repos and new != old:
+        # 正常改名才怕撞名；orphan 模式下「目標已註冊」正是我們要的（把殘留指回現有 alias）
+        print(f"🔴 alias `{new}` 已存在（指向 {repos[new].get('path')}）")
+        return 1
+    strip = (args.strip_prefix or "").strip("/")
+    strip = strip + "/" if strip else ""
+    src = m.setdefault("sources", {})
+    keys = [k for k in src if k.startswith(f"{old}::")]
+
+    # 先全部試算，有任何一筆搬不動就整批不做 —— 半套的 manifest 比沒搬更難修
+    plan, bad = [], []
+    for k in keys:
+        rel = k[len(old) + 2:]
+        if strip:
+            if not rel.startswith(strip):
+                bad.append((k, f"不是以 `{strip}` 開頭，--strip-prefix 套不上"))
+                continue
+            rel = rel[len(strip):]
+        nk = f"{new}::{rel}"
+        if nk in src:
+            bad.append((k, f"目標 key 已存在：{nk}"))
+            continue
+        plan.append((k, nk, src[k].get("catalog_page", "")))
+    if bad:
+        print(f"🔴 {len(bad)} 筆搬不動，整批中止（沒有動到 manifest）：")
+        for k, why in bad:
+            print(f"   · {k}\n     {why}")
+        return 1
+
+    if args.dry_run:
+        print(f"（dry-run，沒有寫入）{old} → {new}"
+              f"{'，去掉前綴 ' + strip if strip else ''}：{len(plan)} 筆 source key")
+        for k, nk, _ in plan:
+            print(f"   {k}\n → {nk}")
+        return 0
+
+    if not orphan_mode and repos[old].get("path") and new != old:
+        repos[new] = repos.pop(old)
+    for k, nk, _ in plan:
+        v = src.pop(k)
+        v["repo"] = new
+        src[nk] = v
+
+    # 🔴 sources 不是唯一存 source key 的地方 —— doc_index 的 current_file／history[].file
+    # 也用同一個格式。只搬 sources 會留下指向已不存在 alias 的 doc_index，而且
+    # 沒有任何檢查會看它 → 版次接替時會拿死路徑去比對。
+    # （2026-09-21 實測發現：手動把 ap2 拆成 ap2-raw 後，doc_index 仍寫著 ap2::…）
+    def _mv(val):
+        if not isinstance(val, str) or not val.startswith(f"{old}::"):
+            return val, False
+        rel = val[len(old) + 2:]
+        if strip and rel.startswith(strip):
+            rel = rel[len(strip):]
+        return f"{new}::{rel}", True
+
+    di_hits = 0
+    for entry in m.get("doc_index", {}).values():
+        entry["current_file"], hit = _mv(entry.get("current_file"))
+        di_hits += hit
+        for h in entry.get("history", []):
+            h["file"], hit = _mv(h.get("file"))
+            di_hits += hit
+    save_manifest(root, m)
+    write_repos_page(root)
+
+    print(f"✅ `{old}` → `{new}`　source key 已搬 {len(plan)} 筆"
+          f"{'（去掉前綴 ' + strip + '）' if strip else ''}"
+          f"{f'；doc_index 另搬 {di_hits} 處' if di_hits else ''}")
+    cards = sorted({c for _, _, c in plan if c})
+    if cards:
+        # 🔴 卡的 frontmatter 是 Claude 寫的散文，腳本不該亂改 —— 只回報，人／Claude 自己判斷
+        print(f"\n🔴 下列 {len(cards)} 張卡的 frontmatter 還指著舊 alias，**腳本不會自動改**：")
+        for c in cards:
+            print(f"   · {c}")
+        print(f"   要改的欄位：`repo:`、`source_file:`（若用了 --strip-prefix 要去掉前綴）、"
+              f"內文出現的 `{old}::` 字樣")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description="多 repo 來源管理")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -707,6 +850,16 @@ def main():
     sub.add_parser("list")
     s = sub.add_parser("scan"); s.add_argument("alias", nargs="?")
     r = sub.add_parser("remove"); r.add_argument("alias"); r.add_argument("--force", action="store_true")
+    lk = sub.add_parser("link", help="把 catalog 卡登記進 manifest.sources（#32，防孤兒卡）")
+    lk.add_argument("key", help="source key：raw/x.pdf 或 {alias}::{repo 內路徑}")
+    lk.add_argument("card", help="卡片路徑，相對 vault 根，例：wiki/catalog/X.md")
+    lk.add_argument("--tier", default="1", help="1 或 full（預設 1）")
+    lk.add_argument("--topics", default="", help="逗號分隔")
+    rn = sub.add_parser("rename", help="改 alias 並搬動所有 source key（#31）")
+    rn.add_argument("old"); rn.add_argument("new")
+    rn.add_argument("--strip-prefix", dest="strip_prefix", default="",
+                    help="新 alias 的根往下移時，從 source key 去掉這段前綴（例：raw/）")
+    rn.add_argument("--dry-run", action="store_true", dest="dry_run")
     d = sub.add_parser("discover", help="掃描上層資料夾，列出候選專案供批次註冊")
     d.add_argument("path")
     d.add_argument("--depth", type=int, default=2, help="往下找幾層（預設 2）")
@@ -723,7 +876,8 @@ def main():
         print("🔴 找不到 vault（往上找不到含 wiki/ 或 raw/.manifest.json 的目錄）")
         return 1
     return {"add": cmd_add, "list": cmd_list, "scan": cmd_scan,
-            "remove": cmd_remove, "discover": cmd_discover}[args.cmd](root, args)
+            "remove": cmd_remove, "discover": cmd_discover,
+            "rename": cmd_rename, "link": cmd_link}[args.cmd](root, args)
 
 
 if __name__ == "__main__":

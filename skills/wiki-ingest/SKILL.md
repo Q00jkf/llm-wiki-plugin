@@ -112,6 +112,15 @@ topics: ["{主題}"]
 
 ## Step 4　更新 manifest
 
+🔴 **走腳本，不要手寫**（手寫漏了就是孤兒卡，#28／#32）：
+
+```bash
+python "${CLAUDE_PLUGIN_ROOT}/scripts/repo.py" link "{source key}" "{卡片路徑}" --tier 1 --topics "a,b"
+```
+
+它會自己算 hash、填 `repo`／`ingested_at`／`catalog_page`，並重建 `wiki/repos.md`。
+寫出來長這樣：
+
 ```json
 "{source key}": {
   "hash": "{MD5}",

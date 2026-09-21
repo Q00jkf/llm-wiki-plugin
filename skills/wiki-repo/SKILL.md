@@ -17,7 +17,17 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/repo.py" add <路徑> [--alias 別名] [--
 python "${CLAUDE_PLUGIN_ROOT}/scripts/repo.py" list
 python "${CLAUDE_PLUGIN_ROOT}/scripts/repo.py" scan [alias]
 python "${CLAUDE_PLUGIN_ROOT}/scripts/repo.py" remove <alias> [--force]
+python "${CLAUDE_PLUGIN_ROOT}/scripts/repo.py" rename <舊> <新> [--strip-prefix raw/] [--dry-run]
+python "${CLAUDE_PLUGIN_ROOT}/scripts/repo.py" link <source key> <卡片路徑> [--tier 1|full] [--topics a,b]
 ```
+
+`rename` 改 alias 並搬動所有 `sources` key 與 `doc_index` 的 `current_file`／`history[].file`。
+拆 alias（整包掛的 vault 拆成 raw／wiki）時用 `--strip-prefix` 把多出來的那段去掉。
+**有任何一筆搬不動就整批中止** —— 半套的 manifest 比沒搬更難修。卡片 frontmatter 只回報不自動改。
+已被 `remove` 掉、只剩殘留紀錄的 alias 也能當 `<舊>`，那正是最該修的情況。
+
+`link` 把 catalog 卡登記進 `sources`（＝ingest 的 Step 4），自動算 hash。
+**建完卡就跑這支**，不要手寫 manifest —— 漏了就是孤兒卡（卡在、但 `scan` 永遠不報它過期）。
 
 `add` 會自動抓 git remote 與擁有者，掃描可 ingest 的檔案數量，**但不 ingest**。
 `add`／`remove`／`scan` 都會依 manifest 重建 `wiki/repos.md`（外部 repo 總覽）——

@@ -18,7 +18,8 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _lib.vaultpaths import find_vault_root, load_manifest, resolve_repo_path  # noqa: E402
+from _lib.vaultpaths import (find_vault_root, load_manifest,  # noqa: E402
+                             resolve_repo_path, resolve_source)
 try:
     import _guard_status  # noqa: E402
 except ImportError:      # 守門留痕模組缺席不該讓開場量測掛掉
@@ -176,6 +177,8 @@ def collect(root: Path):
         "broken_sources": [],
         "broken_repos": [],
         "orphan_cards": [],
+        "index_missing": [],
+        "index_dead_refs": [],
         "guard_stale": [],
         "raw_pending": 0,
     }
@@ -252,6 +255,25 @@ def collect(root: Path):
             if rel not in cited:
                 s["orphan_cards"].append(rel)
 
+    # 🔴 #30 index.md 雙向對帳。`wiki/repos.md` 由 repo.py 自動重建，但 `wiki/index.md`
+    # 只靠 ingest Step 5 手動加，也沒有 maintenance 宣告 → tidy_check 不看它。
+    # 兩種腐爛都實際發生過（2026-09-21）：建了卡忘了進目錄；alias 重掛後目錄裡的
+    # source key 變死連結。目錄是給人讀的入口，錯了比沒有更糟。
+    idx = root / "wiki" / "index.md"
+    if idx.is_file():
+        try:
+            itext = idx.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            itext = ""
+        if itext:
+            for f in sorted((root / "wiki" / "catalog").glob("*.md"))                     if (root / "wiki" / "catalog").is_dir() else []:
+                if f.stem not in itext:
+                    s["index_missing"].append(f.relative_to(root).as_posix())
+            for key in set(re.findall(r"`([^`\s]+::[^`]+)`", itext)):
+                tgt = resolve_source(root, key)
+                if tgt is None or not tgt.exists():
+                    s["index_dead_refs"].append(key)
+
     return s
 
 
@@ -284,6 +306,18 @@ def aging_flags(s):
         f.append(("從未健檢", f"{s['pages']} 頁但找不到健檢紀錄 — 跑 /wiki-doctor 並存 doctor-report"))
     elif s["days_since_lint"] and s["days_since_lint"] > LINT_STALE_DAYS:
         f.append(("健檢過期", f"上次健檢在 {int(s['days_since_lint'])} 天前 — 跑 /wiki-doctor"))
+    if s["index_missing"]:
+        n = len(s["index_missing"])
+        head = "、".join(Path(c).stem for c in s["index_missing"][:3])
+        f.append(("目錄漏卡",
+                  f"{n} 張 catalog 卡沒出現在 wiki/index.md（{head}{'…' if n > 3 else ''}）"
+                  f" — 目錄是入口，漏了等於查不到"))
+    if s["index_dead_refs"]:
+        n = len(s["index_dead_refs"])
+        f.append(("目錄死連結",
+                  f"wiki/index.md 有 {n} 個 source key 解析不開"
+                  f"（{s['index_dead_refs'][0]}{'…' if n > 1 else ''}）"
+                  f" — alias 多半被 remove 或改名過，跑 /wiki-repo rename"))
     if s["orphan_cards"]:
         n = len(s["orphan_cards"])
         head = "、".join(Path(c).stem for c in s["orphan_cards"][:3])
