@@ -164,6 +164,62 @@ def _looks_like_code(d: Path):
 # 每次重建 repos.md 前回填一次：缺 kind、或路徑內容變了（raw/wiki 被加進去）都重判。
 # #27 遷移：0.4.14 以前註冊的條目存的是絕對路徑，一律壓成可攜 spec。
 # 壓不掉的（跨磁碟機）保持絕對，由 list／repos.md 標出來讓使用者自己改成 ${VAR}。
+# 🔴 寫入權限三級（2026-09-21 使用者裁示，取代「外部 repo 一律唯讀」）。
+# 唯讀的理由是「動到別人的東西」，不是「它在 hub 外面」—— 使用者自己的專案掛進來
+# 就是為了統一管理，一刀禁止等於廢掉這個用途。
+#   mine-plain : 本人的一般資料夾
+#   mine-vault : 本人的 vault（有自己的 CLAUDE.md，規則要先載入）
+#   others     : 別人的（remote／owner 非本人）→ 需對方同意
+# 實際能不能寫另看 `writable`，那個旗標**只由使用者明確開啟**，預設唯讀。
+def ownership(root, alias, r) -> str:
+    me = (_git(root, "config", "user.name") or "").strip().lower()
+    owner = ((r.get("owner") or {}).get("name") or "").strip().lower()
+    path = resolve_repo_path(root, r.get("path", ""))
+    remote = ((r.get("owner") or {}).get("remote") or "")
+    # 🔴 抓不到擁有者（非 git 來源）時不要猜。說「這是別人的」是在陳述一件可能為假的事；
+    # 說「不知道是誰的」才是真的。判成 unknown：一樣不給預設寫入，但要使用者自己確認。
+    if not owner or owner == "unknown":
+        return "unknown"
+    mine = bool(me) and owner == me
+    # remote 指向他人的帳號 → 即使本機 git user 相同也算別人的
+    if mine and remote.startswith(("http", "git@")):
+        seg = remote.split(":")[-1].split("/")
+        if len(seg) >= 2 and seg[-2].lower() not in (me, ""):
+            mine = False
+    if not mine:
+        return "others"
+    try:
+        for up in (path, path.parent):
+            if (up / "CLAUDE.md").is_file():
+                return "mine-vault"
+    except OSError:
+        pass
+    return "mine-plain"
+
+
+def autosync_of(path: Path):
+    """對方有沒有裝 Obsidian Git 自動 commit／push。回傳 (分鐘, remote) 或 None。
+
+    有自動同步＝改動幾分鐘內自動推出去，沒有反悔空檔、半成品也會被推。
+    動手前一定要讓使用者知道。
+    """
+    import json as _json
+    for base in (path, path.parent):
+        f = base / ".obsidian" / "plugins" / "obsidian-git" / "data.json"
+        try:
+            if not f.is_file():
+                continue
+            d = _json.loads(f.read_text(encoding="utf-8"))
+            if d.get("disablePush"):
+                continue
+            mins = d.get("autoPushInterval") or d.get("autoSaveInterval")
+            if mins:
+                return int(mins)
+        except (OSError, ValueError, TypeError):
+            continue
+    return None
+
+
 def backfill_paths(root, m) -> bool:
     changed = False
     for alias, r in m.get("repos", {}).items():
@@ -225,19 +281,27 @@ def write_repos_page(root):
         "---", "",
         "# 外部 repo 總覽", "",
         "> 由 `repo.py` 依 `raw/.manifest.json` 自動重建 —— **不要手改**，改了下次 add／remove 會被蓋掉。",
-        "> 🔴 外部 repo 一律唯讀：不建檔、不改檔、不 commit、不 pull。", "",
-        "| alias | 種類 | 路徑 | 擁有者 | Remote | 卡片 | 狀態 |",
-        "|---|---|---|---|---|---|---|",
+        "> 🔴 **預設唯讀**。要寫入請把該筆的 `writable` 設為 `true`（真相來源：`raw/.manifest.json`）。",
+        "> 別人的 repo 另需**對方同意**，且 MUST：動手前 `git pull` → 改 → 完成後 `commit` + `push`；",
+        "> commit message 要標明是從哪個 vault 遠端改的 ＋ session 名。規則全文見 `wiki-repo` skill。", "",
+        "| alias | 種類 | 寫入 | 路徑 | 擁有者 | Remote | 卡片 | 狀態 |",
+        "|---|---|---|---|---|---|---|---|",
     ]
     # 「種類」欄不是裝飾：知識層 alias 一律不可 ingest，下個 session 只看得到這一頁，
     # 沒標就會照一般 repo 處理，把別人的知識重編一份（#23）。
     KIND = {"compiled-wiki": "🔴 知識層", "vault-root": "⚠️ wiki 根", "docs": "文件"}
+    # (級別, writable) → 顯示。唯讀一律鎖頭；可寫的別人 repo 特別標，因為 MUST 最多
+    WMARK = {("others", False): "🔒 唯讀", ("others", True): "🔴 可寫（他人）",
+             ("unknown", False): "🔒 唯讀", ("unknown", True): "⚠️ 可寫（擁有者不明）",
+             ("mine-vault", False): "🔒 唯讀", ("mine-vault", True): "🟡 可寫（照它的規則）",
+             ("mine-plain", False): "🔒 唯讀", ("mine-plain", True): "🟢 可寫"}
     for alias, r in sorted(repos.items()):
         n = sum(1 for k in sources if k.startswith(f"{alias}::"))
         o = r.get("owner") or {}
         alive = resolve_repo_path(root, r.get("path", "")).exists()
         L.append(
-            f"| `{alias}` | {KIND.get(r.get('kind', 'docs'), '文件')} | `{r.get('path','')}` "
+            f"| `{alias}` | {KIND.get(r.get('kind', 'docs'), '文件')} "
+            f"| {WMARK[(ownership(root, alias, r), bool(r.get('writable')))]} | `{r.get('path','')}` "
             f"| {o.get('name','?')} @ {o.get('machine','?')} "
             f"| {o.get('remote','?')} | {n} | {'✅ 在' if alive else '🔴 路徑失效'} |"
         )
@@ -314,6 +378,8 @@ def cmd_add(root, args):
         "exclude": DEFAULT_EXCLUDE,
         # 既有 wiki vault 的知識層 —— 不可 ingest，只能建指標卡路由（#23）
         "kind": kind or "docs",
+        # 🔴 預設唯讀。要開寫入權限，使用者自己把這欄改成 true（見 wiki-repo skill）
+        "writable": False,
         # 🔴 擁有者標記：絕對路徑只在這台機器有效，別台必須知道去找誰
         "owner": {
             "name": (_git(src, "config", "user.name") if is_git else None) or "unknown",
@@ -472,16 +538,29 @@ def cmd_list(root, args):
     if backfill_paths(root, m) | backfill_kinds(root, m):
         save_manifest(root, m)            # #26 / #27
     KIND = {"compiled-wiki": "知識層", "vault-root": "wiki根", "docs": "文件"}
-    print(f"{'alias':<16} {'種類':<6} {'卡':>4}  {'狀態':<6} {'擁有者':<12} 路徑")
-    print("-" * 100)
-    bad, hard = [], []
+    WM = {("others", False): "唯讀", ("others", True): "可寫!他人",
+          ("unknown", False): "唯讀", ("unknown", True): "可寫?不明",
+          ("mine-vault", False): "唯讀", ("mine-vault", True): "可寫.vault",
+          ("mine-plain", False): "唯讀", ("mine-plain", True): "可寫"}
+    print(f"{'alias':<16} {'種類':<6} {'寫入':<10} {'卡':>4}  {'狀態':<6} {'擁有者':<12} 路徑")
+    print("-" * 112)
+    bad, hard, writable_others, autosync, unknown_owner = [], [], [], [], []
     for alias, r in sorted(repos.items()):
         n = sum(1 for k in sources if k.startswith(f"{alias}::"))
         alive = resolve_repo_path(root, r.get("path", "")).exists()
         owner = (r.get("owner") or {}).get("name", "?")
         k = r.get("kind", "docs")
-        print(f"{alias:<16} {KIND.get(k, '文件'):<6} {n:>4}  {'✅ 在' if alive else '🔴 失效':<6} "
-              f"{owner:<12} {r.get('path','')}")
+        own, w = ownership(root, alias, r), bool(r.get("writable"))
+        print(f"{alias:<16} {KIND.get(k, '文件'):<6} {WM[(own, w)]:<10} {n:>4} "
+              f" {'✅ 在' if alive else '🔴 失效':<6} {owner:<12} {r.get('path','')}")
+        if w:
+            if own == "others":
+                writable_others.append(alias)
+            elif own == "unknown":
+                unknown_owner.append(alias)
+            mins = autosync_of(resolve_repo_path(root, r.get("path", ""))) if alive else None
+            if mins:
+                autosync.append((alias, mins, (r.get("owner") or {}).get("remote", "?")))
         if r.get("desc"):
             print(f"{'':<16}              {r['desc']}")
         if not alive:
@@ -494,6 +573,18 @@ def cmd_list(root, args):
         print(f"\n🔴 {'、'.join(bad)} 是整包掛進來的 wiki vault —— "
               "原始正本與對方已編譯的知識層混在同一個 alias。")
         print("   拆成兩個：remove 後分別 add <路徑>/raw 與 <路徑>/wiki（知識層只建指標卡，不 ingest）。")
+    if writable_others:
+        print(f"\n🔴 {'、'.join(writable_others)} 是**別人的** repo 且已開放寫入。動它之前 MUST：")
+        print("   ① 使用者說過對方同意（不可從「叫我改」推導）　② 先 `git pull`　"
+              "③ 完成後 `commit` + `push`")
+        print("   commit message 標明從哪個 vault 遠端改的 ＋ session 名（那是唯一的歸屬證據）。")
+    if unknown_owner:
+        print(f"\n⚠️ {'、'.join(unknown_owner)} 已開放寫入，但**抓不到擁有者**"
+              "（非 git 來源，manifest 記 unknown）。")
+        print("   工具無法判斷是你的還是別人的 —— 若是別人的，別人的那三個 MUST 同樣適用。")
+    for alias, mins, remote in autosync:
+        print(f"\n🔴 {alias} 有自動同步（每 {mins} 分鐘自動 commit／push → {remote}）。")
+        print("   改動幾分鐘內就會推出去，沒有反悔空檔，**半成品也會被推** —— 動手前先告知使用者。")
     if hard:
         print(f"\n🔴 {'、'.join(hard)} 存的是絕對路徑，換機器會失效。"
               "改成 ${你的變數}/子路徑，兩台機器都設好那個環境變數。")

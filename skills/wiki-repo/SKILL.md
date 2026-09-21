@@ -161,11 +161,43 @@ python repo.py add "<vault>/wiki" --alias {名}-wiki --desc "已編譯知識層�
 
 ---
 
-## 🔴 外部 repo 一律唯讀
+## 🔴 寫入權限：依「誰的」分三級
 
-不建檔、不改檔、不 commit、不 pull。所有產物只寫本 vault 的 `wiki/`。
+外部 repo **預設唯讀**，但唯讀的理由是「動到別人的東西」，不是「它在 hub 外面」。
+使用者自己的專案掛進來就是為了統一管理，一刀禁止等於廢掉這個用途。
+（2026-09-21 使用者裁示，取代原本的「外部 repo 一律唯讀」。）
 
-理由：對方可能有未 commit 的工作，動了就是災難。要更新請使用者自己來。
+判準看 manifest 的 `owner` 與 `writable`，**`writable` 由使用者逐個 alias 明確開啟**，
+沒有這個旗標一律當唯讀。
+
+| 級別 | 判準 | 可寫 | MUST |
+|---|---|---|---|
+| 🔴 別人的 | remote／`owner` 不是本人 | 需**對方同意**＋`writable: true` | ① 對方同意　② 動手前 `git pull`　③ 完成後 `commit` + `push` |
+| 🟡 自己的 vault | 是本人的，且有自己的 `CLAUDE.md` | `writable: true` | ① **先讀它的 `CLAUDE.md`**　② 寫它的 `wiki/log.md` |
+| 🟢 自己的資料夾 | 是本人的，沒有自己的規則 | `writable: true` | 照本 vault 規則 |
+
+### 🔴 別人的 repo：三個 MUST
+
+1. **對方同意** —— 使用者說「某某同意了」才算。**不得從「使用者叫我改」推導出對方同意。**
+2. **動手前 `git pull`** —— 不 pull 就改，等於基於舊版寫，push 時撞 conflict。
+   （舊規則寫「不 pull」是錯的：那是為唯讀情境設計的，一旦要寫就必須先同步。）
+3. **完成後 `commit` + `push`** —— 不要把改動留在本機。
+   commit message **MUST 標明是從哪個 vault 遠端改的 ＋ session 名**
+   （全 vault 同一個 git author，commit message 是唯一可靠的歸屬證據）。
+
+**建議（非強制）**：工程量大就去那個資料夾開 session —— 它的 `CLAUDE.md` 與 skills 才會進 context。
+小改動直接在 hub 做即可。
+
+### ⚠️ 有自動同步的 vault 要先講
+
+對方若裝了 Obsidian Git 這類自動 commit／push（看 `.obsidian/plugins/obsidian-git/data.json`
+的 `autoSaveInterval`／`autoPushInterval`／`disablePush`），**改動會在幾分鐘內自動推出去，
+沒有反悔空檔，半成品也會被推**。動手前 MUST 告知使用者「這會在 N 分鐘內推到 {remote}」。
+
+### 仍然不變
+
+- hub 自己的產物只寫 hub 的 `wiki/`。
+- 唯讀 alias（沒開 `writable`）維持：不建檔、不改檔、不 commit、不 pull。
 
 ---
 

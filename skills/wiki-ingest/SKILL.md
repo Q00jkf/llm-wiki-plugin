@@ -19,7 +19,9 @@ description: "把原始檔編譯成 wiki 知識層：建 catalog 卡、更新主
 
 alias 查不到 → 停下來回報「repo `{alias}` 未註冊，先跑 `/wiki-repo add`」。**不要猜路徑。**
 
-> 🔴 外部 repo 唯讀：不在對方目錄建檔、不 commit、不 pull。
+> 🔴 **ingest 對來源一律唯讀**：不在對方目錄建檔、不 commit、不 pull。產物只寫本 vault。
+> （這條不受 `writable` 影響 —— 能不能改那個 repo 是另一回事，**ingest 本身永遠不該寫來源**。
+> 要改對方的檔，走 `wiki-repo` skill 的「寫入權限三級」。）
 
 ---
 
