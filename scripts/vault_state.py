@@ -338,8 +338,13 @@ def aging_flags(s):
 
 GUIDANCE = {
     "absent": [
-        "這個資料夾還不是 wiki vault（沒有 wiki/ 目錄）。",
-        "要建立 → 跑 `/wiki-init`，會產生 wiki/ 骨架、raw/.manifest.json 與 CLAUDE.md。",
+        "**這個資料夾還不是 wiki vault。** 第一次用的話照這三步：",
+        "",
+        "1. `/wiki-init` —— 會問你三題（收什麼知識／`raw/` 怎麼分／有沒有散在別處的專案），然後產出骨架",
+        "2. 把第一份文件丟進 `raw/`，跑 `/wiki-ingest raw/`",
+        "3. 之後任何時候不知道下一步 → `/wiki-coach`（它看你的 vault 現況，只講一件該做的事）",
+        "",
+        "檔案在別的資料夾、不想搬 → `/wiki-repo add <路徑>`，檔案留原地只記指標。",
     ],
     "seed": [
         "**新生 vault** — 以下是這套系統的運作方式（vault 長大後這段會自動消失）：",
@@ -420,10 +425,14 @@ def main():
     start = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
     root = find_vault_root(Path(start))
     if root is None:
+        # --brief 是 SessionStart hook 在跑：非 vault 目錄一律靜默，不吵人。
+        # 其他情況（使用者自己跑 /wiki）要給指導 —— 只印「找不到」等於把新手丟在原地。
         if "--json" in args:
-            print(json.dumps({"has_wiki": False, "root": None}, ensure_ascii=False))
+            print(json.dumps({"has_wiki": False, "root": None, "tier": "absent"}, ensure_ascii=False))
         elif "--brief" not in args:
             print("找不到 vault（往上找不到含 wiki/ 或 raw/.manifest.json 的目錄）")
+            print()
+            print("\n".join(GUIDANCE["absent"]))
         return 0
 
     s = collect(root)

@@ -61,6 +61,23 @@ hash 不同 → 是**更新**，走 supersession（見 Step 4），不是重新�
 
 ---
 
+## 🔴 PDF 怎麼讀（第一次用最常卡在這）
+
+`Read` 對 PDF **不理會 `offset`／`limit`** —— 帶 `limit=50` 一樣會回整份文字＋每頁渲染圖。
+PDF 的切片參數是 **`pages=`**，守門（`big_read_guard`）也只認它：沒帶 `pages` 的大 PDF 會被擋。
+
+| 你要做什麼 | 怎麼讀 |
+|---|---|
+| 判斷 Tier、抓標題／版次／日期 | `Read pages="1-3"`（封面＋目錄通常就夠） |
+| 建 Tier 1 卡的章節結構（TOC） | `Read` 目錄那幾頁；**不要為了列 TOC 讀完整份** |
+| 要某一節的內容 | `Read pages="N-M"`，一次 ≤20 頁 |
+| 要全文檢索關鍵字 | 先抽成文字檔再 Grep：<br>`python -c "import pypdf,sys;print(chr(10).join(p.extract_text() or '' for p in pypdf.PdfReader(sys.argv[1]).pages))" "<pdf>" > "<pdf>.txt"`<br>（沒有 pypdf 就用 `pdftotext`）|
+
+🔴 **被擋時不要改用 `limit` 或 Bash `cat` 繞過** —— 對 PDF 那不是切片，是把整份灌進 context。
+⚠️ 抽出來的 `.txt`／`.md` 是**產出物不是正本**：可以建、可以更新，但不可改原始 PDF。
+
+---
+
 ## Step 3　建卡
 
 ### Tier 1 指標卡（會變動的文件）

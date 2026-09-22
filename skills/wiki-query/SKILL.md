@@ -28,6 +28,10 @@ description: "從知識庫查詢並附來源引用。依序讀 hot → index →
 
 直接引用卡上的數字 = 引用一份聲明自己不是真相來源的東西。
 
+**正本是 PDF 時**：用 `Read pages="N"`（卡上的 TOC 會告訴你第幾頁）。
+`offset`／`limit` 對 PDF 無效，沒帶 `pages` 的大 PDF 會被守門擋下 —— 那不是壞掉，是要你只讀那一節。
+細節見 `wiki-ingest` skill 的「PDF 怎麼讀」。
+
 ---
 
 ## 多產品／多 repo 防混淆
