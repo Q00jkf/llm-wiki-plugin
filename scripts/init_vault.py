@@ -37,7 +37,7 @@ def main():
     ap = argparse.ArgumentParser(description="建立 vault 薄骨架")
     ap.add_argument("path", help="目標資料夾（不存在會建立）")
     ap.add_argument("--name", default="", help="vault 名稱")
-    ap.add_argument("--domain", default="<一兩句話說明這個 vault 收什麼知識、給誰用>", help="一句話說明用途")
+    ap.add_argument("--domain", default="<一兩句話說明這個 vault 管什麼對象（產品線／專案／客戶）、給誰用>", help="一句話說明用途")
     ap.add_argument("--force", action="store_true", help="目標已有 wiki/ 時仍繼續（只覆寫範本檔，不刪既有頁）")
     ap.add_argument("--dry-run", action="store_true", help="只列出會建立什麼，不寫檔")
     args = ap.parse_args()
