@@ -45,7 +45,7 @@ def save_manifest(root: Path, data: dict) -> None:
 def manifest_sources(manifest: dict) -> dict:
     """manifest 裡**真正的來源紀錄**，過濾掉備註。
 
-    🔴 兩種東西會混在 sources 裡，直接迭代會出事（2026-09-22 實測 LLM-Wiki-A）：
+    🔴 兩種東西會混在 sources 裡，直接迭代會出事（2026-09-22 在成熟 vault 實測）：
       · `_` 開頭的 key ＝ 人寫的備註（`_note`／`_batch_note_2026-05-05`…）——
         本 plugin 自己的範本也用這個慣例（`_scope_note`／`_doc_index_note`）
       · 值不是 dict（就是一段說明文字）

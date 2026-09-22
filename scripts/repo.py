@@ -808,7 +808,7 @@ def cmd_rename(root, args):
     # 🔴 sources 不是唯一存 source key 的地方 —— doc_index 的 current_file／history[].file
     # 也用同一個格式。只搬 sources 會留下指向已不存在 alias 的 doc_index，而且
     # 沒有任何檢查會看它 → 版次接替時會拿死路徑去比對。
-    # （2026-09-21 實測發現：手動把 ap2 拆成 ap2-raw 後，doc_index 仍寫著 ap2::…）
+    # （2026-09-21 實測發現：手動把 foo 拆成 foo-raw 後，doc_index 仍寫著 foo::…）
     def _mv(val):
         if not isinstance(val, str) or not val.startswith(f"{old}::"):
             return val, False
