@@ -292,10 +292,24 @@ def findings(root):
 
 
 GREEN = {
+    # 🔴 seed 分兩段：還沒 ingest → 教 ingest；已經有卡 → **教查詢**。
+    # 只教到 ingest 等於教人蓋了索引卻從不查 —— 查詢才是這套系統的回報點，
+    # 而且第一次查會親眼看到「指標卡不含數值、要回正本讀」是什麼意思（2026-09-22 驗收補）。
     "seed": "🟢 沒有卡點。新生 vault → 再丟一份文件進 raw/ 然後 /wiki-ingest raw/，看卡長什麼樣",
+    "seed_has_cards": "🟢 沒有卡點。**下一步是實際用它**：`/wiki-query <你剛放進去那份文件裡的某個東西>`\n"
+                      "   第一次查會看到系統怎麼從 hot → 卡 → 回正本，也會看到指標卡為什麼不放數值。",
     "growing": "🟢 沒有卡點。成長中 vault → 跑 /wiki-doctor，這階段最容易長出重複與孤島",
     "mature": "🟢 沒有卡點。成熟 vault → 拿一個真問題跑 /wiki-query，實際用它才知道哪裡缺",
 }
+
+
+def green_for(tier, root):
+    """seed 階段依「有沒有卡」分流 —— 有卡了就該教查詢，不是再叫他 ingest 一份。"""
+    if tier == "seed" and root is not None:
+        cards = list((Path(root) / "wiki" / "catalog").glob("*.md")) if (Path(root) / "wiki" / "catalog").is_dir() else []
+        if cards:
+            return GREEN["seed_has_cards"]
+    return GREEN.get(tier, "🟢 沒有卡點")
 
 
 def render_one(f):
@@ -311,13 +325,13 @@ def main():
     if "--json" in args:
         print(json.dumps({"root": str(root) if root else None, "tier": tier,
                           "top": fs[0] if fs else None, "findings": fs,
-                          "green": None if fs else GREEN.get(tier)}, ensure_ascii=False, indent=2))
+                          "green": None if fs else green_for(tier, root)}, ensure_ascii=False, indent=2))
         return 0
 
     head = f"Vault：{root}　成熟度：{tier}" if root else "Vault：（無）"
     print(head)
     if not fs:
-        print(GREEN.get(tier, "🟢 沒有卡點"))
+        print(green_for(tier, root))
         return 0
     if "--all" in args:
         for i, f in enumerate(fs, 1):
