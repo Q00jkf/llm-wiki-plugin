@@ -5,7 +5,7 @@ description: "把原始檔編譯成 wiki 知識層：建 catalog 卡、更新主
 
 # wiki-ingest：素材 → 知識層
 
-先讀 `wiki-core` 的三條鐵律。**R1（wiki 不是第二個真相來源）決定這裡的每一個判斷。**
+先讀 `wiki-core` 的四條鐵律。**R1（wiki 不是第二個真相來源）決定這裡的每一個判斷。**
 
 ---
 
