@@ -25,6 +25,7 @@ EXPECTED_DAYS = {
     "tidy-check": 7,
     "stale-check": 30,
     "agenda": 7,
+    "rules-check": 7,
 }
 
 

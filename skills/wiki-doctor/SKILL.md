@@ -39,12 +39,14 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/vault_state.py" --json    # 完整訊號
 |------|--------|--------|
 | `tidy_check.py [--quiet] [path]` | frontmatter 有 `maintenance:` 宣告的檔（hot.md、`_README.md`、coordination）：已結案未刪列、斷掉的編號、數量與檔案／`_manifest.json` 不符、引用的檔名不存在、超出 token 上限 | session 開場 `--quiet`；收尾看完整輸出 |
 | `stale_check.py [raw/子路徑] [--ext .txt]` | raw/ 哪些檔的 md5 不在 manifest（新檔或改過＝wiki 可能過期）。只比 hash 不比路徑；預設只掃 .md/.pdf | 使用者問某產品／資料現況前；ingest 前 |
+| `rules_check.py [--quiet] [--only F1,F3]` | **規則層**漂移：CLAUDE.md 資料夾用途表 vs `raw/` 實際夾、停用頁還被誰引用、引用的腳本不存在、規則層逐字重複、同檔重複標題、vault 腳本沒登記。wiki 層的 doctor 不守這些 | session 開場 `--quiet`；改完 CLAUDE.md／ops 後跑一次 |
 | `log_index.py --check` / `--apply` | log.md 每條標題下的 `<!-- log kind:… scope:… ref:… -->` 標記缺／過期。標記由內容推導、`--apply` 冪等 | append 條目後順手 `--apply`；健檢時 `--check` |
 
 ```bash
 python "${CLAUDE_PLUGIN_ROOT}/scripts/tidy_check.py" --quiet
 python "${CLAUDE_PLUGIN_ROOT}/scripts/stale_check.py" raw/{子路徑}
 python "${CLAUDE_PLUGIN_ROOT}/scripts/log_index.py" --check
+python "${CLAUDE_PLUGIN_ROOT}/scripts/rules_check.py"
 python -m compileall -q "${CLAUDE_PLUGIN_ROOT}/scripts"      # 升級 plugin 或換 Python 後跑一次
 ```
 
@@ -56,7 +58,7 @@ grep log.md 時只撈標記行：`grep -n "<!-- log .*scope:[^ ]*{產品}" wiki/
 
 `tidy_check`／`stale_check` 完整跑過一次就把 `{date, python, host, verdict}` 寫進 `wiki/meta/_guard-status.json`
 （只記日期、內容沒變不寫檔；掃子路徑的 tidy_check 不記）。`vault_state.py` 開場讀它，
-某支超過上限天數沒成功執行就報 **守門失聯**（tidy-check 7 天、stale-check 30 天、agenda 7 天，見 `_guard_status.EXPECTED_DAYS`）。
+某支超過上限天數沒成功執行就報 **守門失聯**（tidy-check 7 天、stale-check 30 天、agenda 7 天、rules-check 7 天，見 `_guard_status.EXPECTED_DAYS`）。
 **沒跑、跑掛、跑出 CLEAN 三者事後要能分辨** —— 原 vault 曾有守門在 Python 3.11 靜默掛 10 天沒人發現。
 看到守門失聯 → 先 `python -m compileall`，再手動跑那支看它還活著沒；不要只把日期改新。
 

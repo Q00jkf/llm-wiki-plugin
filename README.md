@@ -164,7 +164,7 @@
 
 | Hook | 做什麼 |
 |------|--------|
-| `SessionStart` | ① 量測 vault，注入對應深度的指導 ② 快照檔該整理了嗎（`tidy_check --quiet`）③ 日程窗口（逾期／今天／7 天內）。不是 vault 就完全安靜 |
+| `SessionStart` | ① 量測 vault，注入對應深度的指導 ② 快照檔該整理了嗎（`tidy_check --quiet`）③ 日程窗口（逾期／今天／7 天內）④ 規則層對帳（`rules_check --quiet`）。不是 vault 就完全安靜 |
 | `PreToolUse(Read)` | 擋掉整份讀 >100KB 的檔，強制切片或 Grep |
 
 > ⚠️ Read 守門是**減速丘不是保證** —— 擋不住 Bash `cat`，也不管 Grep 的回傳量。
@@ -184,6 +184,7 @@ python scripts/repo.py link <source key> <卡片>     # 建完卡登記進 manif
 python scripts/coach.py                  # 下一步該做的一件事（--all 全列）
 python scripts/agenda.py                 # 日程窗口；add／done／--check／--tidy／--ics／--notify
 python scripts/tidy_check.py --quiet     # 快照檔該整理了嗎（T0–T8）
+python scripts/rules_check.py --quiet    # 規則層漂移：手寫清單 vs 現實、停用頁引用、腳本存在性、逐字重複
 python scripts/stale_check.py raw/子路徑 # raw/ 哪些檔 hash 不在 manifest
 python scripts/log_index.py --check      # log.md 行內索引（--apply 補齊、--query 查）
 python scripts/wiki_fold_parse.py list   # /wiki-fold 後端：列條目／取批次／封存

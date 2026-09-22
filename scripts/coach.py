@@ -32,6 +32,7 @@ RAW_SKIP_DIRS = {"templates"}          # 比對時轉小寫
 BACKLOG_MIN = 10                       # 未 ingest 檔數超過此值 = 積壓
 HOT_STALE_DAYS = 7
 RULINGS_MIN_LOG = 10                   # log 條目 ≥ 此值仍無裁示 = 沒落盤
+INGEST_UNQUERIED_MIN = 5               # ingest ≥ 此值且 query 0 次 = 該問「值不值得建卡」
 DAY = 86400
 
 # CLAUDE.md 必填區（依重要度排序；key 是標題子字串）
@@ -253,6 +254,15 @@ def findings(root):
                           f"log 已有 {len(entries)} 條，wiki/ops/rulings.md 仍無任何裁示",
                           "跑了這麼多輪一定有「以後都這樣做」的決定；只留在對話或 log 裡等於沒定（R3）",
                           "回想最近一次「以後都這樣」的決定，寫成 `### 一句話（v日期，使用者裁示）` 進 rulings.md，CLAUDE.md 🔴 區留一句"))
+
+    # 7b ingest 很多、從沒查過 → 問「值不值得建卡」
+    n_ing = sum(1 for e in entries if e.get("kind") == "ingest")
+    n_q = sum(1 for e in entries if e.get("kind") == "query")
+    if n_ing >= INGEST_UNQUERIED_MIN and n_q == 0:
+        out.append(_f("ingest_unqueried", "🔵",
+                      f"log 有 {n_ing} 次 ingest、0 次 query",
+                      "建了沒人查的卡不是知識，是維護負擔；下一份 ingest 前先問「有人會查它嗎」「要找得到還是讀得懂」",
+                      "拿一個真問題跑 /wiki-query；之後每份 ingest 前先過 wiki-coach 的兩題"))
 
     # 8 從未健檢／健檢過期
     if s["pages"] >= vs.SEED_MAX:
