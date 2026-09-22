@@ -109,7 +109,7 @@ def add_index_row(index: Path, row: str, name: str, dry: bool) -> str:
             lines.insert(end, "")
     if not dry:
         index.write_text("\n".join(lines), encoding="utf-8")
-    return "已加一列到 ## Topics"
+    return ("會加" if dry else "已加") + "一列到 ## Topics"
 
 
 def prepend_log(log: Path, entry: str, dry: bool) -> str:
@@ -123,7 +123,7 @@ def prepend_log(log: Path, entry: str, dry: bool) -> str:
     lines[pos:pos] = entry.split("\n") + [""]
     if not dry:
         log.write_text("\n".join(lines), encoding="utf-8")
-    return "已加到最上方"
+    return ("會加" if dry else "已加") + "到最上方"
 
 
 def main():
@@ -200,7 +200,13 @@ def main():
     print(f"{tag}  index.md：{add_index_row(root / 'wiki' / 'index.md', row, name, dry)}")
     print(f"{tag}  log.md：{prepend_log(root / 'wiki' / 'log.md', entry, dry)}")
 
-    print(f"\n{'會' if dry else '已'}建立 {args.under}/{name}/。")
+    if dry:
+        # dry-run 只回報「會做什麼」。事後提醒（加 CLAUDE.md、下一步）要等真的建完才成立；
+        # 提早印會讓人以為已經建好了（2026-09-22 驗收發現：連 helper 的回傳都是過去式）。
+        print(f"\n[dry-run] 以上都沒有寫入。確認無誤後拿掉 --dry-run 再跑一次。")
+        return 0
+
+    print(f"\n已建立 {args.under}/{name}/。")
     print(f"🔴 請手動把 `{args.under}/{name}/` 加進 CLAUDE.md「資料夾用途」表（本腳本不動 CLAUDE.md）。")
     print(f"   下一步：素材放進去 → /wiki-ingest {args.under}/{name}/ → 更新 _README.md ④ 進度表")
     return 0
