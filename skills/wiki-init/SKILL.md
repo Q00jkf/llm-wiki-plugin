@@ -57,6 +57,10 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/init_vault.py" <目標路徑> --name "名�
 
 先跑 `--dry-run` 讓使用者看會建立什麼，確認後才實際執行。
 
+🔴 **既有檔永遠不覆寫**：目標已有 `wiki/` 時，dry-run 會把已存在的檔標 `skip ⚠️`，
+實際執行要加 `--force`，且只補缺的檔 —— CLAUDE.md／log.md／rulings.md 是使用者累積的裁示與日誌，
+蓋掉＝無聲清空（#33）。要重來請使用者自己刪資料夾，腳本不代刪。
+
 產出：
 
 ```
