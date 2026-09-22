@@ -1,6 +1,6 @@
 {
   "name": "llm-wiki",
-  "version": "0.4.22",
+  "version": "0.4.23",
   "description": "以資料溯源為核心的 Obsidian 知識庫系統。wiki 只存指標不抄內容、可管理散在各處的多個 repo、依 vault 成熟度自動調整指導深度（新 vault 多解說、成熟 vault 跑健檢、老化 vault 主動示警）。",
   "author": {
     "name": "llm-wiki"

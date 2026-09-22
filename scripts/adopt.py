@@ -9,7 +9,8 @@
 用法：
     python adopt.py                  # 撞名總覽
     python adopt.py --diff <名稱>     # 單項逐行差異
-    python adopt.py --rescue         # 只列「刪掉就永遠消失」的內容
+    python adopt.py --rescue         # 「刪掉就永遠消失」的內容（撞名項＋獨有 skill＋根目錄 *.md）
+    python adopt.py --rescue --all   # 同上，不截斷
 """
 import argparse
 import difflib
@@ -266,10 +267,66 @@ def cmd_diff(vault, plug, args):
     return 1
 
 
+ROOT_DOC_CAP = 12        # 整份掃的檔，每檔最多印幾行（--all 解除）
+
+
+def orphans(vault: Path, plug: Path):
+    """vault 有、plugin 沒有的 skill／command，附對照檔（可能是 None）。
+
+    🔴 plugin 沒有＝整份都可能是 vault 獨有，刪掉就永遠消失 —— 正是最該掃的。
+    ⚠️ 但這類 skill 很多只是**上游／使用者層的拷貝**（docx、canvas、autoresearch…）。
+    整份掃會吐出一堆上游原文的 "Do not…"，把真正 vault 獨有的那幾行埋掉。
+    所以 `~/.claude/skills/` 有同名時拿它當對照，只比差異。
+    """
+    vs, vc = collect(vault)
+    ps, pc = collect(plug)
+    us = user_skills()
+    out = []
+    for kind, v, p in (("skill", vs, ps), ("command", vc, pc)):
+        for name in sorted(set(v) - set(p)):
+            cp = None
+            if kind == "skill" and name in us:
+                cp = us[name]["file"]
+                try:
+                    if cp.resolve() == v[name].resolve():
+                        cp = None          # symlink 指回同一個檔，不是對照
+                except OSError:
+                    pass
+            out.append((kind, name, v[name], cp))
+    return out
+
+
+def root_docs(vault: Path, plug: Path):
+    """vault 根目錄的 *.md（CLAUDE.md／SETUP-SOP.md／TOOLS.md…）。
+
+    🔴 2026-09-22 退役 LLM-wiki-Template-share 時，--rescue 只掃撞名 skill，
+    這一層整個漏掉 —— 人工逐檔才撈出四樣有價值的東西（查證原則、skill vs 腳本判準、
+    檔名規約、訪談式 SOP）。**退役最容易連同整包丟掉的就是這裡。**
+
+    有對應範本（templates/vault/同名）就只比差異，沒有就整份掃。
+    """
+    tpl = plug / "templates" / "vault"
+    out = []
+    for f in sorted(vault.glob("*.md")):
+        c = tpl / f.name
+        out.append((f, c if c.is_file() else None))
+    return out
+
+
+def _print_hits(rows, cap):
+    shown = rows if cap is None else rows[:cap]
+    for dated, i, s in shown:
+        print(f"  {'📅' if dated else '  '} L{i:<4} {s}")
+    if cap is not None and len(rows) > cap:
+        print(f"     … 另 {len(rows) - cap} 行（--all 全列）")
+
+
 def cmd_rescue(vault, plug, args):
-    hits = pairs(vault, plug)
+    cap = None if getattr(args, "all", False) else ROOT_DOC_CAP
     found = False
-    for kind, name, vp, pp in hits:
+
+    # ① 撞名項 —— 只算 vault 獨有的行（plugin 也有的刪了不會消失）
+    for kind, name, vp, pp in pairs(vault, plug):
         if _md5(vp) == _md5(pp):
             continue
         vlines, plines = _read(vp), _read(pp)
@@ -277,17 +334,53 @@ def cmd_rescue(vault, plug, args):
         if not r:
             continue
         found = True
-        print(f"\n### {kind} {name}　（{vp}）")
-        for dated, i, s in r:
-            print(f"  {'📅' if dated else '  '} L{i:<4} {s}")
+        print(f"\n### ① 撞名 {kind} {name}　（{vp}）")
+        _print_hits(r, cap)
+
+    # ② vault 獨有的 skill／command
+    for kind, name, vp, cp in orphans(vault, plug):
+        lines = _read(vp)
+        if cp is not None:
+            if _md5(vp) == _md5(cp):
+                continue                   # 與使用者層同一份，刪 vault 版不會消失
+            r = rescue_lines(lines, vault_only(lines, _read(cp)))
+            tag = "（只列與使用者層同名 skill 的差異）"
+        else:
+            r = rescue_lines(lines)
+            tag = "（無對照，整份掃）"
+        if not r:
+            continue
+        found = True
+        print(f"\n### ② plugin 沒有的 {kind} {name}　{tag}")
+        print(f"     {vp}")
+        _print_hits(r, cap)
+
+    # ③ 根目錄文件 —— 退役時最容易整包丟掉的一層
+    for f, counterpart in root_docs(vault, plug):
+        lines = _read(f)
+        if counterpart is not None:
+            if _md5(f) == _md5(counterpart):
+                continue
+            r = rescue_lines(lines, vault_only(lines, _read(counterpart)))
+            tag = f"（與範本 {counterpart.name} 的差異）"
+        else:
+            r = rescue_lines(lines)
+            tag = "（plugin 無對應範本，整份掃）"
+        if not r:
+            continue
+        found = True
+        print(f"\n### ③ 根目錄 {f.name}　{tag}")
+        _print_hits(r, cap)
+
     if not found:
-        print("🟢 撞名項裡沒有偵測到裁示／踩雷紀錄。")
+        print("🟢 沒有偵測到裁示／踩雷紀錄（掃了撞名項＋plugin 沒有的 skill＋根目錄 *.md）。")
         print("   仍建議用 --diff 人眼看過再刪 —— 偵測是關鍵字比對，會漏。")
         return 0
     print("\n🔴 以上每一行在刪除 vault 版 skill 之前，都要先決定去處：")
     print("   · 只對這個 vault 成立 → 搬到 wiki/ops/rulings.md（Why／實例／代價寫全）")
     print("   · 大家都該知道      → 提議合併回 plugin 的對應 skill")
     print("   · 已經過時          → 確認後才丟棄，並在 wiki/log.md 留一筆說明為什麼丟")
+    print("\n⚠️ 這是關鍵字比對，**會漏**。退役整個資料夾前，根目錄的 *.md 仍要人眼掃過一遍。")
     return 0
 
 
@@ -295,7 +388,9 @@ def main():
     ap = argparse.ArgumentParser(description="既有 vault 改用 plugin 版系統的遷移分析")
     ap.add_argument("--vault", help="vault 路徑（預設從當前目錄往上找）")
     ap.add_argument("--diff", help="顯示某個撞名項的逐行差異")
-    ap.add_argument("--rescue", action="store_true", help="只列「刪掉就永遠消失」的內容")
+    ap.add_argument("--rescue", action="store_true",
+                    help="列「刪掉就永遠消失」的內容：撞名項＋plugin 沒有的 skill＋根目錄 *.md")
+    ap.add_argument("--all", action="store_true", help="--rescue 不截斷，每檔全列")
     ap.add_argument("--sources", action="store_true",
                     help="列出每個 skill 名稱的所有來源（使用者層／專案層／plugin），找出分岔")
     args = ap.parse_args()

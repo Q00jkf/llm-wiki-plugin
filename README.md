@@ -16,7 +16,7 @@
 
 ### 2. 一個 wiki 管理散在各處的多個專案
 
-檔案**留在原地**、一律唯讀。適合「幾十個專案散在硬碟上，不想搬進 wiki」的情況。
+檔案**留在原地**。適合「幾十個專案散在硬碟上，不想搬進 wiki」的情況。
 
 ```bash
 /wiki-repo discover D:\            # 掃出候選專案 + 產生批次註冊指令
@@ -25,7 +25,20 @@
 ```
 
 `discover` 會自動排除程式碼樹、處理 alias 撞名、按 Office 文件數排序。
-每筆註冊自動記錄**擁有者與 remote 狀態** —— 絕對路徑只在註冊者那台機器有效，別台必須知道去找誰。
+路徑存的是**可攜 spec**（`${VAR}/`、`~/`、`../`）不是絕對路徑，換機器不會整批失效；
+壓不掉的會標紅，並記錄**擁有者與 remote 狀態** —— 別台機器掃到失效時知道去找誰。
+
+**寫入權限依「誰的」分三級**（預設唯讀，`writable` 逐個 alias 開）：
+
+| 級別 | 判準 | MUST |
+|---|---|---|
+| 🔴 別人的 | remote／owner 不是本人 | 對方同意＋動手前 `git pull`＋完成後 `commit`／`push` |
+| 🟡 自己的 vault | 是本人的、有自己的 `CLAUDE.md` | 先讀它的 `CLAUDE.md`、寫它的 `wiki/log.md` |
+| 🟢 自己的資料夾 | 是本人的、沒有自己的規則 | 照本 vault 規則 |
+
+> 🔴 **既有的 llm-wiki vault 不能整包掛** —— `add` 偵測到會擋下，要求拆成
+> `{名}-raw`＋`{名}-wiki` 雙掛。對方的 `wiki/` 是**已編譯的知識**，重 ingest 等於同一份知識存兩處。
+> 只建一張 Tier 1 指標卡；要原文／數值一律回 `-raw`。
 
 ### 3. 系統依 vault 成熟度自動換檔，不需要選等級
 
@@ -74,7 +87,7 @@
 | `/wiki` | 現況：成熟度、老化訊號、下一步 |
 | `/wiki-ingest [路徑]` | 建 catalog 卡。支援 `{alias}::{路徑}` |
 | `/wiki-query [問題]` | 查詢並附來源引用 |
-| `/wiki-repo` | 管理外部 repo（discover／add／list／scan／remove）|
+| `/wiki-repo` | 管理外部 repo（discover／add／list／scan／remove／rename／link）|
 | `/wiki-doctor` | 老化健檢（含 tidy／stale／log-index／compileall） |
 | `/wiki-coach [問題]` | 教練：看 vault 狀態只講下一步一件事；答「為什麼」「這樣對嗎」 |
 | `/wiki-new <name>` | 開新資料夾：`Templates/_folder-template/` → `raw/<name>/`，建 `_README` 執行節點＋topic stub |
@@ -113,6 +126,8 @@ python scripts/vault_state.py            # 成熟度 + 老化訊號
 python scripts/vault_state.py --json     # 機器讀的完整訊號
 python scripts/repo.py list              # 外部 repo 一覽
 python scripts/repo.py scan              # 掃描變更
+python scripts/repo.py rename <舊> <新> --dry-run   # 改 alias，連 sources／doc_index 一起搬
+python scripts/repo.py link <source key> <卡片>     # 建完卡登記進 manifest（漏了就是孤兒卡）
 python scripts/coach.py                  # 下一步該做的一件事（--all 全列）
 python scripts/agenda.py                 # 日程窗口；add／done／--check／--tidy／--ics／--notify
 python scripts/tidy_check.py --quiet     # 快照檔該整理了嗎（T0–T8）
