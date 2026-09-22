@@ -1,6 +1,6 @@
 ---
 name: wiki-init
-description: "建立新的 wiki vault，並引導使用者填出專屬的 CLAUDE.md（術語、工作習慣、資料夾用途）。產出薄骨架，不複製 skills／commands。Triggers on: wiki-init, 建立 wiki, 開一個新的知識庫, 我要用這套系統, 初始化 vault, 新人第一次用。"
+description: "建立新 vault（團隊／PM 的專案管理系統），引導填出專屬的 CLAUDE.md（管理對象、術語、工作習慣、資料夾用途）。產出薄骨架，不複製 skills／commands。團隊導入請走 references/setup-interview.md。Triggers on: wiki-init, 建立 wiki, 導入這套系統, 我要用這套系統, 初始化 vault, 團隊導入, 新人第一次用。"
 ---
 
 # wiki-init：建立新 vault
@@ -20,16 +20,23 @@ plugin 提供系統、vault 只放內容與個人設定，升級 plugin 時所�
 
 ## 流程
 
-> 🔵 **使用者不確定結構該長什麼樣時**，改帶他跑 `references/setup-interview.md` ——
-> 一份訪談式設計精靈（目的與痛點 → 光譜定位 → 三種藍圖）。預設三題夠用，不要一開始就丟長問卷。
+> 🔵 **團隊導入、或使用者答不出下面三題時**，改帶他跑 `references/setup-interview.md`
+> —— 訪談式設計精靈（管理對象 → 團隊與角色 → 制度 → 既有資產 → 第一批）。
+> 個人用、範圍清楚的情況，下面三題就夠，不要一開始就丟長問卷。
 
 ### Step 1　問清楚（一次問完，不要一題一題來）
 
+🔴 **先問「管什麼」，不要先問「收什麼知識」。** 這是專案管理系統，知識庫是其中一個能力；
+從知識庫問起會把使用者導向錯的結構（真實部署的知識層只佔四成）。
+
 用 `AskUserQuestion` 一次問：
 
-1. **這個 vault 收什麼知識、給誰用？**（一兩句話）
-2. **`raw/` 底下打算怎麼分類？**（例：依產品／依客戶／依文件類型）
-3. **有沒有散在別處的專案要一起管？**（有 → 之後跑 `/wiki-repo add`）
+1. **要管什麼對象？**（產品線／專案／客戶／部門，大概幾個）
+   → 決定 `raw/` 的第一層與 `wiki/products/`
+2. **幾個人用？誰維護什麼？**（一個人／小組／跨部門）
+   → 一人以上就要交代 `wiki/meta/coordination.md` 與 `wiki-collab`
+3. **有沒有制度或既有資產要進來？**（ISO／SOP／表單；散在別處的專案）
+   → 制度進 `raw/<制度名>/`；散在別處的之後跑 `/wiki-repo add`
 
 新人不知道怎麼答時，給範例，不要讓他卡住。
 
@@ -49,13 +56,24 @@ raw/.manifest.json     ← config + repos 註冊表 + sources
 wiki/index.md          ← 全局目錄
 wiki/hot.md            ← 最近上下文（輪替制 ≤150 行）
 wiki/log.md            ← 操作日誌（只增不減，只能 Grep）
-wiki/{catalog,topics,questions,projects}/
+wiki/{catalog,topics,questions,projects}/   ← projects/ 是專案頁，不是知識頁
 wiki/ops/{ingest,query,naming,collab,rulings}.md  ← 規則模組（空殼，有東西才寫）
 wiki/agenda.md         ← 日程唯一真相來源
 wiki/meta/{coordination,agenda-system}.md
 Templates/             ← _README模板、AI對話紀錄模板、_folder-template（/wiki-new 用）
 .gitignore
 ```
+
+**跟使用者介紹骨架時，五件事都要講到** —— 不要只講 catalog／topics 那一塊：
+
+| 建出來的東西 | 管什麼 |
+|---|---|
+| `raw/<對象>/` ＋ `Templates/_folder-template/` | **專案／產品線**。用 `/wiki-new` 開夾，`_README.md` 是該夾的執行節點（進度儀表板）|
+| `wiki/agenda.md` ＋ `wiki/meta/agenda-system.md` | **日程**。唯一真相來源，開場自動印窗口 |
+| `wiki/meta/coordination.md` | **多人／多 session 分工**。一個人用先空著，第二個人進來就要維護 |
+| `raw/.manifest.json` 的 `repos` | **檔案資產**。散在各處的專案掛進來，檔案留原地 |
+| `wiki/{catalog,topics}/` ＋ `hot/index/log` | **知識庫**。raw → wiki 的編譯產物 |
+| `wiki/ops/*.md` | 按需規則模組（空殼，有東西才寫）|
 
 ### Step 3　把 Step 1 的答案填進 CLAUDE.md
 

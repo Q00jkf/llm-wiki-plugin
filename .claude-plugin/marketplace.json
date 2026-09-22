@@ -1,7 +1,7 @@
 {
   "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
   "name": "llm-wiki",
-  "description": "以資料溯源為核心的 Obsidian 知識庫系統（wiki 只存指標、多 repo、依成熟度換檔）",
+  "description": "給團隊與 PM 的專案管理系統（專案／日程／分工／資產／制度；知識庫是其中一個能力）",
   "owner": {
     "name": "呂冠佑 (Lu Guan-You), 呂筱婕 (Lu Hsiao-Chieh)"
   },

@@ -1,11 +1,32 @@
 ---
 name: wiki-core
-description: "LLM Wiki 知識庫系統的架構與鐵律。任何涉及本 vault 的知識庫操作（ingest／查詢／建頁／整理／判斷該不該寫進 wiki）都先讀這份。也用於回答「這個系統怎麼運作」「我該把東西放哪」「為什麼不能直接抄進 wiki」。Triggers on: wiki 架構, 知識庫怎麼運作, 這要放哪, 系統原則, wiki-core, 這個 vault 怎麼用。"
+description: "LLM Wiki 的架構與鐵律 —— 這是給團隊與 PM 的**專案管理系統**，知識庫是其中一個能力。任何涉及本 vault 的操作（開專案夾／排日程／分工／掛來源／ingest／查詢／判斷該不該寫進 wiki）都先讀這份。也用於回答「這個系統管什麼」「我該把東西放哪」「為什麼不能直接抄進 wiki」。Triggers on: wiki 架構, 這個系統管什麼, 這要放哪, 系統原則, wiki-core, 這個 vault 怎麼用。"
 ---
 
 # LLM Wiki — 系統核心
 
+**這是給團隊與 PM 的專案管理系統**，跑在 Obsidian 上、用 Claude Code 操作。
+
 **一句話：raw/ 是真相，wiki/ 是索引。索引可以重建，真相不能。**
+
+---
+
+## 它管五件事（知識庫是其中一件，不是全部）
+
+| # | 面向 | 真相來源 | 主要 skill |
+|---|---|---|---|
+| 1 | **專案／產品線** | `raw/<對象>/` ＋ 該夾的 `_README.md`（執行節點＝進度儀表板）| `wiki-new` |
+| 2 | **日程** | `wiki/agenda.md`（唯一真相來源）| `wiki-agenda` |
+| 3 | **多人／多 session 分工** | `wiki/meta/coordination.md` | `wiki-collab` |
+| 4 | **檔案資產與權限** | `raw/.manifest.json` 的 `repos`（可攜路徑／擁有者／`writable`）| `wiki-repo` |
+| 5 | **知識庫** | `raw/` 正本 → `wiki/` 指標 | `wiki-ingest`／`wiki-query`／`wiki-fold` |
+
+🔴 **判斷「這東西該放哪」時，先問它屬於上面哪一件，再問要不要建卡。**
+制度文件（ISO／SOP／表單規則）、採購決策、實驗紀錄、查核點報告 —— 這些都不是「知識庫」，
+但它們就是這套系統存在的理由。真實部署的比例：知識層 78 頁 vs 制度／管理／營運層 106 頁
+（來源：`LLM-Wiki-A/wiki/`，其中 `wiki/qms/` 含 26 份程序書頁、表單撰寫規則、稽核夾、records index）。
+
+> 下面三條鐵律是**跨五件事都適用**的，不是只管知識庫那一件。
 
 ---
 
