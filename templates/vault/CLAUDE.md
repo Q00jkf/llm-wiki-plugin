@@ -73,6 +73,7 @@
 
 **開始**：讀 `wiki/hot.md` → 需要更多背景才讀 `wiki/index.md`。開場 hook 已印成熟度／快照整理／日程窗口，有 🔴 提一句。不知道下一步 → `/wiki-coach`。
 **結束**：更新 `wiki/hot.md`「上次重大操作」（讓下次知道停在哪）；**待辦做完就刪，不留 ✅**；日程一律 `/wiki-agenda add`，不寫進 hot.md。
+**每次動檔**：回覆末行列 `已寫入：` 路徑，`.md` 用 Obsidian `open … newtab` 開給我；引用一律指 `raw/` 正本或 alias 路徑，不指 wiki 卡（`wiki-core` R2／R4）。
 
 ---
 
