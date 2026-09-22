@@ -29,13 +29,21 @@ plugin 提供系統、vault 只放內容與個人設定，升級 plugin 時所�
 🔴 **先問「管什麼」，不要先問「收什麼知識」。** 這是專案管理系統，知識庫是其中一個能力；
 從知識庫問起會把使用者導向錯的結構（真實部署的知識層只佔四成）。
 
-用 `AskUserQuestion` 一次問：
+🔴 **系統分兩層，訪談只問「彈性層」。** 內建層（多 session 主管制、日程、外部 repo 掛載、
+知識庫編譯、健檢、教練、Read 守門）裝上就有、要用就啟用，**不是訪談題** —— 問「你要不要多 session」
+等於問「你要不要用內建功能」，答案不會改變骨架。
+
+| 層 | 內容 | 怎麼處理 |
+|---|---|---|
+| 內建即有 | 多 session、日程、掛載、編譯、健檢、教練、守門 | Step 2 介紹時講「需要時這樣啟用」 |
+| 彈性修改 | 管什麼對象、`raw/` 怎麼分、術語、查詢路由、工作習慣、鐵律／踩雷 | **Step 1 問出來，填進 CLAUDE.md** |
+
+用 `AskUserQuestion` 一次問（只有彈性層）：
 
 1. **要管什麼對象？**（產品線／專案／客戶／部門，大概幾個）
    → 決定 `raw/` 的第一層與 `wiki/products/`
-2. **會不會同時開多個 Claude session 動同一個 vault？**（一個 session 做完再開下一個／常態多開）
-   → 多開就要交代 `wiki/meta/coordination.md` 與 `wiki-collab` 主管制。
-   （多**人**是另一件事：同事各自 clone、各自 `/wiki-repo add`，權限看擁有者 —— 這裡不問）
+2. **`raw/` 底下怎麼分？**（按對象／按文件類型／按職能；有沒有固定的縮寫或黑話）
+   → 填「資料夾用途」與「專屬術語」；答不出來就照第 1 題的對象分
 3. **有沒有制度或既有資產要進來？**（ISO／SOP／表單；散在別處的專案）
    → 制度進 `raw/<制度名>/`；散在別處的之後跑 `/wiki-repo add`
 
@@ -65,16 +73,16 @@ Templates/             ← _README模板、AI對話紀錄模板、_folder-templa
 .gitignore
 ```
 
-**跟使用者介紹骨架時，五件事都要講到** —— 不要只講 catalog／topics 那一塊：
+**跟使用者介紹骨架時，五件事都要講到，並說清楚哪些是內建、需要時怎麼啟用** —— 不要只講 catalog／topics 那一塊：
 
-| 建出來的東西 | 管什麼 |
-|---|---|
-| `raw/<對象>/` ＋ `Templates/_folder-template/` | **專案／產品線**。用 `/wiki-new` 開夾，`_README.md` 是該夾的執行節點（進度儀表板）|
-| `wiki/agenda.md` ＋ `wiki/meta/agenda-system.md` | **日程**。唯一真相來源，開場自動印窗口 |
-| `wiki/meta/coordination.md` | **多 session 分工**。單一 session 先空著，第二個 session 開起來就要維護 |
-| `raw/.manifest.json` 的 `repos` | **檔案資產**。散在各處的專案掛進來，檔案留原地 |
-| `wiki/{catalog,topics}/` ＋ `hot/index/log` | **知識庫**。raw → wiki 的編譯產物 |
-| `wiki/ops/*.md` | 按需規則模組（空殼，有東西才寫）|
+| 建出來的東西 | 管什麼 | 內建功能，需要時 |
+|---|---|---|
+| `raw/<對象>/` ＋ `Templates/_folder-template/` | **專案／產品線**。`_README.md` 是該夾的執行節點（進度儀表板）| `/wiki-new <name>` 開夾 |
+| `wiki/agenda.md` ＋ `wiki/meta/agenda-system.md` | **日程**。唯一真相來源，開場自動印窗口 | `/wiki-agenda add "…"` |
+| `wiki/meta/coordination.md` | **多 session 分工**。第二個 session 開起來就啟用主管制 | `/wiki-collab takeover` |
+| `raw/.manifest.json` 的 `repos` | **檔案資產**。散在各處的專案掛進來，檔案留原地；多人權限看擁有者 | `/wiki-repo discover`／`add` |
+| `wiki/{catalog,topics}/` ＋ `hot/index/log` | **知識庫**。raw → wiki 的編譯產物 | `/wiki-ingest` |
+| `wiki/ops/*.md` | 按需規則模組（空殼，有東西才寫）| 彈性層，隨用隨填 |
 
 ### Step 3　把 Step 1 的答案填進 CLAUDE.md
 

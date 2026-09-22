@@ -69,7 +69,9 @@ wiki/ 只是目錄                              coordination 有人看、健檢�
 | B3 | **誰負責維護日程**（`wiki/agenda.md`）？ | 日程是唯一真相來源，沒人維護就會出現第二份 |
 | B4 | **誰負責定期健檢**（`/wiki-doctor`）？多久一次？ | 沒人跑＝規則靜靜死掉而沒人發現 |
 | B5 | 有沒有人只能看不能改？ | → `wiki-repo` 的 `writable` 與寫入權限四級 |
-| B6 | 會不會同時開多個 Claude session 動同一個 vault？ | → `wiki/meta/coordination.md` ＋ `wiki-collab` 主管制（session 的事，與人數無關） |
+
+> 多 session 主管制是**內建功能**，不是訪談題：第二個 Claude session 開起來就 `/wiki-collab takeover`。
+> 訪談只問人（誰維護、誰能改），不問 session。
 
 🔴 **B2–B4 只要有一題答「還沒想」，就先別擴大範圍。** 沒有維護者的區塊會在三個月內腐爛。
 
