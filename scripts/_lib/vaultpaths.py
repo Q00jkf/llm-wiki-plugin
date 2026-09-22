@@ -42,6 +42,30 @@ def save_manifest(root: Path, data: dict) -> None:
     tmp.replace(p)
 
 
+def manifest_sources(manifest: dict) -> dict:
+    """manifest 裡**真正的來源紀錄**，過濾掉備註。
+
+    🔴 兩種東西會混在 sources 裡，直接迭代會出事（2026-09-22 實測 LLM-Wiki-A）：
+      · `_` 開頭的 key ＝ 人寫的備註（`_note`／`_batch_note_2026-05-05`…）——
+        本 plugin 自己的範本也用這個慣例（`_scope_note`／`_doc_index_note`）
+      · 值不是 dict（就是一段說明文字）
+    不過濾的後果：`v.get(...)` 直接 AttributeError（#30 對帳整支掛掉、hook 靜默無輸出）、
+    來源數多算、備註 key 被當成「來源檔消失」。
+
+    同時吸收舊式 manifest：來源直接放在頂層（`raw/…` 或 `alias::…`），不在 sources 底下。
+    """
+    out = {}
+    for k, v in (manifest.get("sources") or {}).items():
+        if not k.startswith("_") and isinstance(v, dict):
+            out[k] = v
+    for k, v in manifest.items():
+        if k in ("config", "repos", "sources", "doc_index") or k.startswith("_"):
+            continue
+        if isinstance(v, dict) and (k.startswith("raw/") or "::" in k):
+            out.setdefault(k, v)
+    return out
+
+
 def resolve_source(root: Path, key: str):
     """把 manifest 的 source key 解析成實際路徑。
 

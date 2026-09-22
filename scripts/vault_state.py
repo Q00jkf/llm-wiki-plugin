@@ -19,7 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from _lib.vaultpaths import (find_vault_root, load_manifest,  # noqa: E402
-                             resolve_repo_path, resolve_source)
+                             manifest_sources, resolve_repo_path, resolve_source)
 try:
     import _guard_status  # noqa: E402
 except ImportError:      # 守門留痕模組缺席不該讓開場量測掛掉
@@ -142,7 +142,7 @@ def _raw_pending(root: Path, manifest):
     raw = root / "raw"
     if not raw.is_dir():
         return 0
-    done = set(manifest.get("sources", {}))
+    done = set(manifest_sources(manifest))
     n = 0
     try:
         for p in raw.rglob("*"):
@@ -170,7 +170,7 @@ def collect(root: Path):
         "hot_lines": None,
         "claude_lines": None,
         "ruling_overflow": [],
-        "sources": len(manifest.get("sources", {})),
+        "sources": len(manifest_sources(manifest)),
         "repos": [k for k in manifest.get("repos", {}) if not k.startswith("_")],
         "days_since_lint": None,
         "days_since_commit": _git_last_commit_age(root),
@@ -224,7 +224,8 @@ def collect(root: Path):
 
     # 來源完整性：抽查 manifest 指向的檔還在不在
     repos_cfg = manifest.get("repos", {})
-    for key in list(manifest.get("sources", {}))[:400]:
+    srcs = manifest_sources(manifest)
+    for key in list(srcs)[:400]:
         if "::" in key:
             alias, rel = key.split("::", 1)
             base = repos_cfg.get(alias, {}).get("path")
@@ -246,8 +247,7 @@ def collect(root: Path):
     # broken_sources 抓的是 manifest → 檔案不見；這裡抓的是卡 → 沒有來源紀錄。
     # 後者更陰險：卡看起來在，但 scan 永遠不會說它過期 —— 死卡，會無聲腐爛。
     # （2026-09-21 踩到：AS9100 指標卡手寫進 catalog/ 卻漏了 ingest 的 Step 4。）
-    cited = {v.get("catalog_page", "").replace("\\", "/")
-             for v in manifest.get("sources", {}).values()}
+    cited = {v.get("catalog_page", "").replace("\\", "/") for v in srcs.values()}
     cat = root / "wiki" / "catalog"
     if cat.is_dir():
         for f in sorted(cat.glob("*.md")):

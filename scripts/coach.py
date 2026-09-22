@@ -18,7 +18,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _lib.vaultpaths import find_vault_root, load_manifest  # noqa: E402
+from _lib.vaultpaths import find_vault_root, load_manifest, manifest_sources  # noqa: E402
 from _lib.logparse import load_entries, log_path  # noqa: E402
 import vault_state as vs  # noqa: E402  複用頁數／成熟度／健檢時間，不另寫一份
 
@@ -110,13 +110,7 @@ def _empty_claude_sections(root):
 
 def _all_sources(manifest):
     """新式 sources ＋ 舊式頂層 raw/… 或 alias::… key，一律當來源。"""
-    src = dict(manifest.get("sources", {}) or {})
-    for k, v in manifest.items():
-        if k in ("config", "repos", "sources"):
-            continue
-        if k.startswith("raw/") or "::" in k:
-            src.setdefault(k, v)
-    return src
+    return manifest_sources(manifest)
 
 
 def _raw_files(root):
