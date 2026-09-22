@@ -17,7 +17,7 @@ description: "LLM Wiki 的架構與鐵律 —— 這是給團隊與 PM 的**專�
 |---|---|---|---|
 | 1 | **專案／產品線** | `raw/<對象>/` ＋ 該夾的 `_README.md`（執行節點＝進度儀表板）| `wiki-new` |
 | 2 | **日程** | `wiki/agenda.md`（唯一真相來源）| `wiki-agenda` |
-| 3 | **多人／多 session 分工** | `wiki/meta/coordination.md` | `wiki-collab` |
+| 3 | **多 session 分工**（多人走 #4 的擁有者與權限） | `wiki/meta/coordination.md` | `wiki-collab` |
 | 4 | **檔案資產與權限** | `raw/.manifest.json` 的 `repos`（可攜路徑／擁有者／`writable`）| `wiki-repo` |
 | 5 | **知識庫** | `raw/` 正本 → `wiki/` 指標 | `wiki-ingest`／`wiki-query`／`wiki-fold` |
 
@@ -152,10 +152,10 @@ SessionStart 時 `vault_state.py` 量測 vault，依成熟度給不同深度的�
 
 ---
 
-## 多人／多 session
+## 多 session（與多人的權限）
 
 - 開工前 `ListAgents` 看有沒有 peer 在同一 vault
-- 動共用檔（`wiki/log.md`、多人共寫的表）前先講一聲 —— **檔案系統沒有鎖，後存檔的會無聲覆蓋**
+- 動共用檔（`wiki/log.md`、多 session 共寫的表）前先講一聲 —— **檔案系統沒有鎖，後存檔的會無聲覆蓋**
 - commit 用自己的 session 名當 author：`git -c user.name="<session名>" commit ...`
 - 🔴 **非 `raw/` 的路徑必標擁有者**：絕對路徑只在記錄者那台機器有效。`/wiki-repo add` 會自動記錄擁有者與 remote 狀態
 - 有主管 session 時先跟主管登記；主管的權責、派工單、收尾流程、`coordination.md` 格式 → `wiki-collab` skill

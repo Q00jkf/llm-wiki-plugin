@@ -33,8 +33,9 @@ plugin 提供系統、vault 只放內容與個人設定，升級 plugin 時所�
 
 1. **要管什麼對象？**（產品線／專案／客戶／部門，大概幾個）
    → 決定 `raw/` 的第一層與 `wiki/products/`
-2. **幾個人用？誰維護什麼？**（一個人／小組／跨部門）
-   → 一人以上就要交代 `wiki/meta/coordination.md` 與 `wiki-collab`
+2. **會不會同時開多個 Claude session 動同一個 vault？**（一個 session 做完再開下一個／常態多開）
+   → 多開就要交代 `wiki/meta/coordination.md` 與 `wiki-collab` 主管制。
+   （多**人**是另一件事：同事各自 clone、各自 `/wiki-repo add`，權限看擁有者 —— 這裡不問）
 3. **有沒有制度或既有資產要進來？**（ISO／SOP／表單；散在別處的專案）
    → 制度進 `raw/<制度名>/`；散在別處的之後跑 `/wiki-repo add`
 
@@ -70,7 +71,7 @@ Templates/             ← _README模板、AI對話紀錄模板、_folder-templa
 |---|---|
 | `raw/<對象>/` ＋ `Templates/_folder-template/` | **專案／產品線**。用 `/wiki-new` 開夾，`_README.md` 是該夾的執行節點（進度儀表板）|
 | `wiki/agenda.md` ＋ `wiki/meta/agenda-system.md` | **日程**。唯一真相來源，開場自動印窗口 |
-| `wiki/meta/coordination.md` | **多人／多 session 分工**。一個人用先空著，第二個人進來就要維護 |
+| `wiki/meta/coordination.md` | **多 session 分工**。單一 session 先空著，第二個 session 開起來就要維護 |
 | `raw/.manifest.json` 的 `repos` | **檔案資產**。散在各處的專案掛進來，檔案留原地 |
 | `wiki/{catalog,topics}/` ＋ `hot/index/log` | **知識庫**。raw → wiki 的編譯產物 |
 | `wiki/ops/*.md` | 按需規則模組（空殼，有東西才寫）|

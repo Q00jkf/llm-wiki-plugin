@@ -96,7 +96,7 @@
 | ingest 這個 vault 的例外（哪些不建卡、圖片、批次） | `wiki/ops/ingest.md` |
 | 查東西：完整路由表、scope 規則、腳本清單 | `wiki/ops/query.md` |
 | 命名／編號／版次／frontmatter 必填 | `wiki/ops/naming.md` |
-| 多人／多 session：共用檔、分工、主管制入口 | `wiki/ops/collab.md`（流程見 plugin `wiki-collab`，狀態見 `wiki/meta/coordination.md`） |
+| 多 session：共用檔、分工、主管制入口 | `wiki/ops/collab.md`（流程見 plugin `wiki-collab`，狀態見 `wiki/meta/coordination.md`） |
 | 裁示與踩雷的全文（Why、實例、代價） | `wiki/ops/rulings.md` |
 | 開新資料夾／`_README` 怎麼寫／取用副本夾 | plugin `wiki-new` skill |
 | 日程怎麼記／匯出 | plugin `wiki-agenda` skill |
