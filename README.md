@@ -155,3 +155,11 @@ vault 的 `raw/.manifest.json`：
 ```
 
 其餘門檻（頁數分級、log 大小、hot 行數、健檢天數）在 `scripts/vault_state.py` 檔頭常數區。
+
+---
+
+## 授權
+
+[MIT](LICENSE) © 2026 呂冠佑、呂筱婕
+
+可自由使用、修改、散布與商用，保留著作權聲明即可。本軟體不附任何擔保。
