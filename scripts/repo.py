@@ -25,6 +25,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from _lib import filehash as _filehash  # noqa: E402
 from _lib.vaultpaths import (find_vault_root, load_manifest, save_manifest,  # noqa: E402
+                             manifest_sources,
                              resolve_source,
                              resolve_repo_path, portable_path, is_hardcoded)
 
@@ -268,7 +269,7 @@ def write_repos_page(root):
     if backfill_paths(root, m) | backfill_kinds(root, m):
         save_manifest(root, m)            # #26 補 kind、#27 把絕對路徑壓成可攜
     repos = {k: v for k, v in m.get("repos", {}).items() if not k.startswith("_")}
-    sources = m.get("sources", {})
+    sources = manifest_sources(m)          # #33：過濾 `_` 備註與非 dict
     p = wiki / "repos.md"
 
     if not repos:
@@ -531,7 +532,7 @@ def cmd_discover(root, args):
 def cmd_list(root, args):
     m = load_manifest(root)
     repos = {k: v for k, v in m.get("repos", {}).items() if not k.startswith("_")}
-    sources = m.get("sources", {})
+    sources = manifest_sources(m)          # #33：過濾 `_` 備註與非 dict
     if not repos:
         print("尚未註冊任何外部 repo。加入：python repo.py add <路徑>")
         return 0
@@ -600,7 +601,7 @@ def cmd_scan(root, args):
         if not repos:
             print(f"🔴 repo `{args.alias}` 未註冊")
             return 1
-    sources = m.get("sources", {})
+    sources = manifest_sources(m)          # #33：過濾 `_` 備註與非 dict
     rc = 0
 
     for alias, r in sorted(repos.items()):
@@ -679,7 +680,7 @@ def cmd_remove(root, args):
     if args.alias not in repos:
         print(f"🔴 repo `{args.alias}` 未註冊")
         return 1
-    n = sum(1 for k in m.get("sources", {}) if k.startswith(f"{args.alias}::"))
+    n = sum(1 for k in manifest_sources(m) if k.startswith(f"{args.alias}::"))   # #33
     if n and not args.force:
         print(f"⚠️ `{args.alias}` 有 {n} 筆 ingest 紀錄，移除後這些 catalog 卡會指向失效來源。")
         print("   確定要移除 → 加 --force（只移除 repos 條目，保留 sources 與 catalog 卡）")
@@ -751,7 +752,7 @@ def cmd_rename(root, args):
     # 那正是最需要修的情況 —— 要求「old 必須已註冊」等於把工具擋在問題外面。
     orphan_mode = old not in repos
     if orphan_mode:
-        refs = sum(1 for k in m.get("sources", {}) if k.startswith(f"{old}::"))
+        refs = sum(1 for k in manifest_sources(m) if k.startswith(f"{old}::"))   # #33
         refs += sum(
             1 for e in m.get("doc_index", {}).values()
             if str(e.get("current_file", "")).startswith(f"{old}::")
