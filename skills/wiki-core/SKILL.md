@@ -117,7 +117,7 @@ wiki/                 Claude 維護的知識層
   projects/           開發專案（需求→設計→進度→測試→追溯）
   agenda.md           日程唯一真相來源（一行一事，agenda.py 讀寫）
   ops/                本 vault 的規則模組（ingest／query／naming／collab／rulings）
-  meta/               coordination.md（多 session 狀態）、_guard-status.json（守門留痕）、folds/
+  meta/               coordination.md（多 session 狀態）、_guard-status/{host}.json（守門留痕，一機一檔）、folds/
 Templates/            資料夾模板（_README模板、AI對話紀錄模板、_folder-template）
 raw/{名稱}/_README.md 每個工作資料夾的執行節點（見下）
 ```
@@ -196,7 +196,7 @@ SessionStart 時 `vault_state.py` 量測 vault，依成熟度給不同深度的�
 - 問資料現況前 `stale_check.py raw/…`：hash 不在 manifest ＝ wiki 可能過期
 - append log 後 `log_index.py --apply`：標記由內容推導，grep 只撈 `<!-- log … -->` 行
 - log 太長 `/wiki-fold`：最舊 2^k 條摺成 `wiki/folds/`，原文不竄改
-- 完整跑過會留痕 `wiki/meta/_guard-status.json`；太久沒跑 → `vault_state` 報「守門失聯」
+- 完整跑過會留痕 `wiki/meta/_guard-status/{host}.json`（一機一檔）；太久沒跑 → `vault_state` 報「守門失聯」
 - 不知道下一步做什麼 → `/wiki-coach`
 
 ---
@@ -221,7 +221,7 @@ SessionStart 時 `vault_state.py` 量測 vault，依成熟度給不同深度的�
 |------|------|
 | **腳本** | 輸入輸出固定、**能為它寫 `--check`／assert**；錯了會**靜默產生錯資料** → 必須是腳本 |
 | **skill** | 需要判斷順序與「為什麼」；規則會隨經驗演化，且下一個人需要知道它**為何存在** |
-| ⛔ **不可寫在 skill** | **任何帶頻率的規則**（「每週查一次」）MUST 有實際欄位記錄上次執行時間，否則每次都判定「剛做過」而**永不執行**（本 plugin 的 `_guard-status.json` 就是為這條存在） |
+| ⛔ **不可寫在 skill** | **任何帶頻率的規則**（「每週查一次」）MUST 有實際欄位記錄上次執行時間，否則每次都判定「剛做過」而**永不執行**（本 plugin 的 `_guard-status/{host}.json` 就是為這條存在） |
 
 - 一句話：**腳本封裝「動作」，skill 封裝「判斷依據」。**
 - 最好的形態是**混合**：skill 負責判斷與對話，確定性部分丟腳本 —— skill 短、腳本可單獨測。

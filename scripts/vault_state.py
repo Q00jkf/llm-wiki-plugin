@@ -82,8 +82,8 @@ def _guard_stale(root: Path):
     if _guard_status is None:
         return []
     try:
-        known = set(json.loads((root / _guard_status.STATUS_REL).read_text(encoding="utf-8")))
-    except (OSError, ValueError):
+        known = _guard_status.known_scripts()
+    except OSError:
         known = set()
     track = known | set(GUARD_ALWAYS)
     return [h for h in _guard_status.stale_report() if h.split("：", 1)[0] in track]

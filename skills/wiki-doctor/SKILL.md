@@ -54,13 +54,19 @@ python -m compileall -q "${CLAUDE_PLUGIN_ROOT}/scripts"      # 升級 plugin 或
 `stale_check` 回 PENDING → 提示使用者「raw/… 在上次 ingest 後已改，wiki 可能不是最新，要先 `/wiki-ingest` 嗎？」。
 grep log.md 時只撈標記行：`grep -n "<!-- log .*scope:[^ ]*{產品}" wiki/log.md`，回傳量與條目長度脫鉤。
 
-### `_guard-status.json` 與「守門失聯」
+### `wiki/meta/_guard-status/{host}.json` 與「守門失聯」
 
-`tidy_check`／`stale_check` 完整跑過一次就把 `{date, python, host, verdict}` 寫進 `wiki/meta/_guard-status.json`
-（只記日期、內容沒變不寫檔；掃子路徑的 tidy_check 不記）。`vault_state.py` 開場讀它，
-某支超過上限天數沒成功執行就報 **守門失聯**（tidy-check 7 天、stale-check 30 天、agenda 7 天、rules-check 7 天，見 `_guard_status.EXPECTED_DAYS`）。
+`tidy_check`／`stale_check` 完整跑過一次就把 `{date, python, host, verdict}` 寫進**這台機器自己的**
+`wiki/meta/_guard-status/{host}.json`（只記日期、內容沒變不寫檔；掃子路徑的 tidy_check 不記）。
+`vault_state.py` 開場彙整所有機器的檔案，某支超過上限天數沒成功執行就報 **守門失聯**
+（tidy-check 7 天、stale-check 30 天、agenda 7 天、rules-check 7 天，見 `_guard_status.EXPECTED_DAYS`）。
 **沒跑、跑掛、跑出 CLEAN 三者事後要能分辨** —— 原 vault 曾有守門在 Python 3.11 靜默掛 10 天沒人發現。
 看到守門失聯 → 先 `python -m compileall`，再手動跑那支看它還活著沒；不要只把日期改新。
+
+🔴 **一台機器一個檔，判讀分兩層**：多機共用同一個 vault 時，若所有機器共寫同一筆紀錄，
+B 機今天跑過就會把「A 機 60 天沒跑」蓋成「今天跑過」——A 機的守門可能早就掛了，沒人發現。
+判讀分「全體失聯」（所有機器都逾期，真的沒人在顧）與「單機停跑」（這台逾期、別台在期內，
+這台環境可能有問題但不算全滅）。**這台從未跑過某支不算它逾期**——不是每台都該跑每一支。
 
 ---
 
