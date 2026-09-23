@@ -9,7 +9,7 @@
 檢查（只讀、只列候選）：
   F1 資料夾用途表 vs raw/ 實際頂層夾   CLAUDE.md 表裡沒有的夾／表裡有但不存在的夾
   F2 停用頁反查                         frontmatter `deprecated: true` 的頁，規則層與 wiki 誰還指向它
-  F3 引用腳本存在性                     規則層提到的 scripts/*.py 是否存在（vault 自己的或 plugin 的）
+  F3 引用腳本存在性                     規則層＋vault 自己的 skills/*.md 提到的 scripts/*.py 是否存在（vault 自己的或 plugin 的）
   F4 規則層逐字重複                     CLAUDE.md／hot／index／ops 之間相同的長行（未來矛盾的種子）
   F5 同檔重複標題                       同一頁兩個相同的 H1／H2
   F6 未登記腳本                         vault 自己的 scripts/*.py 沒有任何規則層檔提到它
@@ -88,6 +88,15 @@ class Ctx:
                 continue
             yield p
 
+    def skill_files(self):
+        """vault 自己的（非 plugin 內建）custom skill：專案層 .claude/skills/ 與舊式 skills/。
+        撞名污染常發生在這裡——遷移進來的 SKILL.md 引用著來源 vault 的腳本，搬過來時沒一起搬。"""
+        out = []
+        for base in (self.root / ".claude" / "skills", self.root / "skills"):
+            if base.is_dir():
+                out.extend(sorted(base.glob("*/SKILL.md")))
+        return out
+
 
 # ---------------------------------------------------------------- F1
 def check_f1(c):
@@ -133,7 +142,8 @@ def check_f2(c):
 # ---------------------------------------------------------------- F3
 def check_f3(c):
     hits, seen = [], set()
-    for f in c.rule_files:
+    scan_files = c.rule_files + c.skill_files()
+    for f in scan_files:
         for n, l in enumerate(read(f).splitlines(), 1):
             if NEGATED.search(l):
                 continue
@@ -148,7 +158,7 @@ def check_f3(c):
                     ok = (c.root / ref).exists() or (PLUGIN_SCRIPTS / Path(ref).name).exists()
                 if not ok:
                     hits.append(f"{c.rel(f)}:{n}  引用不存在的 {ref}")
-    return hits, f"掃 {len(c.rule_files)} 個規則層檔的腳本引用"
+    return hits, f"掃 {len(scan_files)} 個檔（規則層＋vault 自己的 skills/*.md）的腳本引用"
 
 
 # ---------------------------------------------------------------- F4

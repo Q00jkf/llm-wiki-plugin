@@ -39,7 +39,7 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/vault_state.py" --json    # 完整訊號
 |------|--------|--------|
 | `tidy_check.py [--quiet] [path]` | frontmatter 有 `maintenance:` 宣告的檔（hot.md、`_README.md`、coordination）：已結案未刪列、斷掉的編號、數量與檔案／`_manifest.json` 不符、引用的檔名不存在、超出 token 上限 | session 開場 `--quiet`；收尾看完整輸出 |
 | `stale_check.py [raw/子路徑] [--ext .txt]` | raw/ 哪些檔的 md5 不在 manifest（新檔或改過＝wiki 可能過期）。只比 hash 不比路徑；預設只掃 .md/.pdf | 使用者問某產品／資料現況前；ingest 前 |
-| `rules_check.py [--quiet] [--only F1,F3]` | **規則層**漂移：CLAUDE.md 資料夾用途表 vs `raw/` 實際夾、停用頁還被誰引用、引用的腳本不存在、規則層逐字重複、同檔重複標題、vault 腳本沒登記。wiki 層的 doctor 不守這些 | session 開場 `--quiet`；改完 CLAUDE.md／ops 後跑一次 |
+| `rules_check.py [--quiet] [--only F1,F3]` | **規則層**漂移：CLAUDE.md 資料夾用途表 vs `raw/` 實際夾、停用頁還被誰引用、引用的腳本不存在（規則層＋vault 自己的 `skills/*.md`，抓「撞名遷移進來的 skill 沒把腳本一起搬」）、規則層逐字重複、同檔重複標題、vault 腳本沒登記。wiki 層的 doctor 不守這些 | session 開場 `--quiet`；改完 CLAUDE.md／ops 後跑一次 |
 | `log_index.py --check` / `--apply` | log.md 每條標題下的 `<!-- log kind:… scope:… ref:… -->` 標記缺／過期。標記由內容推導、`--apply` 冪等 | append 條目後順手 `--apply`；健檢時 `--check` |
 
 ```bash

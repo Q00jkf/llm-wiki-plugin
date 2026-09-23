@@ -1,6 +1,6 @@
 {
   "name": "llm-wiki",
-  "version": "0.4.36",
+  "version": "0.4.37",
   "description": "給團隊與 PM 的專案管理系統，跑在 Obsidian 上、用 Claude Code 操作。管專案／產品線、日程、多 session 分工、散在各處的檔案資產（含多人權限）與公司制度；知識庫（raw → wiki 編譯）是其中一個能力，負責「資料要有出處、不抄會變動的東西」。依 vault 成熟度自動調整指導深度。",
   "author": {
     "name": "呂冠佑 (Lu Guan-You), 呂筱婕 (Lu Hsiao-Chieh)"
