@@ -1,7 +1,8 @@
 {
   "config": {
     "big_read_limit_bytes": 100000,
-    "max_slice_lines": 2000
+    "max_slice_lines": 2000,
+    "coach": "auto"
   },
   "repos": {
     "_scope_note": "外部來源 repo 註冊表。檔案留在原地，wiki 只存指標。sources 的 key 用 {alias}::{repo內相對路徑}；無 :: 者等同 _self。管理用 /wiki-repo。",

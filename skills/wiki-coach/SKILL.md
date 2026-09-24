@@ -12,6 +12,23 @@ description: "看這個 vault 的實際狀態，只告訴你下一步做哪一�
 
 ---
 
+## 長開／長關
+
+教練有三種模式，存在 vault 的 `raw/.manifest.json` → `config.coach`：
+
+| 模式 | 開場行為 | 誰適合 |
+|---|---|---|
+| `auto`（預設） | 新 vault 開場講解＋下一步；成熟後閉嘴，只報老化訊號 | 大多數人 |
+| `on` | 每次開場都印教練的「現在做這一件」 | 新手、想被推著走的人 |
+| `off` | 開場完全不講指導；`/wiki-coach` 手動叫仍可用 | 老手、嫌吵的人 |
+
+```
+/wiki-coach on      # 或 off／auto
+python "${CLAUDE_PLUGIN_ROOT}/scripts/coach.py" --mode   # 看目前是哪一種
+```
+
+老化訊號（log 過大、來源檔消失…）**不受模式影響**，任何模式都會報 —— 那不是指導，是故障。
+
 ## 流程
 
 ### 1　量狀態

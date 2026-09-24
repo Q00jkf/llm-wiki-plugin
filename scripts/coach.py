@@ -8,6 +8,8 @@
     python coach.py            # 只印優先度最高的一項
     python coach.py --all      # 印全部
     python coach.py --json     # 機器讀
+    python coach.py --mode     # 目前教練模式（auto／on／off）
+    python coach.py --set on   # 長開：每次開場都講下一步；off 長關：開場不講；auto 依成熟度
 """
 import json
 import os
@@ -18,7 +20,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _lib.vaultpaths import find_vault_root, load_manifest, manifest_sources  # noqa: E402
+from _lib.vaultpaths import find_vault_root, load_manifest, manifest_sources, save_manifest  # noqa: E402
 from _lib.logparse import load_entries, log_path  # noqa: E402
 import vault_state as vs  # noqa: E402  複用頁數／成熟度／健檢時間，不另寫一份
 
@@ -320,10 +322,36 @@ def render_one(f):
     return f"{f['severity']} {f['finding']}\n   為什麼：{f['why']}\n   做這個：{f['action']}"
 
 
+def _set_mode(root, mode):
+    if root is None:
+        print("🔴 這裡不是 vault，沒有 manifest 可寫")
+        return 1
+    if mode not in vs.COACH_MODES:
+        print(f"🔴 模式只能是 {'／'.join(vs.COACH_MODES)}")
+        return 1
+    m = load_manifest(root)
+    m.setdefault("config", {})["coach"] = mode
+    save_manifest(root, m)
+    desc = {"auto": "依成熟度：新 vault 開場講解，成熟後閉嘴",
+            "on": "長開：每次開場都講一件該做的事",
+            "off": "長關：開場不講指導，只報老化訊號；/wiki-coach 仍可手動叫"}[mode]
+    print(f"✅ 教練模式 → {mode}（{desc}）")
+    print("已寫入：raw/.manifest.json（config.coach）；下次開場生效")
+    return 0
+
+
 def main():
     args = sys.argv[1:]
     start = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
     root = find_vault_root(Path(start))
+
+    if "--set" in args:
+        i = args.index("--set")
+        return _set_mode(root, args[i + 1] if i + 1 < len(args) else "")
+    if "--mode" in args:
+        print(f"教練模式：{vs.coach_mode(root)}")
+        return 0
+
     tier, fs = findings(root)
 
     if "--json" in args:

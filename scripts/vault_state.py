@@ -378,6 +378,27 @@ def next_action(s, tier):
     return "`raw/` 都編完了。下一步：`/wiki-query <問題>` 試查，或 `/wiki-repo scan` 看外部 repo 有無變更。"
 
 
+COACH_MODES = ("auto", "on", "off")
+
+
+def coach_mode(root):
+    """manifest config.coach：auto（預設，依成熟度）／on（每次開場都講）／off（開場不講，只報老化訊號）。"""
+    if not root:
+        return "auto"
+    m = load_manifest(Path(root)).get("config", {}).get("coach", "auto")
+    return m if m in COACH_MODES else "auto"
+
+
+def _coach_top(root):
+    """on 模式：開場附上 coach 最優先的一項。延遲 import，coach 反向依賴本模組。"""
+    try:
+        import coach
+        _, fs = coach.findings(Path(root))
+        return coach.render_one(fs[0]) if fs else coach.green_for(tier_of(collect(Path(root))), Path(root))
+    except Exception:  # noqa: BLE001 — 開場 hook 不能因 coach 壞掉而掛
+        return None
+
+
 def render(s, brief=False):
     tier = tier_of(s)
     flags = aging_flags(s)
@@ -390,8 +411,15 @@ def render(s, brief=False):
         head = f"[llm-wiki] {tier} · {s['pages']} 頁 · {s['sources']} 筆來源"
         if s["repos"]:
             head += f" · {len(s['repos'])} 個外部 repo"
+        mode = coach_mode(s["root"])
+        if mode != "auto":
+            head += f" · coach {mode}"
         out.append(head)
-        if tier in ("seed", "growing"):
+        if mode == "on":
+            top = _coach_top(s["root"])
+            if top:
+                out += ["", "🧭 教練：", top]
+        elif mode == "auto" and tier in ("seed", "growing"):
             out += ["", *GUIDANCE[tier]]
             act = next_action(s, tier)
             if act:
@@ -409,8 +437,11 @@ def render(s, brief=False):
         out.append(f"外部 repo：{', '.join(s['repos'])}")
     if s["days_since_commit"] is not None:
         out.append(f"最後 commit：{int(s['days_since_commit'])} 天前")
-    if tier in ("seed", "growing"):
-        out.append(f"（{tier} 階段的操作指導只在 session 開場印；要看：/wiki-coach）")
+    mode = coach_mode(s["root"])
+    if mode != "auto":
+        out.append(f"教練模式：{mode}（改：/wiki-coach auto|on|off）")
+    elif tier in ("seed", "growing"):
+        out.append(f"（{tier} 階段的操作指導只在 session 開場印；要看：/wiki-coach。長開／長關：/wiki-coach on|off）")
     out.append("")
     if flags:
         out.append(f"🟡 老化訊號 {len(flags)} 項：")
