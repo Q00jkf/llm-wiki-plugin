@@ -185,7 +185,7 @@ topics: ["{主題}"]
 python "${CLAUDE_PLUGIN_ROOT}/scripts/repo.py" link "{source key}" "{卡片路徑}" --tier 1 --topics "a,b"
 ```
 
-它會自己算 hash、填 `repo`／`ingested_at`／`catalog_page`，並重建 `wiki/repos.md`。
+它會自己算 hash、填 `repo`／`ingested_at`／`catalog_page`、把 `scope:` 補進卡的 frontmatter（alias 或 `raw/` 第一層；不對就 `--scope` 指定），並重建 `wiki/repos.md`。
 寫出來長這樣：
 
 ```json

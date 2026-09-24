@@ -704,6 +704,66 @@ def cmd_remove(root, args):
 # 規則叫人別做的事，工具卻不提供替代方案，那條規則就一定會被違反。
 # 🔴 #32：建卡的 manifest 登記（ingest Step 4）原本全靠手寫，漏了就是孤兒卡 ——
 # 卡在、內容也對，但 scan 永遠不會說它過期。#28 加了偵測，這支負責預防。
+def scope_of_key(key):
+    """source key → scope：`alias::…` → alias；`raw/X/…` → X；其他 → None（要人指定）。"""
+    if "::" in key:
+        return key.split("::", 1)[0]
+    parts = key.replace("\\", "/").split("/")
+    if len(parts) >= 3 and parts[0] == "raw":
+        return parts[1]
+    return None
+
+
+_FM_RE = re.compile(r"\A---\n(.*?)\n---\n", re.S)
+
+
+def ensure_scope(card: Path, scope: str, force=False):
+    """卡片 frontmatter 補 `scope:`。已有且 force=False → 不動，回 False。"""
+    text = card.read_text(encoding="utf-8", errors="replace")
+    m = _FM_RE.match(text)
+    if not m:
+        return False
+    fm = m.group(1)
+    has = re.search(r"(?m)^scope:", fm)
+    if has and not force:
+        return False
+    line = f"scope: {scope}"
+    fm2 = re.sub(r"(?m)^scope:.*$", line, fm) if has else fm + "\n" + line
+    card.write_text(text[:m.start(1)] + fm2 + text[m.end(1):], encoding="utf-8", newline="\n")
+    return True
+
+
+def cmd_scope(root, args):
+    """回填缺 scope 的卡：依 manifest sources 的 catalog_page ↔ key 推導。"""
+    m = load_manifest(root)
+    done, skipped, unknown = [], [], []
+    for key, e in manifest_sources(m).items():
+        cp = e.get("catalog_page")
+        if not cp:
+            continue
+        card = root / cp
+        if not card.is_file():
+            continue
+        sc = args.scope or scope_of_key(key)
+        if not sc:
+            unknown.append(cp)
+            continue
+        if args.dry_run:
+            text = card.read_text(encoding="utf-8", errors="replace")
+            (skipped if re.search(r"(?m)^scope:", text[:2000]) else done).append(f"{cp} ← {sc}")
+            continue
+        (done if ensure_scope(card, sc, force=args.force) else skipped).append(f"{cp} ← {sc}")
+    tag = "會補" if args.dry_run else "已補"
+    print(f"{tag} {len(done)} 張；已有 scope 跳過 {len(skipped)} 張；推不出 scope {len(unknown)} 張")
+    for d in done:
+        print(f"  + {d}")
+    for u in unknown:
+        print(f"  ? {u}（key 不在 raw/<夾>/ 底下，用 --scope 指定）")
+    if done and not args.dry_run:
+        print("已寫入：" + "、".join(d.split(" ← ")[0] for d in done))
+    return 0
+
+
 def cmd_link(root, args):
     key = args.key
     card = Path(args.card)
@@ -737,9 +797,13 @@ def cmd_link(root, args):
     src[key] = entry
     save_manifest(root, m)
     write_repos_page(root)
+    sc = args.scope or scope_of_key(key)
+    sc_note = ""
+    if sc:
+        sc_note = "（frontmatter 已補）" if ensure_scope(card, sc) else "（frontmatter 已有）"
     print(f"✅ {'更新' if was else '登記'}：{key}")
     print(f"   卡片：{rel_card}")
-    print(f"   hash：{h}　tier：{args.tier}")
+    print(f"   hash：{h}　tier：{args.tier}　scope：{sc or '⚠️ 推不出，請在卡上手填'}{sc_note}")
     print("   scan 從現在起會在正本改動時報這張卡過期。")
     return 0
 
@@ -851,7 +915,12 @@ def main():
     sub.add_parser("list")
     s = sub.add_parser("scan"); s.add_argument("alias", nargs="?")
     r = sub.add_parser("remove"); r.add_argument("alias"); r.add_argument("--force", action="store_true")
+    sc = sub.add_parser("scope", help="回填缺 scope 的卡（依 source key 推導：alias 或 raw/ 第一層）")
+    sc.add_argument("--scope", help="全部指定為此值（不推導）")
+    sc.add_argument("--force", action="store_true", help="已有 scope 也覆寫")
+    sc.add_argument("--dry-run", action="store_true")
     lk = sub.add_parser("link", help="把 catalog 卡登記進 manifest.sources（#32，防孤兒卡）")
+    lk.add_argument("--scope", help="覆寫自動推導的 scope（alias 或 raw/ 第一層名）")
     lk.add_argument("key", help="source key：raw/x.pdf 或 {alias}::{repo 內路徑}")
     lk.add_argument("card", help="卡片路徑，相對 vault 根，例：wiki/catalog/X.md")
     lk.add_argument("--tier", default="1", help="1 或 full（預設 1）")
@@ -878,7 +947,7 @@ def main():
         return 1
     return {"add": cmd_add, "list": cmd_list, "scan": cmd_scan,
             "remove": cmd_remove, "discover": cmd_discover,
-            "rename": cmd_rename, "link": cmd_link}[args.cmd](root, args)
+            "rename": cmd_rename, "link": cmd_link, "scope": cmd_scope}[args.cmd](root, args)
 
 
 if __name__ == "__main__":

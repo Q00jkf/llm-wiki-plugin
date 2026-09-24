@@ -21,4 +21,4 @@ updated: {{today}}
 
 ## 防混淆 scope 規則
 
-<!-- 多產品／多 repo 時：Grep 帶 path= 限定，引用前看 frontmatter 歸屬，不端出非目標的細節 -->
+<!-- 多對象時：先定 scope（沒指就問），Grep 帶 path= 限定，引用前看卡的 scope:，不端出非目標的細節 -->
