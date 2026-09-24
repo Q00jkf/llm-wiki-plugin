@@ -110,12 +110,16 @@ def check_f1(c):
     listed = set()
     for l in table:
         for m in re.finditer(r"`raw/([^/`]+)/?`", l):
-            listed.add(m.group(1))
+            name = m.group(1)
+            if any(ch in name for ch in "{<*"):      # `raw/{專案代號}/` 是命名規則，不是某一夾
+                continue
+            listed.add(name)
     hits = []
     for miss in sorted(actual - listed):
         hits.append(f"raw/{miss}/ 存在，CLAUDE.md「資料夾用途」表沒有它（/wiki-new 建夾後要加一列）")
-    for ghost in sorted(listed - actual):
-        hits.append(f"CLAUDE.md 表列了 raw/{ghost}/，實際不存在")
+    if actual:                                        # 全新 vault 表列的是計畫，不是漂移
+        for ghost in sorted(listed - actual):
+            hits.append(f"CLAUDE.md 表列了 raw/{ghost}/，實際不存在")
     return hits, f"raw/ 頂層 {len(actual)} 夾 vs 表列 {len(listed)}"
 
 
