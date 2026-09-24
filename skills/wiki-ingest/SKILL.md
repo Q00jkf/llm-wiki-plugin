@@ -99,7 +99,7 @@ title: "{文件標題}"
 doc_number: "{編號}"
 revision: "{版本}"
 doc_status: "{draft / review / approved}"
-current_file: "{正本路徑}"
+current_file: "{正本路徑：raw/… 或 alias::…，🔴 不准絕對路徑}"
 current_hash: "{MD5}"
 scope: "{raw/ 第一層名 或 alias；跨多個用 [A, B]；通用 shared}"   # 🔴 必填，查詢靠它隔離
 repo: "{alias}"            # 外部 repo 才有

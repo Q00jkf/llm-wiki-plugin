@@ -27,6 +27,7 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/vault_state.py" --json    # 完整訊號
 | **CLAUDE.md 過大**（>150 行） | 每 session 都載入，規則越多越貴，且會出現互相矛盾的舊規則 | 按需規則拆到 `wiki/ops/{{主題}}.md`，CLAUDE.md 只留「我要做…→讀哪份」索引表 |
 | **hot 沒輪替**（>150 行） | hot.md 是每 session 必讀，長了就每次多花 token | 修剪：常駐規則 + 最近 3 次操作 + 待確認，其餘移進 log |
 | **健檢過期 / 從未健檢** | 孤立頁與死連結會無聲累積 | 跑本 skill 的完整報告並存檔（見「何時跑」收尾列）|
+| **卡有絕對路徑** | `current_file` 寫 `C:/Users/…` 換機器就開不到正本（0.4.15 只修了 manifest，卡沒修） | `repo.py fixpaths --dry-run` → 去掉 `--dry-run`；不在已註冊 repo 底下的先 `add` |
 | **卡無 scope** | 沒有 `scope:` 的卡不知道屬於誰，會被撈進任何問題 → 討論 A 撈到 B | `python "${CLAUDE_PLUGIN_ROOT}/scripts/repo.py" scope --dry-run` 看推導結果，再去掉 `--dry-run`；推不出的手填 |
 | **來源檔消失** | catalog 卡指向不存在的檔＝假知識 | `/wiki-repo scan` 確認，修卡或標失效 |
 | **repo 路徑失效** | 絕對路徑換機器就死 | 看 owner 欄找擁有者要 remote；不要直接刪註冊 |

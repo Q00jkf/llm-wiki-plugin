@@ -178,6 +178,7 @@ def collect(root: Path):
         "broken_repos": [],
         "orphan_cards": [],
         "cards_no_scope": [],
+        "cards_abs_path": [],
         "index_missing": [],
         "index_dead_refs": [],
         "guard_stale": [],
@@ -261,6 +262,8 @@ def collect(root: Path):
                 head = ""
             if not re.search(r"(?m)^scope:", head):
                 s["cards_no_scope"].append(rel)
+            if re.search(r'(?m)^(?:current_file|source_file|source_path|source_abs):[ \t]*"?(?:[A-Za-z]:[\\/]|/(?:Users|home|mnt|Volumes)/)', head):
+                s["cards_abs_path"].append(rel)
 
     # 🔴 #30 index.md 雙向對帳。`wiki/repos.md` 由 repo.py 自動重建，但 `wiki/index.md`
     # 只靠 ingest Step 5 手動加，也沒有 maintenance 宣告 → tidy_check 不看它。
@@ -325,6 +328,12 @@ def aging_flags(s):
                   f"wiki/index.md 有 {n} 個 source key 解析不開"
                   f"（{s['index_dead_refs'][0]}{'…' if n > 1 else ''}）"
                   f" — alias 多半被 remove 或改名過，跑 /wiki-repo rename"))
+    if s["cards_abs_path"]:
+        n = len(s["cards_abs_path"])
+        head = "、".join(Path(c).stem for c in s["cards_abs_path"][:3])
+        f.append(("卡有絕對路徑",
+                  f"{n} 張卡的 current_file／source_file 是 C:/Users… 這種絕對路徑（{head}{'…' if n > 3 else ''}）"
+                  " — 換機器就開不到正本；跑 repo.py fixpaths 改成 alias::rel"))
     if s["cards_no_scope"]:
         n = len(s["cards_no_scope"])
         head = "、".join(Path(c).stem for c in s["cards_no_scope"][:3])

@@ -733,6 +733,78 @@ def ensure_scope(card: Path, scope: str, force=False):
     return True
 
 
+CARD_PATH_KEYS = ("current_file", "source_file", "source_path")
+_ABS_RE = re.compile(r"^[A-Za-z]:[\\/]|^/(?:Users|home|mnt|Volumes)/")
+
+
+def _portable(root, repos, value):
+    """絕對路徑 → `alias::rel`（在某個已註冊 repo 底下）或 `raw/…`（在本 vault 底下）。改不了回 None。"""
+    v = value.replace("\\", "/")
+    if not _ABS_RE.match(v):
+        return None
+    p = Path(v)
+    best = None
+    for alias, e in repos.items():
+        if not isinstance(e, dict) or alias.startswith("_"):
+            continue                      # `_note` 之類的人寫備註
+        base = resolve_repo_path(root, e.get("path", ""))
+        try:
+            rel = p.resolve().relative_to(base.resolve()).as_posix()
+        except (ValueError, OSError):
+            continue
+        if best is None or len(str(base)) > best[0]:
+            best = (len(str(base)), f"{alias}::{rel}")
+    if best:
+        return best[1]
+    try:
+        return p.resolve().relative_to(Path(root).resolve()).as_posix()
+    except (ValueError, OSError):
+        return None
+
+
+def cmd_fixpaths(root, args):
+    """卡片 frontmatter 的絕對路徑改成可攜形式；`source_abs` 整行移除（它只能是絕對路徑）。"""
+    m = load_manifest(root)
+    repos = m.get("repos", {})
+    cat = root / "wiki" / "catalog"
+    changed, stuck = [], []
+    for card in sorted(cat.glob("*.md")) if cat.is_dir() else []:
+        text = card.read_text(encoding="utf-8", errors="replace")
+        fm = _FM_RE.match(text)
+        if not fm:
+            continue
+        body, edits = fm.group(1), []
+        for key in CARD_PATH_KEYS:
+            mk = re.search(rf'(?m)^{key}:[ \t]*"?([^"\n]+?)"?[ \t]*$', body)
+            if not mk:
+                continue
+            new = _portable(root, repos, mk.group(1))
+            if new:
+                body = body[:mk.start()] + f'{key}: "{new}"' + body[mk.end():]
+                edits.append(f"{key} → {new}")
+            elif _ABS_RE.match(mk.group(1).replace("\\", "/")):
+                stuck.append(f"{card.relative_to(root).as_posix()}: {key} 不在任何已註冊 repo 底下，請先 /wiki-repo add 或手改")
+        if re.search(r"(?m)^source_abs:", body):
+            body = re.sub(r"(?m)^source_abs:.*\n?", "", body)
+            edits.append("移除 source_abs")
+        if edits:
+            rel = card.relative_to(root).as_posix()
+            changed.append((rel, edits))
+            if not args.dry_run:
+                card.write_text(text[:fm.start(1)] + body + text[fm.end(1):], encoding="utf-8", newline="\n")
+    tag = "會改" if args.dry_run else "已改"
+    print(f"{tag} {len(changed)} 張；改不了 {len(stuck)} 處")
+    for rel, edits in changed:
+        print(f"  {rel}")
+        for e in edits:
+            print(f"     · {e}")
+    for s_ in stuck:
+        print(f"  ⚠️ {s_}")
+    if changed and not args.dry_run:
+        print("已寫入：" + "、".join(r for r, _ in changed))
+    return 0
+
+
 def cmd_scope(root, args):
     """回填缺 scope 的卡：依 manifest sources 的 catalog_page ↔ key 推導。"""
     m = load_manifest(root)
@@ -915,6 +987,8 @@ def main():
     sub.add_parser("list")
     s = sub.add_parser("scan"); s.add_argument("alias", nargs="?")
     r = sub.add_parser("remove"); r.add_argument("alias"); r.add_argument("--force", action="store_true")
+    fp = sub.add_parser("fixpaths", help="卡片 frontmatter 的絕對路徑改成 alias::rel 或 raw/…；移除 source_abs")
+    fp.add_argument("--dry-run", action="store_true")
     sc = sub.add_parser("scope", help="回填缺 scope 的卡（依 source key 推導：alias 或 raw/ 第一層）")
     sc.add_argument("--scope", help="全部指定為此值（不推導）")
     sc.add_argument("--force", action="store_true", help="已有 scope 也覆寫")
@@ -947,7 +1021,8 @@ def main():
         return 1
     return {"add": cmd_add, "list": cmd_list, "scan": cmd_scan,
             "remove": cmd_remove, "discover": cmd_discover,
-            "rename": cmd_rename, "link": cmd_link, "scope": cmd_scope}[args.cmd](root, args)
+            "rename": cmd_rename, "link": cmd_link, "scope": cmd_scope,
+            "fixpaths": cmd_fixpaths}[args.cmd](root, args)
 
 
 if __name__ == "__main__":
