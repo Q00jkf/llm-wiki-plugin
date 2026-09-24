@@ -29,7 +29,7 @@ updated: {{today}}
 
 | 頁型 | 必填欄位 |
 |---|---|
-| catalog 卡 | `type`, `title`, `source_file`／`current_file`, `tier` |
+| catalog 卡 | `type`, `title`, `source_file`／`current_file`, `tier`, **`scope`**（＝`raw/` 第一層名或 alias；查詢靠它隔離，缺了就會混） |
 
 ## 版次與廢止
 

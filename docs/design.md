@@ -27,7 +27,7 @@
 | 制度文件跟專案文件攪在一起 | 制度自成一夾 |
 
 分好之後，查詢時 `Grep` 帶 `path=` 限定在那一夾，物理上就撈不到別的。
-每張 wiki 卡的 frontmatter 標它屬於哪個對象（`product:`／`customer:`／`topic:`），
+每張 wiki 卡的 frontmatter 用 `scope:` 標它屬於哪個對象（值就是你 `raw/` 第一層的名字），
 系統據此拒絕把 B 的內容端進 A 的回答。**分法是你的，隔離是系統保證的。**
 
 `/wiki-init` 會問你「管什麼對象、`raw/` 怎麼分」，答案寫進你的 `CLAUDE.md`；之後隨時可改。

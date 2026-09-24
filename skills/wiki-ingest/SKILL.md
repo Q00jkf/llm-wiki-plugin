@@ -86,6 +86,10 @@ PDF 的切片參數是 **`pages=`**，守門（`big_read_guard`）也只認它�
 
 ## Step 3　建卡
 
+🔴 **每張卡都要有 `scope:`**：值＝這份文件在 `raw/` 的第一層資料夾名（使用者在 CLAUDE.md 定的隔離軸），
+外部檔就寫 alias。跨多個對象 `scope: [A, B]`，真正通用的 `scope: shared`。
+查詢靠它判斷「這頁是不是當前對象的」；沒有 `scope` 的卡等於沒有邊界，會被撈進任何問題。
+
 ### Tier 1 指標卡（會變動的文件）
 
 ```markdown
@@ -97,6 +101,7 @@ revision: "{版本}"
 doc_status: "{draft / review / approved}"
 current_file: "{正本路徑}"
 current_hash: "{MD5}"
+scope: "{raw/ 第一層名 或 alias；跨多個用 [A, B]；通用 shared}"   # 🔴 必填，查詢靠它隔離
 repo: "{alias}"            # 外部 repo 才有
 owner: "{擁有者} @ {機器}"  # 非本 vault 路徑必標
 tier: 1
@@ -129,6 +134,7 @@ dut: "{待測物／標的／料號／序號}"
 source_doc: "{檔名}"
 source_path: "{正本路徑}"
 sources: ["{正本路徑}"]
+scope: "{raw/ 第一層名 或 alias}"   # 🔴 必填
 tier: 1
 ---
 
@@ -159,6 +165,7 @@ source_file: "{路徑}"
 source_hash: "{MD5}"      # 選填；要能偵測正本被換掉就寫
 revision: "{版本}"         # 選填；文件本身有版次才寫
 ingested_at: YYYY-MM-DD
+scope: "{raw/ 第一層名 或 alias}"   # 🔴 必填
 topics: ["{主題}"]
 ---
 

@@ -86,7 +86,7 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/coach.py" --all    # 使用者明確要「
 | 每個論述都有來源標記（`[📄 raw/…, p.X]`／`[📄 alias::…, p.X]` 或 `[⚠️ 非資料庫：…]`），指的是正本不是 wiki 卡？ | R2 |
 | 指標卡有「正本各頁」表，頁碼對得上正本？ | ingest 索引卡格式 |
 | 指標卡（tier-1／catalog）裡沒有規格數值、單價、pin 表？ | R1 |
-| frontmatter 有 `type`／`title`／來源欄；多產品時有 `product` 或 `topic`？ | naming（`wiki/ops/naming.md`）|
+| frontmatter 有 `type`／`title`／來源欄／**`scope`**（它屬於哪個對象）？ | naming（`wiki/ops/naming.md`）|
 | 寫進去的數字都綁日期（`2026-09-21 收 83`，不是 `現價 83`）？ | W1 |
 | 沒有 ✅ 已完成項留在待辦裡？ | W2 |
 
