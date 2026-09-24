@@ -35,6 +35,57 @@
 
 ---
 
+## 系統教練：不知道下一步就問它
+
+```
+/wiki-coach
+```
+
+它看你的 vault 現況，**只講一件現在該做的事**，附一句為什麼。做完再叫它，它講下一件。
+也可以直接問：「為什麼不能把數字抄進 wiki」「我這張卡寫得對嗎」「這份要不要收進來」。
+剛開始用的人靠它就夠，不用讀完這份文件。
+
+---
+
+## 指令
+
+| 指令 | 做什麼 |
+|---|---|
+| `/wiki-init` | 建立新 vault，問三題後產出骨架 |
+| `/wiki` | 現況：規模、有沒有老化訊號、下一步 |
+| `/wiki-new <名稱>` | 開一個新工作夾，附進度儀表板（`_README.md`） |
+| `/wiki-agenda add "…"` | 記日程；不帶參數印逾期／今天／7 天內 |
+| `/wiki-repo add <路徑>` | 把外部專案掛進來管，檔案留原地；`discover` 幫你找、`scan` 看變更 |
+| `/wiki-ingest <檔>` | 把一份文件收進 wiki（建索引卡，不抄內容） |
+| `/wiki-query <問題>` | 查詢，附來源；要數字時幫你開原檔 |
+| `/wiki-coach` | 系統教練，只講下一步 |
+| `/wiki-doctor` | 健檢：找過期、孤兒、死連結、規則漂移 |
+| `/wiki-collab` | 同時開多個 Claude session 時的協調（主管制） |
+| `/wiki-fold` | log 太長時摺疊成摘要 |
+| `/wiki-adopt` | 本來就有 wiki 的人接上這套系統 |
+
+---
+
+## 腳本：不開 Claude 也能跑
+
+系統的判斷都在 Python 腳本裡，可以單獨執行、可以排程。路徑前綴 `~/.claude/plugins/cache/llm-wiki/llm-wiki/<版本>/scripts/`。
+
+| 腳本 | 做什麼 |
+|---|---|
+| `vault_state.py` | vault 規模與老化訊號（`--json` 給程式讀） |
+| `coach.py` | 下一步該做的一件事（`--all` 全列） |
+| `agenda.py` | 日程：`add`／`done`／`--ics` 匯 Google 日曆／`--notify` 產推播文字 |
+| `repo.py` | 外部專案：`discover`／`add`／`list`／`scan`／`remove` |
+| `new_folder.py <名稱>` | 開工作夾（`--dry-run` 先看） |
+| `stale_check.py raw/…` | 哪些原始檔改過、wiki 可能過期 |
+| `tidy_check.py --quiet` | 快照檔有沒有該清的待辦 |
+| `rules_check.py --quiet` | 規則檔跟實際狀況對不對得上 |
+| `log_index.py --query <詞>` | 查操作日誌 |
+
+開 Claude Code 時前四支會自動跑一次，有事才出聲。
+
+---
+
 ## 兩個原則，知道就好
 
 **1. 資料留在原地。** 系統不搬你的檔案，只記「有什麼、在哪裡、哪一頁」。
@@ -79,8 +130,7 @@
 
 ## 想知道更多
 
-- 每個指令做什麼、可以怎麼說：[docs/design.md](docs/design.md)「指令」節
-- 為什麼這樣設計、規則的來由：[docs/design.md](docs/design.md)
+為什麼這樣設計、規則的來由、完整腳本參數：[docs/design.md](docs/design.md)
 
 ## 授權
 
