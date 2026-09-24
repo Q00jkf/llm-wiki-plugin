@@ -82,7 +82,7 @@
 | `rules_check.py --quiet` | 規則檔跟實際狀況對不對得上 |
 | `log_index.py --query <詞>` | 查操作日誌 |
 
-開 Claude Code 時前四支會自動跑一次，有事才出聲。
+開 Claude Code 時 `vault_state`／`tidy_check`／`agenda`／`rules_check` 會自動跑一次，有事才出聲。
 
 ---
 
