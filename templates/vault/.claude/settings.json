@@ -1,11 +1,53 @@
 {
-  "_comment": [
-    "本檔由 /wiki-init 建立，進 git、與同事共用。只放 deny，不放 allow。",
-    "為什麼只放 deny：allow 清單是每個人自己機器的（路徑、慣用指令都不同），塞進共用檔會製造『這份已審過』的假象。個人 allow 請寫 .claude/settings.local.json（已在 .gitignore）。",
-    "為什麼這個系統需要 deny 憑證檔：它的核心動作是「掛別人的目錄 → 讀檔 → 把摘要寫進會被 commit 的 wiki 頁 → push」。一般專案沒有這條鏈，憑證一旦寫進 wiki 頁就進了 git 歷史，刪不乾淨。",
-    "這是第三道防線。第一道在 repo.py 的 SECRET_PATTERNS（掛載時就不收），第二道在 wiki-ingest skill（判斷層不建卡）。",
-    "⚠️ deny 只擋 Read 工具，擋不住 Bash cat／Grep —— 是減速丘不是保證，別把它當成可以放心的理由。"
+  "_說明_本檔定位": [
+    "由 /wiki-init 建立。專案層設定，進 git，隊友 clone 就生效。",
+    "只放「換一台電腦還成立、且隊友也該有」的規則。",
+    "只對這台機器成立的（已授權指令、MCP 開關）放 .claude/settings.local.json —— 那個在 .gitignore 裡。",
+    "個人偏好（model／theme／effortLevel）放 ~/.claude/settings.json。",
+    "🔴 憑證一律不進本檔 —— 本檔在 git 裡。",
+    "🔴 註解只放頂層 _說明_* 鍵，**不要塞進 env／permissions／hooks 內部** ——",
+    "   env 裡的假鍵會變成真的環境變數；permissions 只認 allow／deny／ask，",
+    "   多一個未知鍵可能讓整份驗證失敗，而那會連 hook 一起靜默失效。"
   ],
+
+  "_說明_env": [
+    "PYTHONIOENCODING=utf-8 —— Windows 的 Python 預設輸出是 cp950，印 emoji 或部分中文會",
+    "  UnicodeEncodeError。本 plugin 的正式腳本各自寫了 sys.stdout.reconfigure 躲過，",
+    "  但臨時的 `python -c` 沒有，而那正是最常用的。",
+    "",
+    "🔴 **不要順手加 PYTHONUTF8=1**。看起來像是「更徹底的 UTF-8」，實際上兩者範圍不同：",
+    "   PYTHONIOENCODING 只改 stdio（就是我們要的）；PYTHONUTF8=1 連 open() 的預設編碼一起改。",
+    "   對「Windows ＋ 中文 vault」這個族群那是最危險的組合 —— 這種 vault 最可能有 Big5／cp950",
+    "   的舊檔（Excel 匯出的 CSV、早年 .txt、Arduino .ino）。任何沒寫 encoding= 的 open()",
+    "   會從「能讀」變成「炸掉」，而且是在使用者自己的既有腳本裡炸，不是在我們的程式裡。",
+    "   實測（2026-09-26）：只設 PYTHONIOENCODING → open() 仍是 cp950、舊檔讀得到；",
+    "   加上 PYTHONUTF8=1 → open() 變 utf-8、同一個檔 UnicodeDecodeError。",
+    "",
+    "逾時類（BASH_DEFAULT_TIMEOUT_MS）刻意不放 —— 那取決於你自己的腳本有多重，不是通例。"
+  ],
+
+  "_說明_deny": [
+    "只放 deny，不放 allow。allow 清單是每個人自己機器的（路徑、慣用指令都不同），",
+    "塞進共用檔會製造「這份已審過」的假象。個人 allow 請寫 settings.local.json。",
+    "",
+    "為什麼這個系統需要 deny 憑證檔：它的核心動作是「掛別人的目錄 → 讀檔 →",
+    "把摘要寫進會被 commit 的 wiki 頁 → push」。一般專案沒有這條鏈，",
+    "憑證一旦寫進 wiki 頁就進了 git 歷史，刪不乾淨。",
+    "",
+    "🔴 **deny 是邊界，不是保險箱。攔得到什麼、攔不到什麼要講清楚**：",
+    "   攔得到：Read／Edit／Write 這類「工具＋路徑」可比對的呼叫。",
+    "   攔不到：Bash 的 cat／cp／git mv（路徑在指令字串裡）；",
+    "           Word／Excel COM（路徑在 script 內部，工具層看不到）。",
+    "   ⇒ 要真的擋，只有 PreToolUse hook 拿得到指令字串。hook 與 deny 是**互補不是重複**。",
+    "",
+    "這是第三道防線。第一道在 repo.py 的 SECRET_PATTERNS（掛載時就不收，也擋 Bash 路徑），",
+    "第二道在 wiki-ingest skill（判斷層不建卡）。"
+  ],
+
+  "env": {
+    "PYTHONIOENCODING": "utf-8"
+  },
+
   "permissions": {
     "deny": [
       "Read(**/.env)",
