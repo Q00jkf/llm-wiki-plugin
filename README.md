@@ -100,6 +100,14 @@
 | `tidy_check.py --quiet` | 快照檔有沒有該清的待辦 |
 | `rules_check.py --quiet` | 規則檔跟實際狀況對不對得上 |
 | `log_index.py --query <詞>` | 查操作日誌 |
+| `adopt.py` | 既有 vault 要改用本系統：算差異、找撞名（`/wiki-adopt` 的後端） |
+| `occupancy_check.py` | 多人同時改同一個檔的違規偵測（`/wiki-collab` 的後端） |
+| `audit_copy_check.py` | 取用副本夾與正本的一致性 |
+
+其餘 4 支是內部件，由指令或 hook 驅動，不必手動跑：
+`init_vault.py`（`/wiki-init`）、`wiki_fold_parse.py`（`/wiki-fold`）、
+`big_read_guard.py`（PreToolUse：擋整份讀大檔）、`_guard_status.py`（守門分類帳）。
+另有 `_lib/` 放共用函式。
 
 開 Claude Code 時 `vault_state`／`tidy_check`／`agenda`／`rules_check` 會自動跑一次，有事才出聲。
 

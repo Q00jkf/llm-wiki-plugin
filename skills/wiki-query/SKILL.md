@@ -53,7 +53,7 @@ description: "從知識庫查詢並附來源引用。依序讀 hot → index →
 
 ### 查詢步驟
 
-1. **先定 scope**：問題裡有對象（「產品A 的 PPS」「甲客戶的交期」）→ 對到 CLAUDE.md 路由表的那一列。
+1. **先定 scope**：問題裡有對象（「產品 A 的散熱規格」「甲客戶的交期」）→ 對到 CLAUDE.md 路由表的那一列。
    問題沒指對象、而 vault 有多個 scope → **問使用者要哪一個，不做全域 grep 猜**。
 2. `Grep` 帶 `path=` 限定到該 scope 的 `raw/` 夾；catalog 卡命中後看 `scope:` 對不對。
 3. 命中 `scope: shared` 的頁可以用，但回答時標明它是通用的。
