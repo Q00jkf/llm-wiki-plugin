@@ -170,6 +170,54 @@ def _f(fid, sev, finding, why, action):
     return {"id": fid, "severity": sev, "finding": finding, "why": why, "action": action}
 
 
+# 老化訊號 → 行動。key 是 vault_state.aging_flags() 的第一個元素（訊號名）。
+# 沒列在這裡的訊號一律用 DEFAULT_AGING —— 新增訊號時忘了補這張表，
+# 也不會從 coach 消失（只是話講得比較general）。
+AGING_ACTION = {
+    "守門結果變差": ("🔴", "守門的數字在惡化，代表某件事從某天起開始累積 —— 趁還記得那天做過什麼時處理最便宜",
+                 "讀 wiki/meta/maintenance/ledger.tsv 找變化那天，對照 wiki/log.md 看當天做了什麼"),
+    "守門失聯": ("🔴", "守門太久沒成功執行 —— 它可能早就掛了，而輸出看起來跟「沒問題」一樣",
+               "先 python -m compileall 再手動跑那支；不要只把日期改新"),
+    "收尾沒跑": ("🟡", "hot.md 是每 session 第一份讀的檔，落後 log 就會接錯地方",
+               "把最近操作與待確認寫進 wiki/hot.md「目前狀態」，舊的移進 log"),
+    "來源檔消失": ("🔴", "卡片指向不存在的檔＝假知識，查詢時會回一個開不了的路徑",
+                "/wiki-repo scan 確認，然後修卡或標失效"),
+    "repo 路徑失效": ("🔴", "換機器就開不到正本",
+                   "看 owner 欄找擁有者要 remote；不要直接刪註冊"),
+    "卡有絕對路徑": ("🟡", "current_file 寫死 C:/Users/… 換機器就失效",
+                  'python "${CLAUDE_PLUGIN_ROOT}/scripts/repo.py" fixpaths --dry-run 看結果，再去掉 --dry-run'),
+    "卡無 scope": ("🟡", "沒有 scope 的卡不知道屬於誰，會被撈進任何問題 —— 討論 A 撈到 B",
+                 'python "${CLAUDE_PLUGIN_ROOT}/scripts/repo.py" scope --dry-run'),
+    "孤兒卡": ("🟡", "卡在、manifest 沒紀錄 → scan 永遠不會報它過期",
+             'python "${CLAUDE_PLUGIN_ROOT}/scripts/repo.py" link "{source key}" "{卡片}"'),
+    "目錄死連結": ("🟡", "index.md 的 source key 解析不開，多半是 alias 被改名或 remove 過",
+                'python "${CLAUDE_PLUGIN_ROOT}/scripts/repo.py" rename <舊> <新>'),
+    "目錄漏卡": ("🔵", "卡建了但 index 沒登記，之後沒人找得到它", "把缺的卡補進 wiki/index.md 的 Catalog 表"),
+    "從未健檢": ("🔵", "孤立頁與死連結會無聲累積，沒人驗證規則還在跑就會靜靜死掉",
+               "/wiki-doctor（結果存 wiki/meta/doctor-report-{日期}.md）"),
+    "健檢過期": ("🔵", "健檢是唯一會抓孤立頁／死連結／來源檔消失的機制", "/wiki-doctor"),
+    "log 過大": ("🔵", "整份讀就是數十 k tokens，而它設計上只增不減", "/wiki-fold 把最舊的摺成摘要"),
+    "hot 沒輪替": ("🔵", "hot.md 每 session 必讀，長了就每次多花 token",
+                 "修剪成：常駐規則＋最近 3 次操作＋待確認，其餘移進 log"),
+    "CLAUDE.md 過大": ("🔵", "每 session 都載入，規則越多越貴，且會出現互相矛盾的舊規則",
+                     "把按需規則拆到 wiki/ops/，CLAUDE.md 只留「我要做…→讀哪份」索引表"),
+    "單頁過大": ("🔵", "代表該頁混了太多主題", "依主題或產品拆成子頁"),
+}
+DEFAULT_AGING = ("🔵", "這是老化訊號，放著會累積", "/wiki-doctor 看這一項該怎麼處理")
+
+
+def _aging_findings(s):
+    """把 vault_state 偵測到的老化訊號轉成行動項。偵測不在這裡。"""
+    out = []
+    for kind, detail in vs.aging_flags(s):
+        sev, why, action = AGING_ACTION.get(kind, DEFAULT_AGING)
+        # detail 可能自帶嚴重度 emoji（trend_report 會加，給 vault_state 的表列用）；
+        # coach 自己就印 severity，留著會變成「🔴 …：🔴 …」
+        detail = re.sub(r"^\s*[🔴🟡🔵🟢]\s*", "", detail)
+        out.append(_f(f"aging:{kind}", sev, f"{kind}：{detail}", why, action))
+    return out
+
+
 # ---------- 檢查 ----------
 def findings(root):
     """依優先序回傳所有命中的建議。root 為 None 表示不是 vault。"""
@@ -264,18 +312,11 @@ def findings(root):
                       "建了沒人查的卡不是知識，是維護負擔；下一份 ingest 前先問「有人會查它嗎」「要找得到還是讀得懂」",
                       "拿一個真問題跑 /wiki-query；之後每份 ingest 前先過 wiki-coach 的兩題"))
 
-    # 8 從未健檢／健檢過期
-    if s["pages"] >= vs.SEED_MAX:
-        if s["days_since_lint"] is None:
-            out.append(_f("doctor_never", "🔵",
-                          f"{s['pages']} 頁但找不到 lint-report／doctor-report",
-                          "孤立頁與死連結會無聲累積，沒人驗證規則還在跑就會靜靜死掉",
-                          "/wiki-doctor（結果存 wiki/meta/doctor-report-{日期}.md）"))
-        elif s["days_since_lint"] > vs.LINT_STALE_DAYS:
-            out.append(_f("doctor_stale", "🔵",
-                          f"上次健檢在 {int(s['days_since_lint'])} 天前",
-                          "健檢是唯一會抓孤立頁／死連結／來源檔消失的機制",
-                          "/wiki-doctor"))
+    # 8 老化訊號 —— 🔴 判斷不在這裡，在 vault_state.aging_flags()
+    #    原本這裡自己重算「從未健檢／健檢過期」，與 aging 部分重疊 ——
+    #    同一件事兩處實作遲早會漂（2026-09-26 收掉，同 hot_behind_log 的處理）。
+    #    分工：vault_state 偵測「有什麼不對」，coach 只說「那該做什麼」。
+    out.extend(_aging_findings(s))
 
     # 9 agenda
     agenda = root / "wiki" / "agenda.md"
