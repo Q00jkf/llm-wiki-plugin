@@ -34,6 +34,25 @@ def _frontmatter(text):
     return m.group(1) if m else ""
 
 
+def _is_stub(fm):
+    """`/wiki-new` 產的主題樁：`status: initializing` ＋ `sources: []`。
+
+    那是「還沒 ingest」的**正確**狀態，不是「宣告了卻驗不到」。
+    2026-09-26 實測：本支上線當天就對這種樁報了一筆假陽性 —— 而本檔自己
+    就寫著「穩定的假陽性會被當背景雜訊，連真的一起被忽略」。同一個檔裡犯
+    自己剛記下的錯，所以這段註解留著。
+
+    🔴 **刻意不用正則**：原本寫 `^status:[ \t]*initializing\b`，但經過
+    heredoc／工具層之後 `\b` 變成字面的 backspace（0x08），regex 永遠不匹配
+    而且**不報錯** —— 修了等於沒修，是複驗才抓到的。純字串比對沒有這個風險。
+    """
+    for line in fm.splitlines():
+        k, _, v = line.partition(":")
+        if k.strip().lower() == "status" and v.strip().lower() == "initializing":
+            return True
+    return False
+
+
 def _sources(fm):
     """取 frontmatter 的 sources 清單。支援區塊式與行內式，行內空陣列回 []。"""
     m = re.search(r"(?m)^sources:[ \t]*(.*)$", fm)
@@ -124,6 +143,13 @@ def scan(root: Path):
         if srcs is None:
             continue
         rel_page = p.relative_to(root).as_posix()
+        # 🔴 `/wiki-new` 產的主題樁本來就是 `status: initializing` ＋ `sources: []` ——
+        #    那是「還沒 ingest」的**正確**狀態，不是「宣告了卻驗不到」。
+        #    2026-09-26 實測：本支上線當天就對這種樁報了一筆假陽性。
+        #    而本檔自己第 57 行就寫著「穩定的假陽性會被當背景雜訊，連真的一起被忽略」——
+        #    同一個檔裡犯自己剛記下的錯，所以這條註解要留著。
+        if _is_stub(fm):
+            continue
         if srcs == []:
             hits.append((rel_page, _fm_date(fm, "updated"), [], [], True))
             continue
