@@ -9,23 +9,26 @@
     "   env 裡的假鍵會變成真的環境變數；permissions 只認 allow／deny／ask，",
     "   多一個未知鍵可能讓整份驗證失敗，而那會連 hook 一起靜默失效。"
   ],
-
   "_說明_env": [
-    "PYTHONIOENCODING=utf-8 —— Windows 的 Python 預設輸出是 cp950，印 emoji 或部分中文會",
-    "  UnicodeEncodeError。本 plugin 的正式腳本各自寫了 sys.stdout.reconfigure 躲過，",
-    "  但臨時的 `python -c` 沒有，而那正是最常用的。",
+    "PYTHONIOENCODING=utf-8 —— **一律設，無副作用**。Windows 的 Python 預設輸出是 cp950，",
+    "  印 emoji 或部分中文會 UnicodeEncodeError。本 plugin 的正式腳本各自寫了",
+    "  sys.stdout.reconfigure 躲過，但臨時的 `python -c` 沒有，而那正是最常用的。",
     "",
-    "🔴 **不要順手加 PYTHONUTF8=1**。看起來像是「更徹底的 UTF-8」，實際上兩者範圍不同：",
-    "   PYTHONIOENCODING 只改 stdio（就是我們要的）；PYTHONUTF8=1 連 open() 的預設編碼一起改。",
-    "   對「Windows ＋ 中文 vault」這個族群那是最危險的組合 —— 這種 vault 最可能有 Big5／cp950",
-    "   的舊檔（Excel 匯出的 CSV、早年 .txt、Arduino .ino）。任何沒寫 encoding= 的 open()",
-    "   會從「能讀」變成「炸掉」，而且是在使用者自己的既有腳本裡炸，不是在我們的程式裡。",
-    "   實測（2026-09-26）：只設 PYTHONIOENCODING → open() 仍是 cp950、舊檔讀得到；",
-    "   加上 PYTHONUTF8=1 → open() 變 utf-8、同一個檔 UnicodeDecodeError。",
+    "PYTHONUTF8=1 —— **範本預設不設**。它看起來像「更徹底的 UTF-8」，但範圍不同：",
+    "  PYTHONIOENCODING 只改 stdio；PYTHONUTF8=1 連 open() 的預設編碼一起改。",
+    "  實測（2026-09-26）：只設前者 → open() 仍 cp950、Big5 舊檔讀得到；",
+    "  加後者 → open() 變 utf-8、同一個檔 UnicodeDecodeError。",
     "",
-    "逾時類（BASH_DEFAULT_TIMEOUT_MS）刻意不放 —— 那取決於你自己的腳本有多重，不是通例。"
+    "  🔑 **你的 vault 要不要加，自己用這兩個條件判斷**（不要照抄別人的結論）：",
+    "     1. 非 UTF-8 的舊檔有多少？（Big5／cp950 的 Excel 匯出 CSV、早年 .txt、Arduino .ino）",
+    "     2. 你的腳本是不是都明確帶了 encoding=？裸 open() 有幾筆？",
+    "  兩題都乾淨 → 可以加，臨時 python -c 會方便很多。",
+    "  有疑慮 → 不要加。範本的工作是**預設安全**，不是預設方便。",
+    "  ⚠️ 加之前先確認失敗方向：這兩者搞錯都是 UnicodeDecodeError（會炸），",
+    "     不是靜默讀成亂碼。如果你的情境會靜默壞資料，一律不要加。",
+    "",
+    "逾時類（BASH_DEFAULT_TIMEOUT_MS）刻意不放 —— 取決於你的腳本有多重，不是通例。"
   ],
-
   "_說明_deny": [
     "只放 deny，不放 allow。allow 清單是每個人自己機器的（路徑、慣用指令都不同），",
     "塞進共用檔會製造「這份已審過」的假象。個人 allow 請寫 settings.local.json。",
@@ -43,11 +46,9 @@
     "這是第三道防線。第一道在 repo.py 的 SECRET_PATTERNS（掛載時就不收，也擋 Bash 路徑），",
     "第二道在 wiki-ingest skill（判斷層不建卡）。"
   ],
-
   "env": {
     "PYTHONIOENCODING": "utf-8"
   },
-
   "permissions": {
     "deny": [
       "Read(**/.env)",
