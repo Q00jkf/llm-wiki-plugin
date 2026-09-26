@@ -184,6 +184,7 @@ def collect(root: Path):
         "index_missing": [],
         "index_dead_refs": [],
         "guard_stale": [],
+        "guard_trend": [],
         "raw_pending": 0,
     }
 
@@ -194,6 +195,7 @@ def collect(root: Path):
 
     s["pages"], big = _count_pages(wiki)
     s["guard_stale"] = _guard_stale(root)
+    s["guard_trend"] = _guard_status.trend_report(root) if _guard_status else []
     s["big_pages"] = [
         {"path": str(p.relative_to(root)).replace("\\", "/"), "kb": round(n / 1024)}
         for n, p in big if n > PAGE_WARN_KB * 1024
@@ -382,6 +384,8 @@ def aging_flags(s):
     n = len(s["broken_sources"])
     if n:
         f.append(("來源檔消失", f"{n} 筆 manifest 紀錄指向不存在的檔 — 跑 /wiki-repo scan"))
+    for t in s.get("guard_trend", []):
+        f.append(("守門結果變差", t))
     for h in s["guard_stale"]:
         if "從未留痕" in h and s["pages"] < SEED_MAX:
             continue  # 新生 vault 還沒東西可守，與「從未健檢」同一門檻

@@ -32,6 +32,7 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/vault_state.py" --json    # 完整訊號
 | **卡無 scope** | 沒有 `scope:` 的卡不知道屬於誰，會被撈進任何問題 → 討論 A 撈到 B | `python "${CLAUDE_PLUGIN_ROOT}/scripts/repo.py" scope --dry-run` 看推導結果，再去掉 `--dry-run`；推不出的手填 |
 | **來源檔消失** | catalog 卡指向不存在的檔＝假知識 | `/wiki-repo scan` 確認，修卡或標失效 |
 | **repo 路徑失效** | 絕對路徑換機器就死 | 看 owner 欄找擁有者要 remote；不要直接刪註冊 |
+| **守門結果變差** | 某支守門的 verdict 從 CLEAN 變成有問題、或數字變大 —— 單看現值判斷不了，看趨勢才知道 | 讀 `wiki/meta/maintenance/ledger.tsv` 找變化那天，對照 `wiki/log.md` 看當天做了什麼 |
 | **守門失聯** | 某支守門腳本太久沒成功執行＝它可能早就掛了 | 見下節；先 `compileall` 再手動跑那支 |
 
 ---
@@ -56,6 +57,16 @@ python -m compileall -q "${CLAUDE_PLUGIN_ROOT}/scripts"      # 升級 plugin 或
 三支 exit 一律 0（`stale_check` 路徑不存在才 2），**只列候選、不擋 git**。
 `stale_check` 回 PENDING → 提示使用者「raw/… 在上次 ingest 後已改，wiki 可能不是最新，要先 `/wiki-ingest` 嗎？」。
 grep log.md 時只撈標記行：`grep -n "<!-- log .*scope:[^ ]*{產品}" wiki/log.md`，回傳量與條目長度脫鉤。
+
+### 分類帳 `wiki/meta/maintenance/ledger.tsv`
+
+`record()` 順手 append，**只在 verdict 變化時寫** —— 穩定的系統幾乎不長，每一行都是轉折點。
+每次都寫的話，連續 60 天 CLEAN 會產生 60 行相同內容，看的人要自己找哪裡變過，那就是雜訊。
+
+`vault_state` 開場讀它報趨勢，**只報變差**：`CLEAN`→有問題＝🔴，數字變大＝🟡，變好或持平不印。
+60 天前的變化不再提（那已經是現況不是新聞）。
+
+兩份檔分工不重疊：`_guard-status/{host}.json` 答「**它還活著嗎**」，`ledger.tsv` 答「**結果在變好還是變壞**」。
 
 ### `wiki/meta/_guard-status/{host}.json` 與「守門失聯」
 

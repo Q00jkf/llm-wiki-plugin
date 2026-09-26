@@ -28,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from _lib.vaultpaths import find_vault_root  # noqa: E402
 
 STATUS_DIR_REL = "wiki/meta/_guard-status"
+LEDGER_REL = "wiki/meta/maintenance/ledger.tsv"
 STATUS_REL = "wiki/meta/_guard-status.json"  # 舊格式（單檔），只用於一次性遷移
 
 # 多少天沒成功執行就算失聯
@@ -102,6 +103,106 @@ def known_scripts():
     return out
 
 
+def _verdict_score(verdict):
+    """把 verdict 轉成可比大小的數字。CLEAN＝0，其餘取第一個數字，抓不到數字＝1。
+
+    只用來判斷「變好還是變差」，不是精確度量 —— 不同腳本的數字意義本來就不同，
+    但**同一支腳本自己跟自己比**是有意義的，而趨勢判讀只做同支比較。
+    """
+    v = str(verdict)
+    if "CLEAN" in v.upper():
+        return 0
+    m = re.search(r"\d+", v)
+    return int(m.group()) if m else 1
+
+
+def _ledger_path(root):
+    return None if root is None else Path(root) / LEDGER_REL
+
+
+def ledger_rows(root=None):
+    """讀分類帳。回 [(date, script, host, verdict)]，讀不到回 []。"""
+    fp = _ledger_path(root if root is not None else _vault_root())
+    if fp is None or not fp.is_file():
+        return []
+    rows = []
+    try:
+        for line in fp.read_text(encoding="utf-8", errors="replace").splitlines():
+            if not line.strip() or line.startswith("#"):
+                continue
+            parts = line.split("\t")
+            if len(parts) >= 4:
+                rows.append(tuple(parts[:4]))
+    except OSError:
+        return []
+    return rows
+
+
+def _append_ledger(root, script, verdict, host):
+    """🔴 只在 verdict **變化**時 append 一行 —— 記的是轉折點不是流水帳。
+
+    為什麼不每次都寫：一個連續 60 天 CLEAN 的系統會產生 60 行相同內容，
+    看的人要自己找哪裡變過 —— 那就是雜訊，而雜訊久了沒人看（實測：某 vault 的
+    lint-report 四個月沒人產、也沒人想念）。只記變化點的話，穩定的系統幾乎不長，
+    而每一行都是「這天開始不一樣了」。
+    「上次何時跑過」不在這裡 —— 那是 _guard-status/{host}.json 的職責，兩者不重疊。
+    """
+    fp = _ledger_path(root)
+    if fp is None:
+        return
+    prev = None
+    for d, s, h, v in ledger_rows(root):
+        if s == script and h == host:
+            prev = v
+    if prev is not None and prev == str(verdict):
+        return                                    # 沒變，不寫
+    line = "\t".join([date.today().isoformat(), script, host, str(verdict)])
+    try:
+        fp.parent.mkdir(parents=True, exist_ok=True)
+        new = not fp.exists()
+        with fp.open("a", encoding="utf-8", newline="\n") as f:
+            if new:
+                f.write("# 守門分類帳：只記 verdict 的**變化點**，不是每次執行。\n")
+                f.write("# 「上次何時跑過」看 _guard-status/{host}.json；本檔看「結果何時變過」。\n")
+                f.write("# 欄位：日期\t腳本\t機器\tverdict\n")
+            f.write(line + "\n")
+    except OSError:
+        pass
+
+
+def trend_report(root=None, days=60):
+    """比對每支腳本最近一次變化：變差回一句話，變好或沒變不回。
+
+    只報惡化 —— 變好不需要打擾人（同 tidy_check「CLEAN 就安靜」的取捨）。
+    """
+    root = root if root is not None else _vault_root()
+    rows = ledger_rows(root)
+    if not rows:
+        return []
+    byscript = {}
+    for d, s, h, v in rows:
+        byscript.setdefault((s, h), []).append((d, v))
+    out = []
+    today = date.today()
+    for (s, h), seq in sorted(byscript.items()):
+        if len(seq) < 2:
+            continue
+        (pd_, pv), (cd, cv) = seq[-2], seq[-1]
+        try:
+            age = (today - datetime.strptime(cd, "%Y-%m-%d").date()).days
+        except ValueError:
+            continue
+        if age > days:
+            continue                              # 太久以前的變化不再提
+        before, after = _verdict_score(pv), _verdict_score(cv)
+        if after <= before:
+            continue                              # 變好或持平 → 不吵
+        sev = "🔴" if before == 0 else "🟡"
+        out.append(f"{sev} {s}：{pd_} 還是「{pv}」，{cd} 變成「{cv}」"
+                   f"（{age} 天前{'' if h == platform.node() else '，在 ' + h}）")
+    return out
+
+
 def record(script, verdict, exit_code=0, scope=None):
     """寫一筆留痕到**這台機器自己的檔**。內容與現有相同就不動檔案；留痕失敗不能讓守門本身失敗。"""
     root = _vault_root()
@@ -121,6 +222,7 @@ def record(script, verdict, exit_code=0, scope=None):
     }
     if scope:
         entry["scope"] = scope
+    _append_ledger(root, script, verdict, platform.node())
     if data.get(script) == entry:
         return
     data[script] = entry
