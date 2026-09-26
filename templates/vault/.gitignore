@@ -1,5 +1,8 @@
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json
+# 個人層設定（權限 allow 清單是你這台機器的，不該進 git）
+.claude/settings.local.json
+
 __pycache__/
 *.pyc
 .DS_Store

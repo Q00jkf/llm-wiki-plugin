@@ -1,0 +1,34 @@
+{
+  "_comment": [
+    "本檔由 /wiki-init 建立，進 git、與同事共用。只放 deny，不放 allow。",
+    "為什麼只放 deny：allow 清單是每個人自己機器的（路徑、慣用指令都不同），塞進共用檔會製造『這份已審過』的假象。個人 allow 請寫 .claude/settings.local.json（已在 .gitignore）。",
+    "為什麼這個系統需要 deny 憑證檔：它的核心動作是「掛別人的目錄 → 讀檔 → 把摘要寫進會被 commit 的 wiki 頁 → push」。一般專案沒有這條鏈，憑證一旦寫進 wiki 頁就進了 git 歷史，刪不乾淨。",
+    "這是第三道防線。第一道在 repo.py 的 SECRET_PATTERNS（掛載時就不收），第二道在 wiki-ingest skill（判斷層不建卡）。",
+    "⚠️ deny 只擋 Read 工具，擋不住 Bash cat／Grep —— 是減速丘不是保證，別把它當成可以放心的理由。"
+  ],
+  "permissions": {
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/*.env)",
+      "Read(**/*secret*)",
+      "Read(**/*credential*)",
+      "Read(**/*password*)",
+      "Read(**/密碼*)",
+      "Read(**/*帳密*)",
+      "Read(**/id_rsa*)",
+      "Read(**/id_ed25519*)",
+      "Read(**/*.pem)",
+      "Read(**/*.pfx)",
+      "Read(**/*.p12)",
+      "Read(**/*.keystore)",
+      "Read(**/*.kdbx)",
+      "Read(**/.npmrc)",
+      "Read(**/.netrc)",
+      "Read(**/.pypirc)",
+      "Read(**/.ssh/**)",
+      "Read(**/.aws/**)",
+      "Read(**/.gnupg/**)"
+    ]
+  }
+}

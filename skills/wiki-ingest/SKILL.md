@@ -25,6 +25,19 @@ alias 查不到 → 停下來回報「repo `{alias}` 未註冊，先跑 `/wiki-r
 
 ---
 
+## 🔴 Step 0.5　憑證檔一律不 ingest
+
+**看起來像憑證的檔，不建卡、不摘要、不把內容寫進任何 wiki 頁。** 發現就停下來回報使用者。
+
+判準（`repo.py` 的 `SECRET_PATTERNS` 是同一份清單）：檔名含 `secret`／`credential`／`password`／`密碼`／`帳密`／`金鑰`，
+或是 `.env*`／`id_rsa*`／`*.pem`／`*.pfx`／`*.key`／`.npmrc`／`.netrc`／`*.kdbx`。
+
+**為什麼這條必須在 ingest 這層再擋一次**：`repo.py` 已經在掛載時擋掉了，但那只涵蓋「掛進來的 repo」。
+使用者直接 `/wiki-ingest raw/某某/密碼表.xlsx` 是繞過掛載層的 —— 判斷層要自己認得。
+
+🔴 **洩漏鏈是這個系統特有的**：掛別人的目錄 → 讀檔 → 摘要寫進 `wiki/` → `git commit` → `push`。
+一般專案沒有這條鏈，所以別處的直覺在這裡不適用。**憑證進了 wiki 頁就等於進了 git 歷史，刪不乾淨。**
+
 ## Step 1　Hash 檢查（先做，省最多 token）
 
 ```bash

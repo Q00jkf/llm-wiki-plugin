@@ -14,6 +14,7 @@
     python repo.py remove <alias>
 """
 import argparse
+import fnmatch
 import os
 import platform
 import re
@@ -42,6 +43,32 @@ BATCH_SAFE_MAX = 30
 DEFAULT_EXCLUDE = [".git", "node_modules", "__pycache__", "dist", "build",
                    ".venv", "venv", ".obsidian", "site-packages"]
 
+# 🔴 憑證樣式：**程式碼層的硬底線，不存進 manifest、不可被關掉**。
+# 為什麼不做成 manifest 的 exclude 預設值：那樣只有「之後才掛的 repo」受保護，
+# 既有已掛的要靠懶回填（#26 教訓）。寫死在這裡，升級 plugin 當下所有 vault 一起生效。
+#
+# 為什麼這個 plugin 特別需要：它的核心動作是「掛別人的目錄 → 讀檔 → 把摘要寫進會被
+# commit 的 wiki 頁」。一般專案沒有這條鏈。實測 `_walk` 原本**完全不比對檔案**
+# （只比對資料夾），且 `_candidates` 只靠副檔名過濾 —— 所以 `secrets.txt`、
+# `credentials.md`、`密碼.xlsx` 這類「有 ingest 副檔名的憑證檔」會直接進候選。
+#
+# ⚠️ 這是減速丘不是保證：擋得住本 plugin 的掛載與 ingest 路徑，**擋不住**使用者
+# 自己用 Bash cat／Grep 去讀。第二道防線見範本 `.claude/settings.json` 的 deny。
+SECRET_PATTERNS = [
+    ".env", ".env.*", "*.env",
+    "*secret*", "*credential*", "*password*", "*passwd*",
+    "密碼*", "*帳密*", "*金鑰*",
+    "id_rsa*", "id_ed25519*", "*.pem", "*.pfx", "*.p12", "*.key", "*.keystore",
+    ".npmrc", ".netrc", ".pypirc", "*.kdbx",
+    ".aws", ".ssh", ".gnupg",
+]
+
+
+def is_secret_name(name: str) -> bool:
+    """檔名／夾名看起來像憑證？大小寫不敏感。"""
+    low = name.lower()
+    return any(fnmatch.fnmatch(low, pat) for pat in SECRET_PATTERNS)
+
 
 def _git(path, *args):
     try:
@@ -52,10 +79,17 @@ def _git(path, *args):
         return None
 
 
+# 本次執行被憑證樣式擋掉的路徑。**要印出來讓人看得見** —— 靜默的保護，
+# 下一個人不知道它存在，就會在它擋錯時直接把它拆掉（同 occupancy-check 的 O4 精神）。
+SECRET_SKIPPED = []
+
+
 def _is_excluded(p: Path, base: Path, excludes):
     try:
         parts = p.relative_to(base).parts
     except ValueError:
+        return True
+    if any(is_secret_name(part) for part in parts):
         return True
     return any(part in excludes for part in parts)
 
@@ -82,12 +116,42 @@ def _walk(base: Path, excludes, max_depth=None):
                 if e.is_dir(follow_symlinks=False):
                     if e.name in excludes or e.name.startswith("."):
                         continue
+                    if is_secret_name(e.name):
+                        SECRET_SKIPPED.append(e.path)
+                        continue
                     stack.append((Path(e.path), depth + 1))
                     yield Path(e.path), True, depth + 1
                 elif e.is_file(follow_symlinks=False):
+                    # 🔴 原本檔案完全不比對排除清單，只有資料夾比對（2026-09-26 實測）
+                    if is_secret_name(e.name):
+                        SECRET_SKIPPED.append(e.path)
+                        continue
                     yield Path(e.path), False, depth + 1
             except OSError:
                 continue
+
+
+def _report_secret_skips(base: Path, limit=8):
+    """把憑證樣式擋掉的路徑印出來。
+
+    🔴 **不可改成靜默**：沒人知道保護存在，它擋錯時第一個反應就是把它拆掉；
+    而且「這裡本來就沒有憑證檔」與「有但被擋了」看起來會一模一樣。
+    """
+    if not SECRET_SKIPPED:
+        return
+    rel = []
+    for p in SECRET_SKIPPED:
+        try:
+            rel.append(Path(p).relative_to(base).as_posix())
+        except ValueError:
+            rel.append(Path(p).name)
+    print(f"   🔒 憑證樣式已排除 {len(rel)} 個（不進候選、不會被 ingest）：")
+    for r in rel[:limit]:
+        print(f"      · {r}")
+    if len(rel) > limit:
+        print(f"      · …另 {len(rel) - limit} 個")
+    print("      樣式寫在 repo.py 的 SECRET_PATTERNS；誤擋請回報，不要自行放寬。")
+    SECRET_SKIPPED.clear()
 
 
 def _candidates(base: Path, excludes, max_depth=None):
@@ -408,6 +472,7 @@ def cmd_add(root, args):
     print(f"   Git：{'是' if is_git else '否'}　擁有者：{entry['owner']['name']} @ {entry['owner']['machine']}")
     print(f"   Remote：{entry['owner']['remote']}")
     print(f"   可 ingest 候選：{len(files)} 個（{breakdown or '無'}）")
+    _report_secret_skips(src)
     if page:
         print(f"   總覽已更新：{page.relative_to(root).as_posix()}")
     if kind == "compiled-wiki":
@@ -493,6 +558,7 @@ def cmd_discover(root, args):
         return 0
 
     chosen.sort(key=lambda x: (-x[2], -x[1]))   # Office 文件多的排前面
+    _report_secret_skips(base)
     print(f"在 {base} 下找到 {len(chosen)} 個候選（深度 ≤{args.depth}，"
           f"≥{args.min_files} 份、其中 ≥{args.min_office} 份 Office）"
           f"{'' if args.include_code else '，已排除程式碼專案'}：\n")

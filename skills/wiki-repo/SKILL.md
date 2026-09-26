@@ -3,7 +3,12 @@ name: wiki-repo
 description: "把散在各處的 git 專案／資料夾掛進同一個 wiki 管理。註冊、列出、掃描變更、解除註冊。檔案留在原地不搬家，wiki 只存指標。Triggers on: wiki-repo, 註冊 repo, 加入外部專案, 管理多個 git, 掃描 repo, 這個 wiki 也要管 XXX, 我的專案散在好幾個資料夾。"
 ---
 
-# wiki-repo：多 repo 來源管理
+# wiki-repo
+
+🔴 **憑證檔不會被收進來**：`repo.py` 有一份寫死的 `SECRET_PATTERNS`（`.env*`／`*secret*`／`*credential*`／`*password*`／`密碼*`／`帳密*`／`金鑰*`／`id_rsa*`／`*.pem`／`*.pfx`／`*.key`／`.npmrc`／`.netrc`／`.ssh`／`.aws`…），
+掛載與掃描都會跳過，並在輸出印出擋掉了哪幾個。**這是程式碼層的底線，不存進 manifest、不可用設定關掉** ——
+存進 manifest 只有之後才掛的 repo 受保護，既有的要靠懶回填（#26 教訓）。
+誤擋請回報使用者，不要自行放寬樣式。：多 repo 來源管理
 
 **一個 wiki 當中控台，管理散在各處的多個專案。檔案不搬家，wiki 只記路徑。**
 
