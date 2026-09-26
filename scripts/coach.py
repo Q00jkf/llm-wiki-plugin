@@ -178,6 +178,9 @@ AGING_ACTION = {
                  "讀 wiki/meta/maintenance/ledger.tsv 找變化那天，對照 wiki/log.md 看當天做了什麼"),
     "守門失聯": ("🔴", "守門太久沒成功執行 —— 它可能早就掛了，而輸出看起來跟「沒問題」一樣",
                "先 python -m compileall 再手動跑那支；不要只把日期改新"),
+    "綜合頁過期": ("🔵", "綜合頁把 N 份文件的結論抄成一頁，來源改了它不會跟著改 —— 而且沒有 hash 對帳，"
+                "在這個檢查出現之前沒有任何東西會說。先分流再修：留的補來源、不留的刪掉",
+                'python "${CLAUDE_PLUGIN_ROOT}/scripts/stale_check.py" --derived 看明細'),
     "收尾沒跑": ("🟡", "hot.md 是每 session 第一份讀的檔，落後 log 就會接錯地方",
                "把最近操作與待確認寫進 wiki/hot.md「目前狀態」，舊的移進 log"),
     "來源檔消失": ("🔴", "卡片指向不存在的檔＝假知識，查詢時會回一個開不了的路徑",

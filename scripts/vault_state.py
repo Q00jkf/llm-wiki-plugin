@@ -18,6 +18,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
+from _lib import derived as _derived  # noqa: E402
 from _lib.vaultpaths import (find_vault_root, load_manifest,  # noqa: E402
                              manifest_sources, resolve_repo_path, resolve_source)
 try:
@@ -185,6 +186,7 @@ def collect(root: Path):
         "index_dead_refs": [],
         "guard_stale": [],
         "guard_trend": [],
+        "derived_stale": None,
         "raw_pending": 0,
     }
 
@@ -196,6 +198,10 @@ def collect(root: Path):
     s["pages"], big = _count_pages(wiki)
     s["guard_stale"] = _guard_stale(root)
     s["guard_trend"] = _guard_status.trend_report(root) if _guard_status else []
+    try:
+        s["derived_stale"] = _derived.summarize(root)
+    except Exception:      # noqa: BLE001 —— 開場量測不因單一檢查壞掉而整個掛
+        s["derived_stale"] = None
     s["big_pages"] = [
         {"path": str(p.relative_to(root)).replace("\\", "/"), "kb": round(n / 1024)}
         for n, p in big if n > PAGE_WARN_KB * 1024
@@ -355,6 +361,8 @@ def aging_flags(s):
                   f"wiki/index.md 有 {n} 個 source key 解析不開"
                   f"（{s['index_dead_refs'][0]}{'…' if n > 1 else ''}）"
                   f" — alias 多半被 remove 或改名過，跑 /wiki-repo rename"))
+    if s.get("derived_stale"):
+        f.append(("綜合頁過期", s["derived_stale"]))
     if s.get("hot_behind_log"):
         hot_day, log_day = s["hot_behind_log"]
         f.append(("收尾沒跑",

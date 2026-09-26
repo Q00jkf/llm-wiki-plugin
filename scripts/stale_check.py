@@ -56,11 +56,40 @@ def manifest_hashes(p: Path) -> set:
     return hashes
 
 
+def _print_derived(root):
+    """綜合頁（多來源）過期明細。判斷在 _lib/derived.py，本處只負責顯示。"""
+    from _lib import derived as _d
+    hits = _d.scan(root)
+    print("=== derived-check：綜合頁 vs 來源 ===")
+    if not hits:
+        print("verdict : 🟢 CLEAN —— 沒有綜合頁落後於來源")
+        return 0
+    for page, upd, newer, missing, empty in hits:
+        if empty:
+            print(f"🟡 {page}　updated={upd}")
+            print("     宣告了 sources 卻是空的 —— 宣告存在、驗證不存在")
+            continue
+        print(f"🟡 {page}　updated={upd}")
+        for s_, w in newer[:5]:
+            print(f"     🔴 來源 {w} 比本頁新　{s_}")
+        if len(newer) > 5:
+            print(f"     …另 {len(newer) - 5} 個來源也較新")
+        for m_ in missing[:3]:
+            print(f"     ⚠️ 來源不存在　{m_}")
+        if len(missing) > 3:
+            print(f"     …另 {len(missing) - 3} 個不存在")
+    print("-" * 60)
+    print(f"verdict : 🟡 {len(hits)} 頁 —— {_d.summarize(root)}")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description="wiki ingest delta/stale check")
     ap.add_argument("path", nargs="?", default="raw", help="要掃的子路徑（相對 vault root）")
     ap.add_argument("--hash", metavar="FILE", help="只印單一檔案的 MD5")
     ap.add_argument("--ext", action="append", default=[], help="追加副檔名，可重複")
+    ap.add_argument("--derived", action="store_true",
+                    help="改查綜合頁（多來源）有沒有落後於來源，而不是掃 raw/")
     a = ap.parse_args()
 
     root = find_vault_root(Path(os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()))
@@ -71,6 +100,9 @@ def main():
     def resolve(s):
         p = Path(s)
         return p if p.is_absolute() else root / p
+
+    if a.derived:
+        return _print_derived(root)
 
     if a.hash:
         t = resolve(a.hash)
