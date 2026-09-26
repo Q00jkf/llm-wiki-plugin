@@ -23,9 +23,22 @@ description: "看這個 vault 的實際狀態，只告訴你下一步做哪一�
 | `off` | 開場完全不講指導；`/wiki-coach` 手動叫仍可用 | 老手、嫌吵的人 |
 
 ```
-/wiki-coach on      # 或 off／auto
+/wiki-coach on      # 或 off／auto —— 寫進這個 vault 的 manifest
 python "${CLAUDE_PLUGIN_ROOT}/scripts/coach.py" --mode   # 看目前是哪一種
 ```
+
+**兩個設定來源，個人優先於 vault**：
+
+| 來源 | 寫在哪 | 適用範圍 |
+|---|---|---|
+| 環境變數 `LLM_WIKI_COACH` | `~/.claude/settings.json` 的 `env`（所有 vault）<br>或 `.claude/settings.local.json`（只這個 vault、不進 git） | 跟著**人**走 |
+| manifest `config.coach` | 該 vault 的 `raw/.manifest.json` | 跟著 **vault** 走，同事 clone 下來也是這個 |
+
+```json
+{ "env": { "LLM_WIKI_COACH": "on" } }
+```
+
+環境變數會蓋過 manifest。團隊共用的 vault 設 `auto`，想被推著走的人自己在 settings 設 `on`，互不干擾。
 
 老化訊號（log 過大、來源檔消失…）**不受模式影響**，任何模式都會報 —— 那不是指導，是故障。
 

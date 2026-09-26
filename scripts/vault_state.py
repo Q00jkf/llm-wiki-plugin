@@ -37,6 +37,7 @@ HOT_WARN_LINES = 150     # hot.md 超過此行數 = 輪替沒執行
 CLAUDE_WARN_LINES = 150  # CLAUDE.md 超過此行數 = 該把按需規則拆到 wiki/ops/
 RULING_MAX = 5           # CLAUDE.md 🔴／⚠️ 區各最多幾條，多的搬 wiki/ops/rulings.md
 LINT_STALE_DAYS = 60     # 距上次健檢超過此天數 = 該跑了
+# hot.md 的 mtime 日期比 log 最後一條舊 = 收尾協議沒跑（不是「幾天沒動」，是「落後於實際操作」）
 DAY = 86400
 # 不算「知識頁」的東西：系統骨架與規則層。剛 init 的 vault 頁數應為 0，不是 8。
 NON_PAGE_TYPES = {"meta", "ops-rule", "fold"}
@@ -179,6 +180,7 @@ def collect(root: Path):
         "orphan_cards": [],
         "cards_no_scope": [],
         "cards_abs_path": [],
+        "hot_behind_log": None,
         "index_missing": [],
         "index_dead_refs": [],
         "guard_stale": [],
@@ -284,7 +286,30 @@ def collect(root: Path):
                 if tgt is None or not tgt.exists():
                     s["index_dead_refs"].append(key)
 
+    s["hot_behind_log"] = _hot_behind_log(root)
     return s
+
+
+def _hot_behind_log(root: Path):
+    """hot.md 的 mtime 日期 vs log.md 最後一條的日期。落後回 (hot_day, log_day)，否則 None。
+
+    為什麼看日期不看天數：收尾協議是「這次做完就更新 hot」，隔一天才發現已經太晚 ——
+    下個 session 開場讀 hot.md 會接到錯的地方。門檻放在「有沒有落後」，不是「落後幾天」。
+    """
+    hot = root / "wiki" / "hot.md"
+    log = root / "wiki" / "log.md"
+    if not hot.is_file() or not log.is_file():
+        return None
+    try:
+        hot_day = time.strftime("%Y-%m-%d", time.localtime(hot.stat().st_mtime))
+        text = log.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    days = re.findall(r"^##\s+(20\d{2}-\d{2}-\d{2})", text, flags=re.M)
+    if not days:
+        return None
+    last = max(days)
+    return (hot_day, last) if last > hot_day else None
 
 
 def tier_of(s):
@@ -328,6 +353,12 @@ def aging_flags(s):
                   f"wiki/index.md 有 {n} 個 source key 解析不開"
                   f"（{s['index_dead_refs'][0]}{'…' if n > 1 else ''}）"
                   f" — alias 多半被 remove 或改名過，跑 /wiki-repo rename"))
+    if s.get("hot_behind_log"):
+        hot_day, log_day = s["hot_behind_log"]
+        f.append(("收尾沒跑",
+                  f"wiki/hot.md 停在 {hot_day}，log 已有 {log_day} 的條目"
+                  " — hot.md 是每 session 第一份讀的檔，落後就會接錯地方；"
+                  "把最近操作與待確認寫進 hot.md「目前狀態」，舊的移進 log"))
     if s["cards_abs_path"]:
         n = len(s["cards_abs_path"])
         head = "、".join(Path(c).stem for c in s["cards_abs_path"][:3])
@@ -404,7 +435,15 @@ COACH_MODES = ("auto", "on", "off")
 
 
 def coach_mode(root):
-    """manifest config.coach：auto（預設，依成熟度）／on（每次開場都講）／off（開場不講，只報老化訊號）。"""
+    """教練模式：auto（依成熟度）／on（每次開場都講）／off（開場不講，只報老化訊號）。
+
+    兩個來源，個人設定優先於 vault 設定：
+      1. 環境變數 LLM_WIKI_COACH —— 個人偏好，用 settings.json 的 `env` 設，跟著人走
+      2. manifest `config.coach` —— vault 預設，跟著 repo 走，同事 clone 下來也是這個
+    """
+    env = os.environ.get("LLM_WIKI_COACH", "").strip().lower()
+    if env in COACH_MODES:
+        return env
     if not root:
         return "auto"
     m = load_manifest(Path(root)).get("config", {}).get("coach", "auto")

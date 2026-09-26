@@ -234,15 +234,13 @@ def findings(root):
                       "沒建卡的檔對 wiki 是隱形的；積壓越久越分不清哪些是刻意不建卡、哪些是漏掉",
                       "先跑 scripts/stale_check.py 拿精確清單（hash 比對），對照 wiki/ops/ingest.md 的不建卡規則，剩下的 /wiki-ingest raw/ 批次"))
 
-    # 6 hot 沒更新
-    hot_m = _mtime(root / "wiki" / "hot.md")
-    if hot_m and entries and (time.time() - hot_m) > HOT_STALE_DAYS * DAY:
-        hot_day = time.strftime("%Y-%m-%d", time.localtime(hot_m))
-        if entries[-1]["date"] > hot_day:
-            out.append(_f("hot_stale", "🟡",
-                          f"wiki/hot.md 上次更新 {hot_day}，log 卻有 {entries[-1]['date']} 的條目",
-                          "hot.md 是每 session 第一份讀的檔；它落後 log 表示收尾協議沒跑，下次開場會接錯地方",
-                          "把最近 3 次操作與待確認寫進 wiki/hot.md「目前狀態」，舊的移進 log"))
+    # 6 hot 落後 log（判斷在 vault_state，這裡只轉成行動項 —— 同一件事不算兩次）
+    if s.get("hot_behind_log"):
+        hot_day, log_day = s["hot_behind_log"]
+        out.append(_f("hot_stale", "🟡",
+                      f"wiki/hot.md 停在 {hot_day}，log 已有 {log_day} 的條目",
+                      "hot.md 是每 session 第一份讀的檔；它落後 log 表示收尾協議沒跑，下次開場會接錯地方",
+                      "把最近 3 次操作與待確認寫進 wiki/hot.md「目前狀態」，舊的移進 log"))
 
     # 7 裁示沒落盤
     rul = root / "wiki" / "ops" / "rulings.md"

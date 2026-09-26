@@ -25,6 +25,7 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/vault_state.py" --json    # 完整訊號
 | **log 過大**（>200KB） | 整份讀就是數十 k tokens；設計上只增不減 | 改用 `Grep` 帶關鍵字；在 vault 內建摺疊／歸檔機制（plugin 不內建） |
 | **單頁過大**（>100KB） | 同上，且代表該頁混了太多主題 | 拆頁，依主題或產品分子資料夾 |
 | **CLAUDE.md 過大**（>150 行） | 每 session 都載入，規則越多越貴，且會出現互相矛盾的舊規則 | 按需規則拆到 `wiki/ops/{{主題}}.md`，CLAUDE.md 只留「我要做…→讀哪份」索引表 |
+| **收尾沒跑** | `hot.md` 的日期比 `log.md` 最後一條舊 —— 下個 session 開場讀 hot 會接到錯的地方 | 把最近操作與待確認寫進 hot.md「目前狀態」，舊的移進 log |
 | **hot 沒輪替**（>150 行） | hot.md 是每 session 必讀，長了就每次多花 token | 修剪：常駐規則 + 最近 3 次操作 + 待確認，其餘移進 log |
 | **健檢過期 / 從未健檢** | 孤立頁與死連結會無聲累積 | 跑本 skill 的完整報告並存檔（見「何時跑」收尾列）|
 | **卡有絕對路徑** | `current_file` 寫 `C:/Users/…` 換機器就開不到正本（0.4.15 只修了 manifest，卡沒修） | `repo.py fixpaths --dry-run` → 去掉 `--dry-run`；不在已註冊 repo 底下的先 `add` |

@@ -56,6 +56,14 @@
 
 要它每次開場都講一件事：`/wiki-coach on`；嫌吵：`/wiki-coach off`；預設 `auto`（新 vault 講、用熟了就安靜）。
 
+這是存在該 vault 裡的設定，同事 clone 下來也一樣。想只改自己的，在 `~/.claude/settings.json` 加：
+
+```json
+{ "env": { "LLM_WIKI_COACH": "on" } }
+```
+
+個人設定會蓋過 vault 設定。
+
 ---
 
 ## 指令
