@@ -22,6 +22,7 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/vault_state.py" --json    # 完整訊號
 
 | 訊號 | 為什麼危險 | 怎麼處理 |
 |------|-----------|---------|
+| 🔴 **vault 不是 git repo**（有 `.gitignore`／obsidian-git 痕跡卻沒有 `.git`） | `.git` 被刪或沒還原，之後任何寫入都沒有退路；排在老化訊號前、開場一定報 | 先查資源回收筒或備份還原 `.git`，跑 `git fsck` 確認；還原前不要寫入 vault。沒有痕跡的成熟 vault 只給 🟡「沒有版本控制」建議 |
 | **log 過大**（>200KB） | 整份讀就是數十 k tokens；設計上只增不減 | 改用 `Grep` 帶關鍵字；在 vault 內建摺疊／歸檔機制（plugin 不內建） |
 | **單頁過大**（>100KB） | 同上，且代表該頁混了太多主題 | 拆頁，依主題或產品分子資料夾 |
 | **CLAUDE.md 過大**（>150 行） | 每 session 都載入，規則越多越貴，且會出現互相矛盾的舊規則 | 按需規則拆到 `wiki/ops/{{主題}}.md`，CLAUDE.md 只留「我要做…→讀哪份」索引表 |
