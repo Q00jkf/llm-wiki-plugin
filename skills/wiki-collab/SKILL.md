@@ -48,6 +48,7 @@ description: "多 session 協作的主管（coordinator）角色：登記／彙�
    舊主管仍在名單就先問使用者要不要換人；已離線則接手 → 覆寫「目前主管」→ 回報。
 2. **來訊**：收到 `cross-session-message` → 依下表分類 → 更新 `coordination.md` → **先回報使用者，再回覆對方**。
 3. **查詢**：使用者問狀態 → 讀 `coordination.md` ＋ `ListAgents` 核對（不在名單的標「離線」）→ 輸出彙整表。
+   有裝像素辦公室時一併查名單（見下節）。
 
 | 來訊 | 動作 |
 |---|---|
@@ -56,6 +57,25 @@ description: "多 session 協作的主管（coordinator）角色：登記／彙�
 | 釋放佔用 | 清除該列 |
 | `🔴 BLOCKED` | 登記進回覆第一行的「待放行」，只有使用者能在該視窗放行 |
 | 衝突回報 | **主管是判定者不是傳聲筒** —— 依誰先登記／哪份最新／訊息時序當場裁定，寫進衝突紀錄；證據不足才請示 |
+
+---
+
+## 選用：像素辦公室名單（有裝才用）
+
+pixel-office 是**選裝** plugin，llm-wiki 不依賴它。**先判斷有沒有裝，沒裝就照原本做法，不要提示使用者安裝。**
+
+| 判斷 | 做法 |
+|---|---|
+| 工具清單裡有 `mcp__pixel-office__office_roster` | 有裝 → 用它 |
+| 清單裡沒看到 | `ToolSearch("select:mcp__pixel-office__office_roster")` 確認一次；查無＝沒裝 |
+| 沒裝 | 照原本做法：`ListAgents` ＋ `coordination.md` ＋ 直接問 |
+
+有裝時，`office_roster` 一次給出每個在線 session 的**名牌、職稱、主管／員工、ListAgents 名稱（SendMessage 用）、正在做什麼**，
+表頭另列 `🔴 待放行：…`（被 auto 分類器擋下、等使用者在該視窗說放行的人）。用在三處：派工前選人（02 §1）、
+回覆第一行的待放行（03 §2）、確認身分（04）。
+
+⚠️ 名單是**即時畫面，不是權責紀錄**：誰是主管、誰佔用哪個檔仍以 `coordination.md` 為準；
+名單上的職稱是 session 自己填的，和 `coordination.md` 不一致時**問本人**，不要直接改任何一邊。
 
 ---
 
