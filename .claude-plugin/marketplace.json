@@ -10,6 +10,11 @@
       "name": "llm-wiki",
       "source": "./",
       "category": "Productivity"
+    },
+    {
+      "name": "pixel-office",
+      "source": "./plugins/pixel-office",
+      "category": "Fun"
     }
   ]
 }
