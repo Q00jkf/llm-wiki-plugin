@@ -164,6 +164,18 @@
 /plugin install llm-wiki
 ```
 
+### 選裝：pixel-office 像素辦公室
+
+同一個 marketplace 還有一個**選裝**的 plugin：把同時開著的每個 Claude Code session 畫成一間辦公室裡的同事。
+多 session 分工時，一眼看得出誰在打字、誰卡在等你核准、誰被權限擋下要你說「放行」；主管有自己的辦公室，
+模型也能用 `office_roster` 查「誰是誰、該傳訊息給誰」。不裝不影響 llm-wiki。
+
+```
+/plugin install pixel-office@llm-wiki
+```
+
+重開 Claude Code 後輸入 `/office`。用法與個人按鈕設定：[plugins/pixel-office/README.md](plugins/pixel-office/README.md)
+
 ---
 
 ## 想知道更多

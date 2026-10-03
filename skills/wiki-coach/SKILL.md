@@ -79,6 +79,7 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/coach.py" --all    # 使用者明確要「
 | 為什麼不留 ✅ | wiki-core W2 |
 | 為什麼不讓我選新手／進階 | wiki-core「系統會自己換檔」 |
 | 這東西該不該進 wiki | wiki-core 最後一節的決策樹 |
+| 像素辦公室怎麼用／要不要裝 | 不在 wiki-core：選裝 plugin，讀 `plugins/pixel-office/README.md`。**只在被問到時回答，不主動推薦**（它跟 vault 健康無關） |
 
 ### 3b　「這份要不要 ingest」（使用者問、或腳本報 `ingest_unqueried`）
 
