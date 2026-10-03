@@ -105,6 +105,18 @@ def _git_last_commit_age(root: Path):
     return None
 
 
+def _git_presence(root: Path):
+    """vault 根有沒有自己的 .git，以及有沒有用過 git 的痕跡。
+
+    只看 root/.git 本身：用 `git rev-parse` 會往上找到外層 repo（例如家目錄本身是 repo），
+    把「vault 自己的 .git 被刪」誤判成有版控。
+    痕跡＝.gitignore 或 Obsidian 的 obsidian-git 外掛：有痕跡卻沒 .git，幾乎一定是 .git 被刪或沒還原。
+    """
+    has_git = (root / ".git").exists()  # 目錄，或 worktree／submodule 的 .git 檔
+    traces = [t for t in (".gitignore", ".obsidian/plugins/obsidian-git") if (root / t).exists()]
+    return has_git, traces
+
+
 def _newest_mtime(paths):
     best = None
     for p in paths:
@@ -176,6 +188,8 @@ def collect(root: Path):
         "repos": [k for k in manifest.get("repos", {}) if not k.startswith("_")],
         "days_since_lint": None,
         "days_since_commit": _git_last_commit_age(root),
+        "git_repo": None,
+        "git_traces": [],
         "broken_sources": [],
         "broken_repos": [],
         "orphan_cards": [],
@@ -295,6 +309,7 @@ def collect(root: Path):
                     s["index_dead_refs"].append(key)
 
     s["hot_behind_log"] = _hot_behind_log(root)
+    s["git_repo"], s["git_traces"] = _git_presence(root)
     return s
 
 
@@ -330,9 +345,20 @@ def tier_of(s):
     return "mature"
 
 
+def critical_flags(s):
+    """紅燈：會讓資料無法還原的狀況，排在老化訊號前面、開場一定講。"""
+    f = []
+    if s.get("git_repo") is False and s.get("git_traces"):
+        f.append(("vault 不是 git repo", f"根目錄沒有 .git，但有用過 git 的痕跡（{'、'.join(s['git_traces'])}）"
+                  " — .git 可能被刪或沒還原；先查資源回收筒／備份還原，還原前不要寫入 vault（沒有退路）"))
+    return f
+
+
 def aging_flags(s):
     """老化訊號。與 tier 無關，任何成熟度都可能出現。"""
     f = []
+    if s.get("git_repo") is False and not s.get("git_traces") and tier_of(s) == "mature":
+        f.append(("沒有版本控制", "成熟 vault 卻沒有 .git — 建議 git init，改壞了才有退路"))
     if s["log_kb"] > LOG_WARN_KB:
         f.append(("log 過大", f"wiki/log.md {s['log_kb']}KB — 已無法整份讀，查詢改用 Grep 帶關鍵字"))
     for bp in s["big_pages"]:
@@ -497,6 +523,11 @@ def render(s, brief=False):
             act = next_action(s, tier)
             if act:
                 out += ["", act]
+        crit = critical_flags(s)
+        if crit:
+            out.append("")
+            out.append(f"🔴 紅燈 {len(crit)} 項（先處理）：")
+            out += [f"  - {k}：{v}" for k, v in crit]
         if flags:
             out.append("")
             out.append(f"⚠️ 老化訊號 {len(flags)} 項（開場提一句，不必當場處理）：")
@@ -516,6 +547,11 @@ def render(s, brief=False):
     elif tier in ("seed", "growing"):
         out.append(f"（{tier} 階段的操作指導只在 session 開場印；要看：/wiki-coach。長開／長關：/wiki-coach on|off）")
     out.append("")
+    crit = critical_flags(s)
+    if crit:
+        out.append(f"🔴 紅燈 {len(crit)} 項（先處理）：")
+        out += [f"  - {k}：{v}" for k, v in crit]
+        out.append("")
     if flags:
         out.append(f"🟡 老化訊號 {len(flags)} 項：")
         out += [f"  - {k}：{v}" for k, v in flags]
@@ -542,6 +578,7 @@ def main():
     s = collect(root)
     if "--json" in args:
         s["tier"] = tier_of(s)
+        s["critical"] = [{"kind": k, "detail": v} for k, v in critical_flags(s)]
         s["aging"] = [{"kind": k, "detail": v} for k, v in aging_flags(s)]
         print(json.dumps(s, ensure_ascii=False, indent=2))
     else:
