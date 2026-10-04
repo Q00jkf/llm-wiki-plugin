@@ -74,8 +74,8 @@
 
 ## Session 開始／結束
 
-**開始**：讀 `wiki/hot.md` → 需要更多背景才讀 `wiki/index.md`。開場 hook 已印成熟度／快照整理／日程窗口，有 🔴 提一句。不知道下一步 → `/wiki-coach`。
-**結束**：更新 `wiki/hot.md`「上次重大操作」（讓下次知道停在哪）；**待辦做完就刪，不留 ✅**；日程一律 `/wiki-agenda add`，不寫進 hot.md。
+**開始**：說「開始工作」走 `llm-wiki:wiki-start`（接上次進度＋本 vault 的 `wiki/ops/start.md`）。系統檢查已由開場 hook 跑過（成熟度／快照整理／日程窗口），有 🔴 提一句。不知道下一步 → `/wiki-coach`。
+**結束**：說「結束工作／收工」走 `llm-wiki:wiki-end`。`wiki/hot.md` **只在收工時由 wiki-end 寫**：有主管在線由主管寫，否則該 session 自己寫；ingest 與其他步驟不寫。**待辦做完就刪，不留 ✅**；日程一律 `/wiki-agenda add`，不寫進 hot.md。
 **每次動檔**：回覆末行列 `已寫入：` 路徑，`.md` 用 Obsidian `open … newtab` 開給我；引用一律指 `raw/` 正本或 alias 路徑，不指 wiki 卡（`wiki-core` R2／R4）。
 
 ---
@@ -102,6 +102,7 @@
 | 命名／編號／版次／frontmatter 必填 | `wiki/ops/naming.md` |
 | 多 session：共用檔、分工、主管制入口 | `wiki/ops/collab.md`（流程見 plugin `wiki-collab`，狀態見 `wiki/meta/coordination.md`） |
 | 裁示與踩雷的全文（Why、實例、代價） | `wiki/ops/rulings.md` |
+| 開工／收工時本 vault 自訂的項目 | `wiki/ops/start.md`／`end.md`（plugin `wiki-start`／`wiki-end` 讀） |
 | 開新資料夾／`_README` 怎麼寫／取用副本夾 | plugin `wiki-new` skill |
 | 日程怎麼記／匯出 | plugin `wiki-agenda` skill |
 

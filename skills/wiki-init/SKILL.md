@@ -70,7 +70,7 @@ wiki/index.md          ← 全局目錄
 wiki/hot.md            ← 最近上下文（輪替制 ≤150 行）
 wiki/log.md            ← 操作日誌（只增不減，只能 Grep）
 wiki/{catalog,topics,questions,projects}/   ← projects/ 是專案頁，不是知識頁
-wiki/ops/{ingest,query,naming,collab,rulings}.md  ← 規則模組（空殼，有東西才寫）
+wiki/ops/{ingest,query,naming,collab,rulings,start,end}.md  ← 規則模組（空殼，有東西才寫；start／end 由 wiki-start／wiki-end 讀）
 wiki/agenda.md         ← 日程唯一真相來源
 wiki/meta/{coordination,agenda-system}.md
 Templates/             ← _README模板、AI對話紀錄模板、_folder-template（/wiki-new 用）
