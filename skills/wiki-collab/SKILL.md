@@ -87,7 +87,7 @@ pixel-office 是**選裝** plugin，llm-wiki 不依賴它。**先判斷有沒有
 | 發派工單、選人、交接包、防撞單、申請人力 | `02-派工.md` |
 | 回報使用者、節奏與篇幅、BLOCKED、裁示落下後怎麼處理 | `03-回報與節奏.md` |
 | 複驗 peer 回報、查原文、防環境層靜默破壞 | `04-查核.md` |
-| 收尾（驗證→清理→落盤→push→交接）、佔用檢查 | `05-收尾.md` |
+| 收尾（驗證→清理→落盤→push→交接）、佔用檢查 | **`wiki-end`** skill（主管段 `skills/wiki-end/manager.md`） |
 | 維護 `coordination.md` 本身 | `06-coordination格式.md` |
 | 動 Office 檔前、寫 git 指令前 | `07-技術提醒.md` |
 

@@ -255,7 +255,7 @@ value＝`{current_file, current_summary, wiki_pages[], revision, history[]}`，�
 | 檔 | 動作 |
 |----|------|
 | `wiki/index.md` | 對應區塊新增條目 |
-| `wiki/hot.md` | 更新計數與「最近 ingest」（注意 ≤150 行輪替） |
+| `wiki/hot.md` | **ingest 時不寫**——收工時由 `wiki-end` 統一寫今日結論（有主管在線由主管寫） |
 | `wiki/repos.md` | **不用手動改** —— `repo.py` 在 add／remove／scan 時依 manifest 自動重建 |
 | `wiki/log.md` | 最上方新增一則（**用 append，不要整份讀**） |
 
@@ -288,4 +288,4 @@ session 名當 author 才分得出誰做的。**不要 `git config --global`**�
 2. 列出「新增／已 ingest／建議跳過」三類。**使用者已明確下 `/wiki-ingest <路徑>` 時，「新增」類直接開始，不再問一次**；只有 ①新增 >10 份 ②Tier 判斷有疑義 ③「建議跳過」裡有你不確定的，才停下來問
 3. 每 5 份 check in 一次回報進度
 4. 全部完成後做一次跨文件主題交叉引用
-5. 統一更新 index / hot / log，最後 commit
+5. 統一更新 index / log，最後 commit（hot.md 留給 `wiki-end`）

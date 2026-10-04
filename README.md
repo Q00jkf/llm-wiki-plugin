@@ -79,6 +79,8 @@
 | `/wiki-query <問題>` | 查詢，附來源；要數字時幫你開原檔 |
 | `/wiki-coach` | 系統教練，只講下一步 |
 | `/wiki-doctor` | 健檢：找過期、孤兒、死連結、規則漂移 |
+| `/wiki-start` | 開始工作：接上次進度、做 vault 自訂開工項（`wiki/ops/start.md`）、向主管報到 |
+| `/wiki-end` | 結束工作：寫 hot.md 今日結論、落盤、commit、交接；vault 自訂收尾項在 `wiki/ops/end.md` |
 | `/wiki-collab` | 同時開多個 Claude session 時的協調（主管制） |
 | `/wiki-fold` | log 太長時摺疊成摘要 |
 | `/wiki-adopt` | 本來就有 wiki 的人接上這套系統 |
