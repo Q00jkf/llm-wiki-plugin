@@ -172,9 +172,17 @@
 
 ### 選裝：pixel-office 像素辦公室
 
-同一個 marketplace 還有一個**選裝**的 plugin：把同時開著的每個 Claude Code session 畫成一間辦公室裡的同事。
-多 session 分工時，一眼看得出誰在打字、誰卡在等你核准、誰被權限擋下要你說「放行」；主管有自己的辦公室，
-模型也能用 `office_roster` 查「誰是誰、該傳訊息給誰」。不裝不影響 llm-wiki。
+同一個 marketplace 還有一個**選裝**的 plugin。它是一個 **Claude Code MOD**（用 function hooks 寫的即時面板），
+把同時開著的每個 Claude Code session **視覺化**成一間像素辦公室：每個 session 是一位同事，坐在自己的桌子前工作。
+
+<img src="plugins/pixel-office/docs/office.png" alt="像素辦公室：主管室、TEAM 區、等待核准的問號、被擋下的紅牌、紙飛機與橘貓" width="420">
+
+- **一眼看出大家在做什麼**：打字、讀檔、思考、出錯、完成，小人的動作和螢幕顏色即時反映
+- **誰卡住了**：等你核准的人頭上冒黃色問號；被權限擋下、要你在它的視窗說「放行」的人舉紅牌，其他視窗會跳提醒
+- **有組織**：主管坐主管室，主管的 peer 坐 TEAM 區，傳訊息時有紙飛機飛過去
+- **模型也看得到**：用 `office_roster` 查「誰是誰、該傳訊息給誰、誰在等放行」
+
+畫面全由程式即時畫出，不花 token。不裝不影響 llm-wiki。
 
 ```
 /plugin install pixel-office@llm-wiki
