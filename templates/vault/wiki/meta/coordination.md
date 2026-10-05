@@ -5,8 +5,9 @@ maintenance: transactional
 updated: {{today}}
 ---
 
-> 本頁只寫**當前狀態**：退休 session 不留、結案即刪、佔用釋放即清列。
-> 歷程與已結案裁示 → `wiki/log.md`；編號沿用不重編。格式與維護規則見 plugin `wiki-collab` skill。
+> 本頁是**索引＋當前狀態**：每列一行，細節不展開，寫「去哪看」（真相來源路徑，或 `log YYYY-MM-DD <條目標題>`）。
+> 退休 session 不留、結案即刪、佔用釋放即清列；一列長到要展開時，原文搬進 `wiki/log.md`、本頁留一行。
+> 編號沿用不重編。格式與維護規則見 plugin `wiki-collab` skill（`06-coordination格式.md`）。
 
 # 目前主管
 <!-- {session 名稱}（上線於 {時間}；當前任務一句話）。舊主管仍在 ListAgents 名單就先問使用者要不要換人 -->
