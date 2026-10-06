@@ -167,6 +167,7 @@
 | `/wiki-new <name>` | 開新資料夾：`Templates/_folder-template/` → `raw/<name>/`，建 `_README` 執行節點＋topic stub |
 | `/wiki-agenda [add "…"｜done 關鍵字｜--ics｜--notify]` | 日程：逾期／今天／7 天內窗口；匯出 ics／Telegram 文字 |
 | `/wiki-collab [status｜takeover｜wrapup]` | 多 session 主管：三層權責、派工、佔用登記、每日收尾 |
+| `/wiki-meet <題目> <參與者…> <輸出資料夾>` | 多 session 開會：參與者依職責提案、彼此直接協調，第一位主持、寫方案、散會通知主管；主管開會後不參與 |
 | `/wiki-fold [k]` | 把 log.md 最舊 2^k 條摺成一頁摘要 |
 | `/wiki-adopt [vault]` | 既有 vault 接上 plugin：找撞名、搶救裁示／踩雷、刪 vault 自帶舊版 |
 

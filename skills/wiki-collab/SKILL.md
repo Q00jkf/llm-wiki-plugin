@@ -42,6 +42,8 @@ description: "多 session 協作的主管（coordinator）角色：登記／彙�
 
 ---
 
+要讓幾個 session **自己討論出一個方案**（主管只出題、不居中傳話）→ 用 `wiki-meet`，不在這裡派工。
+
 ## 三種進入路徑
 
 1. **上線**：使用者說「你來當主管」→ `ListAgents` 取自己名稱 → 讀 `wiki/meta/coordination.md`（無則從 template 建）→

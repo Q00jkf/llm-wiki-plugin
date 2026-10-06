@@ -86,6 +86,7 @@
 | `/wiki-start` | 開始工作：接上次進度、做 vault 自訂開工項（`wiki/ops/start.md`）、向主管報到 |
 | `/wiki-end` | 結束工作：寫 hot.md 今日結論、落盤、commit、交接；vault 自訂收尾項在 `wiki/ops/end.md` |
 | `/wiki-collab` | 同時開多個 Claude session 時的協調（主管制） |
+| `/wiki-meet` | 開會：主管出題、點名參與者，參與者依職責提案並互相討論，結果寫進指定資料夾、散會通知主管 |
 | `/wiki-fold` | log 太長時摺疊成摘要 |
 | `/wiki-adopt` | 本來就有 wiki 的人接上這套系統 |
 
