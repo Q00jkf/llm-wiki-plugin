@@ -6,6 +6,7 @@
 
 用法：
     python role_cards.py list                 # 所有角色：持有者（ListAgents 名稱）、接手時間、職稱、必讀份數、進行中行數
+    python role_cards.py check [--quiet]      # 指標會不會老化：卡裡的 [[連結]]（檔案＋#標題）、必讀、疑似抄 _README 的行
     python role_cards.py cost <角色>          # 接手要讀的檔（卡＋必讀）與估計 token
     python role_cards.py claim <角色> <agent> # 接手：把 agent 與 taken 寫進卡的 frontmatter
     python role_cards.py new <角色>           # 從 Templates/角色卡模板.md 建卡（已存在就拒絕）
@@ -46,27 +47,85 @@ def split_frontmatter(text: str):
     return fields, lines, text[end + 4:].lstrip("\n")
 
 
+WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:#([^\]|]+))?(?:\|[^\]]*)?\]\]")
+
+
+def strip_comments(text: str) -> str:
+    return re.sub(r"<!--.*?-->", "", text, flags=re.S)
+
+
 def must_reads(body: str):
-    """「必讀」那一項底下縮排的 `路徑`，到下一個頂層 bullet 或標題為止。"""
+    """「必讀」那一項底下縮排的 [[連結]] 或 `路徑`，到下一個頂層 bullet 或標題為止；回傳檔案路徑（不含 #標題）。"""
     out, inside = [], False
-    for ln in body.split("\n"):
+    for ln in strip_comments(body).split("\n"):
         if re.match(r"^- .*必讀", ln):
             inside = True
             continue
         if inside and (re.match(r"^(- |#)", ln)):
             break
         if inside:
-            m = re.search(r"`([^`<>]+)`", ln)
-            if m:
+            m = WIKILINK.search(ln)
+            b = re.search(r"`([^`<>]+)`", ln)
+            if m and "<" not in m.group(1):
                 out.append(m.group(1).strip())
+            elif b:
+                out.append(b.group(1).strip())
     return out
 
 
+def section(body: str, title: str) -> str:
+    m = re.search(rf"^## {title}\s*\n(.*?)(?=^## |\Z)", strip_comments(body), re.S | re.M)
+    return m.group(1) if m else ""
+
+
 def in_progress_lines(body: str) -> int:
-    m = re.search(r"^## 進行中事項\s*\n(.*?)(?=^## |\Z)", body, re.S | re.M)
-    if not m:
-        return 0
-    return sum(1 for ln in m.group(1).split("\n") if re.match(r"^\s*- \S", ln))
+    return sum(1 for ln in section(body, "進行中事項").split("\n") if re.match(r"^\s*- \S", ln))
+
+
+def resolve(root: Path, target: str):
+    """Obsidian 連結目標 → 檔案。先照路徑（可省略 .md），找不到再用檔名在 vault 內找唯一一份（Obsidian 的最短路徑寫法）。"""
+    t = target.strip()
+    for cand in (root / t, root / f"{t}.md"):
+        if cand.is_file():
+            return cand
+    name = Path(t).name
+    hits = [p for p in root.rglob(f"{name}.md") if ".obsidian" not in p.parts] + [p for p in root.rglob(name) if p.is_file() and ".obsidian" not in p.parts]
+    hits = list(dict.fromkeys(hits))
+    return hits[0] if len(hits) == 1 else None
+
+
+def has_heading(path: Path, heading: str) -> bool:
+    want = heading.strip()
+    for ln in path.read_text(encoding="utf-8", errors="replace").split("\n"):
+        m = re.match(r"^#{1,6}\s+(.*?)\s*$", ln)
+        if m and m.group(1) == want:
+            return True
+    return False
+
+
+def link_problems(root: Path, body: str):
+    """卡裡每個 [[連結]]：檔案找不到或 #標題不存在就回報。範本佔位符（含 <…>）略過。"""
+    out = []
+    for m in WIKILINK.finditer(strip_comments(body)):
+        target, heading = m.group(1), m.group(2)
+        if "<" in target:
+            continue
+        f = resolve(root, target)
+        if f is None:
+            out.append(f"[[{target}]] 找不到檔案")
+        elif heading and not has_heading(f, heading):
+            out.append(f"[[{target}#{heading}]] 標題不存在")
+    return out
+
+
+def copied_lines(body: str):
+    """進行中事項裡沒有指向出處（[[連結]] 或 `路徑`）又超過 40 字的行：多半是把 _README 的內容抄過來了。"""
+    out = []
+    for ln in section(body, "進行中事項").split("\n"):
+        s = ln.strip()
+        if s.startswith("- ") and len(s) > 42 and not WIKILINK.search(s) and "`" not in s:
+            out.append(s[:30] + "…")
+    return out
 
 
 def est_tokens(text: str) -> int:
@@ -86,9 +145,24 @@ def load(path: Path):
     return text, fields, body
 
 
-def cmd_list(root: Path) -> int:
+def all_cards(root: Path):
     d = root / ROLES_REL
-    cards = sorted(p for p in d.glob("*.md") if not p.name.startswith("_")) if d.is_dir() else []
+    return sorted(p for p in d.glob("*.md") if not p.name.startswith("_")) if d.is_dir() else []
+
+
+def card_problems(root: Path, body: str):
+    reads = must_reads(body)
+    out = []
+    if len(reads) > MAX_MUST_READ:
+        out.append(f"必讀 {len(reads)} 份 > {MAX_MUST_READ}")
+    out += [f"必讀找不到：{r}" for r in reads if resolve(root, r) is None and not Path(r).exists()]
+    out += [p for p in link_problems(root, body) if not any(p.startswith(f"[[{r}]]") for r in reads)]
+    out += [f"疑似抄了 _README（沒有指向出處）：{c}" for c in copied_lines(body)]
+    return out
+
+
+def cmd_list(root: Path) -> int:
+    cards = all_cards(root)
     if not cards:
         print(f"沒有角色卡（{ROLES_REL.as_posix()}/ 不存在或是空的）。建卡：python role_cards.py new <角色>")
         return 0
@@ -97,13 +171,26 @@ def cmd_list(root: Path) -> int:
     for p in cards:
         _, f, body = load(p)
         reads = must_reads(body)
-        warn = []
-        if len(reads) > MAX_MUST_READ:
-            warn.append(f"必讀 {len(reads)} 份 > {MAX_MUST_READ}")
-        missing = [r for r in reads if not (root / r).exists() and not Path(r).exists()]
-        if missing:
-            warn.append("找不到：" + "、".join(missing))
-        print(f"| {f.get('role') or p.stem} | {f.get('agent') or '（無人）'} | {f.get('taken') or '—'} | {f.get('office_title') or '—'} | {len(reads)} | {in_progress_lines(body)} | {'；'.join(warn)} |")
+        n = len(card_problems(root, body))
+        print(f"| {f.get('role') or p.stem} | {f.get('agent') or '（無人）'} | {f.get('taken') or '—'} | {f.get('office_title') or '—'} | {len(reads)} | {in_progress_lines(body)} | {f'{n} 項，跑 check' if n else ''} |")
+    return 0
+
+
+def cmd_check(root: Path, quiet: bool) -> int:
+    """每張卡的連結（檔案＋標題）、必讀清單、疑似抄 README 的行。斷掉的只回報，不自動修 —— 猜錯位置比斷掉更糟。"""
+    total = 0
+    for p in all_cards(root):
+        _, _, body = load(p)
+        probs = card_problems(root, body)
+        total += len(probs)
+        if probs:
+            print(f"🔴 {p.relative_to(root).as_posix()}")
+            for x in probs:
+                print(f"   - {x}")
+        elif not quiet:
+            print(f"✅ {p.relative_to(root).as_posix()}")
+    if total == 0 and not quiet:
+        print("角色卡沒有斷掉的指標")
     return 0
 
 
@@ -115,8 +202,8 @@ def cmd_cost(root: Path, role: str) -> int:
     text, _, body = load(p)
     rows = [(p.relative_to(root).as_posix(), est_tokens(text), True)]
     for r in must_reads(body):
-        f = root / r if not Path(r).is_absolute() else Path(r)
-        if f.is_file():
+        f = Path(r) if Path(r).is_absolute() else resolve(root, r)
+        if f is not None and f.is_file():
             rows.append((r, est_tokens(f.read_text(encoding="utf-8", errors="replace")), True))
         else:
             rows.append((r, 0, False))
@@ -188,6 +275,8 @@ def main(argv) -> int:
     if not argv or argv[0] == "list":
         return cmd_list(root)
     cmd, args = argv[0], argv[1:]
+    if cmd == "check":
+        return cmd_check(root, "--quiet" in args)
     if cmd == "cost" and len(args) == 1:
         return cmd_cost(root, args[0])
     if cmd == "claim" and len(args) == 2:

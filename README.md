@@ -109,7 +109,7 @@
 | `rules_check.py --quiet` | 規則檔跟實際狀況對不對得上 |
 | `log_index.py --query <詞>` | 查操作日誌 |
 | `adopt.py` | 既有 vault 要改用本系統：算差異、找撞名（`/wiki-adopt` 的後端） |
-| `role_cards.py` | 角色卡列表、接手成本估算（只算必讀清單）、登記持有者、建卡 |
+| `role_cards.py` | 角色卡列表、接手成本估算（只算必讀清單）、登記持有者、建卡；`check` 驗卡上的 Obsidian 連結（檔案＋標題）沒有老化 |
 | `occupancy_check.py` | 多人同時改同一個檔的違規偵測（`/wiki-collab` 的後端） |
 | `audit_copy_check.py` | 取用副本夾與正本的一致性 |
 

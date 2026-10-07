@@ -118,7 +118,7 @@ wiki/                 Claude 維護的知識層
   catalog/            文件目錄卡（書 / 文件 / spec / 報告）
   topics/ concepts/   主題索引（多產品時依產品分子資料夾）
   questions/          查詢結果
-  projects/           開發專案（需求→設計→進度→測試→追溯）
+  projects/           開發專案（需求→設計→測試→追溯；進度只在 raw/<夾>/_README.md，這裡連過去）
   agenda.md           日程唯一真相來源（一行一事，agenda.py 讀寫）
   ops/                本 vault 的規則模組（ingest／query／naming／collab／rulings）
   meta/               coordination.md（多 session 狀態）、_guard-status/{host}.json（守門留痕，一機一檔）、folds/

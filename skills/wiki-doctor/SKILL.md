@@ -52,6 +52,7 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/tidy_check.py" --quiet
 python "${CLAUDE_PLUGIN_ROOT}/scripts/stale_check.py" raw/{子路徑}
 python "${CLAUDE_PLUGIN_ROOT}/scripts/log_index.py" --check
 python "${CLAUDE_PLUGIN_ROOT}/scripts/rules_check.py"
+python "${CLAUDE_PLUGIN_ROOT}/scripts/role_cards.py" check --quiet   # 角色卡的 [[連結]] 檔案／#標題還在不在、疑似抄 _README
 python -m compileall -q "${CLAUDE_PLUGIN_ROOT}/scripts"      # 升級 plugin 或換 Python 後跑一次
 ```
 

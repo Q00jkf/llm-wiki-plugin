@@ -48,3 +48,4 @@ vault 自訂的收尾項目在 **`wiki/ops/end.md`**（每個 vault 自己寫，
 ```
 
 不超過 6 行。細節寫 log，hot.md 只放下一個 session 開場需要知道的事。
+🔑 進度與卡點的家是各資料夾 `_README.md`：「卡誰」寫 `[[raw/X/_README#③ 🔴 現在卡在哪]]（哪一件）卡 <誰>`，不重抄問題描述。

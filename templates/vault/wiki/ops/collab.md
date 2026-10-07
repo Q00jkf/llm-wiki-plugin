@@ -20,11 +20,10 @@ updated: {{today}}
 | `wiki/meta/coordination.md` | 主管 | 快照，只寫當前狀態 |
 | 各資料夾 `_README.md` | 主管 | 執行節點；peer 只回報欄位級建議 |
 
-## 分工（自然形成後寫下；名稱會變，對不上時以專長欄為準）
+## 分工
 
-| 專長 | 典型任務 | 目前 session |
-|---|---|---|
-|  |  |  |
+專責角色（職責、必讀、守門腳本、目前持有者）各一張卡在 `wiki/meta/roles/`，`/wiki-role list` 看全部；這裡不重寫。
+現在哪個 session 在線、在做什麼 → `wiki/meta/coordination.md`。
 
 ## 收尾要跑的本 vault 自訂檢查
 
