@@ -1,0 +1,72 @@
+---
+name: wiki-role
+description: "角色卡：讓 session 關掉、/clear 或換視窗後接手同一個專責角色（例：QMS 專員、某產品線負責人）。每個角色一張卡 wiki/meta/roles/<角色>.md，記職責、必讀清單、守門腳本、辦公室登記參數、進行中事項，以及目前持有者的 ListAgents 名稱。使用者說「你是 <角色>，接手」「接手 <角色>」「我是誰的角色」、主管問「<角色> 現在是哪個 session」「角色清單」，或 /wiki-role 時觸發。收工時由 wiki-end 呼叫 save。Triggers: 接手, 你是, 角色卡, 角色清單, wiki-role, role card, 交接."
+---
+
+# wiki-role：角色卡與接手
+
+為什麼：session 沒有跨視窗記憶，ListAgents 名稱在重開或 `/clear` 後也會變（只有使用者能 `/rename`，session 改不了自己的名字）。
+角色卡把「這個角色是誰、要讀什麼、做到哪」固定在 vault 裡，新 session 照卡接手；主管從卡上的 `agent` 欄對到現在的 ListAgents 名稱。
+
+腳本：`python "${CLAUDE_PLUGIN_ROOT}/scripts/role_cards.py" <子指令>`（以下簡稱 `role_cards.py`），在 vault 內執行。
+
+## 角色卡
+
+位置 `wiki/meta/roles/<角色>.md`，範本 `Templates/角色卡模板.md`。
+
+| 段 | 誰維護 | 內容 |
+|---|---|---|
+| frontmatter `role`／`office_*` | 使用者或主管 | 角色名、辦公室名牌／職稱／team |
+| frontmatter `agent`／`taken` | **只由 `role_cards.py claim` 寫** | 目前持有者的 ListAgents 名稱、接手時間 |
+| `## 定義` | **使用者或主管**；持有者不改 | 職責範圍、必讀（最多 5 份）、守門腳本 |
+| `## 進行中事項` | 持有者，收工時整段覆寫 | 最多 10 行，做完就刪、不留 ✅；細節寫「去哪看」 |
+
+🔴 持有者發現「定義」不對（必讀過時、職責變了）→ 回報使用者或主管，不自己改。
+
+---
+
+## take：接手（「你是 <角色>，接手」）
+
+1. **讀卡**：`wiki/meta/roles/<角色>.md`。沒有這張卡 → 告訴使用者，問要不要 `new`；不要自己猜職責。
+2. **查前一位持有者**：`ListAgents`。
+   - 卡上的 `agent` **還在名單上、而且不是你** → **停下來問使用者**：「<角色> 目前由 <agent> 持有且在線，要我接手嗎？」
+     不能兩個 session 同時頂同一個角色（進行中事項會互相覆寫）。使用者說接手才往下。
+   - 不在名單、或是空的 → 往下。
+3. **估成本**：`role_cards.py cost <角色>`，記下合計 token。
+4. **只讀必讀清單**：卡＋「必讀」列的檔。**不翻 `wiki/log.md`、不讀 hot.md 以外的歷程**；有找不到的檔照實回報。
+5. **跑守門腳本**（卡上有寫才跑），結果記下。
+6. **登記持有者**：`role_cards.py claim <角色> <你的 ListAgents 名稱>`（名稱取自 `ListAgents` 的「This session is X」）。
+7. **辦公室（選裝）**：有 `mcp__pixel-office__office_profile`（沒看到就 `ToolSearch("select:mcp__pixel-office__office_profile")` 確認一次；查無＝沒裝，跳過）→
+   `office_profile(agent=<你的 ListAgents 名稱>, name=<office_name>, title=<office_title>, team=<office_team 或 off>)`。
+8. **向主管報到**（協作模式且主管在線；主管是誰見 `wiki/meta/coordination.md`）：
+   ```
+   接手：<角色>（ListAgents=<你的名稱>，前一位 <舊 agent 或 無>）
+   進行中：<進行中事項前 3 行>
+   ```
+9. **回報使用者**（三行內）：接手了什麼角色、讀了哪些檔（約多少 token）、進行中事項第一件與守門腳本結果。
+
+> 建議但非必要：使用者先在新視窗 `/rename <角色>`，ListAgents 名稱就跟角色名一致、好認。沒改名也能接手 —— 卡上記的是實際名稱。
+
+## list：角色清單（主管派工、改名後對人）
+
+`role_cards.py list` → 再 `ListAgents` 核對每個 `agent` 是否在線，輸出：
+
+| 角色 | 持有者 | 在線 | 接手 | 進行中 |
+|---|---|---|---|---|
+
+持有者不在線＝角色空著，等使用者開新視窗接手。主管傳訊息給某角色時，用這張表的「持有者」當 `SendMessage` 的 `to`。
+
+## new：建卡
+
+`role_cards.py new <角色>` → 照使用者給的內容填「定義」段與 `office_*`。
+🔴 建新文件只有使用者能核可：使用者明說要建這個角色才做。必讀超過 5 份就請使用者精簡。
+
+## save：更新進行中事項（wiki-end 呼叫）
+
+本 session 持有角色（卡上 `agent`＝你的 ListAgents 名稱）時：
+
+1. 重寫 `## 進行中事項` 整段：還沒做完的、明天第一件、卡在誰；做完的刪掉。**最多 10 行**。
+2. 只改這一段，不動「定義」與 frontmatter。
+3. commit 這張卡（和當天其他自己的檔一起）。
+
+主管收工（`wiki-end` 主管段）時讀各卡的進行中事項彙整，不改別人的卡。

@@ -86,6 +86,7 @@
 | `/wiki-start` | 開始工作：接上次進度、做 vault 自訂開工項（`wiki/ops/start.md`）、向主管報到 |
 | `/wiki-end` | 結束工作：寫 hot.md 今日結論、落盤、commit、交接；vault 自訂收尾項在 `wiki/ops/end.md` |
 | `/wiki-collab` | 同時開多個 Claude session 時的協調（主管制） |
+| `/wiki-role` | 角色卡：session 重開或 /clear 後接手同一個專責角色；主管從卡上對到現在的 session |
 | `/wiki-meet` | 開會：主管出題、點名參與者，參與者依職責提案並互相討論，結果寫進指定資料夾、散會通知主管 |
 | `/wiki-fold` | log 太長時摺疊成摘要 |
 | `/wiki-adopt` | 本來就有 wiki 的人接上這套系統 |
@@ -108,6 +109,7 @@
 | `rules_check.py --quiet` | 規則檔跟實際狀況對不對得上 |
 | `log_index.py --query <詞>` | 查操作日誌 |
 | `adopt.py` | 既有 vault 要改用本系統：算差異、找撞名（`/wiki-adopt` 的後端） |
+| `role_cards.py` | 角色卡列表、接手成本估算（只算必讀清單）、登記持有者、建卡 |
 | `occupancy_check.py` | 多人同時改同一個檔的違規偵測（`/wiki-collab` 的後端） |
 | `audit_copy_check.py` | 取用副本夾與正本的一致性 |
 

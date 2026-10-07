@@ -22,15 +22,17 @@ vault 自訂的收尾項目在 **`wiki/ops/end.md`**（每個 vault 自己寫，
 1. 照 `wiki/ops/end.md` 做 vault 自訂項目。
 2. `wiki/log.md` 最上方補今天的條目（已寫過就不重複），append 後跑 `python "${CLAUDE_PLUGIN_ROOT}/scripts/log_index.py" --apply`。
 3. 寫 `wiki/hot.md` 今日結論一塊（格式見下），再依 hot.md 檔頭輪替規則修剪；刪舊塊前先 grep `wiki/log.md` 有記載。
-4. commit 只 add 自己動過的檔；`git push`。
-5. 回報使用者：做完什麼、卡在誰身上、明天第一件事。
+4. 本 session 持有角色（`wiki/meta/roles/` 有卡的 `agent`＝你的 ListAgents 名稱）→ 走 `wiki-role` 的 save，更新該卡「進行中事項」。
+5. commit 只 add 自己動過的檔；`git push`。
+6. 回報使用者：做完什麼、卡在誰身上、明天第一件事。
 
 ## B. peer（協作模式，主管在線）
 
 1. 照 `wiki/ops/end.md` 做 vault 自訂項目中屬於自己的部分。
-2. commit 自己動過的檔。
-3. `SendMessage` 給主管：今天完成什麼（附 commit sha）、手上還有沒有佔用、遺留什麼。
-4. **不寫 hot.md**（多個 session 同時寫會互相覆蓋，由主管統一寫）。
+2. 持有角色 → `wiki-role` save，更新該卡「進行中事項」。
+3. commit 自己動過的檔（含角色卡）。
+4. `SendMessage` 給主管：今天完成什麼（附 commit sha）、手上還有沒有佔用、遺留什麼。
+5. **不寫 hot.md**（多個 session 同時寫會互相覆蓋，由主管統一寫）。
 
 ## C. 主管
 
