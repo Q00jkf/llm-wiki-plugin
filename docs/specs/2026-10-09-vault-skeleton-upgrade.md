@@ -191,9 +191,16 @@ Step 7  回報：做了什麼、跳過什麼、init-history 連結
 | `README.md`／`docs/design.md` | 升級流程各補一行 |
 | ~~`wiki/ops/tools.md`（各 vault）~~ | **不需要**。`rules_check.py` 的 F6 是 `sdir = c.root / "scripts"`，只掃 vault 自己的腳本；`skeleton_check.py` 住在 plugin，F6 看不到（llm-wiki-aegiverse-e4 2026-10-09 實跑 `[F6] 🟢 0 筆` 指正）。要不要為了好查而登記是規則層的另一個決定 |
 
-## 10. 未決事項
+## 10. 未決／待辦
 
-無。設計已由使用者在 2026-10-09 對話中逐項裁示：
+- **死 glob 測試**（llm-wiki-aegiverse-e4 2026-10-09 建議，與 IT 議定延後）：
+  `.skeleton-policy` 的每個 glob 至少要命中一個樣板檔，否則樣板改名後死 glob 會無聲腐爛
+  —— 那條 glob 失效了也沒人知道，該對帳的檔就永遠不對帳。
+  延後的理由：這是防腐不是防資料損失，而使用者的驗收不該為它多卡一輪。**驗收完就補。**
+- 要不要為了好查而把 `skeleton_check.py` 登記進各 vault 的 `wiki/ops/tools.md`：
+  規則層的決定，由主管與使用者定，F6 不逼（見 §9）。
+
+設計已由使用者在 2026-10-09 對話中逐項裁示：
 只報告→改為同意後才改（使用者修正）、三組批次同意、加 `init-history` 紀錄層。
 
 ---
