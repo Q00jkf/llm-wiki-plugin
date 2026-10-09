@@ -1,11 +1,18 @@
 ---
 name: wiki-init
-description: "建立新 vault 並引導填出專屬的 CLAUDE.md；產出薄骨架，不複製 skills／commands。Triggers: wiki-init, 建立 wiki, 導入這套系統, 初始化 vault, 團隊導入。"
+description: "建立新 vault（薄骨架，不複製 skills／commands）；目標已經是 vault 時改走升級模式，把骨架補到跟現行 plugin 一樣。Triggers: wiki-init, 建立 wiki, 導入這套系統, 初始化 vault, 團隊導入, 骨架升級, 更新 vault 結構。"
 ---
 
-# wiki-init：建立新 vault
+# wiki-init：建立新 vault／升級既有骨架
 
 **產出薄骨架（`templates/vault/` 整棵複製），系統由 plugin 提供。**
+
+## 先判斷走哪一條
+
+| 目標資料夾 | 走 |
+|---|---|
+| 不存在，或沒有 `wiki/` | **建新 vault** → 下面的 Step 1～5 |
+| 已經有 `wiki/` | **升級模式** → 最下方「升級既有 vault 的骨架」 |
 
 ---
 
@@ -123,3 +130,69 @@ git -C <目標路徑> commit -m "init: vault 骨架（llm-wiki plugin）"
 
 建好後提醒使用者在 Obsidian 用「Open folder as vault」加入該資料夾。
 plugin 不自動改 `obsidian.json`（Obsidian 執行中改它會被覆蓋，且有弄壞其他 vault 註冊的風險）。
+
+---
+
+# 升級既有 vault 的骨架
+
+**為什麼需要**：建骨架是一次性快照。plugin 升級後 `skills/` 會跟著更新（從 plugin 讀），
+但已建好的 vault 那些檔永遠停在建立那天，而且沒有東西會發現。
+實例：`wiki-start`／`wiki-end` 是 1.1.1 加的，skill 在那個 vault 早就能用，
+但它要讀的 `wiki/ops/start.md`／`end.md` 根本不存在。
+
+🔴 **一個 byte 都不自動改。** 三組分開問，使用者說可以才寫。
+
+## Step 0　對帳
+
+```bash
+python "${CLAUDE_PLUGIN_ROOT}/scripts/skeleton_check.py" <vault> --json
+```
+
+沒有差異 → 回一句「骨架已是最新（<版本>）」，結束。
+
+**第一次跑一定是降級模式**（vault 沒有 `.skeleton.json`）：分不出「你改的」與「樣板改的」，
+有差異的一律進組③。照實說一句，不要假裝分得出來。
+
+## Step 1　組① 缺檔：整批問一次
+
+列檔名，**每個補一句「這個檔是幹嘛的」**（讀樣板的第一個標題與開頭，不要只丟路徑）。
+
+> 缺 4 個檔：
+> - `wiki/ops/start.md`、`wiki/ops/end.md` —— 開工／收工時這個 vault 自訂的項目（`/wiki-start`、`/wiki-end` 會讀）
+> - …
+> 補進來？[y/n]
+
+## Step 2　組② 未客製：整批問一次
+
+這些檔你沒動過，樣板有更新 → 直接換成新版。一樣列出**這版多了什麼**。
+
+## Step 3　組③ 已客製：一個一個問
+
+每個檔講三件事，然後給建議：
+
+1. **新版多了什麼** —— 讀 `lines`／`sections`，用人話講這是什麼功能，不要念 diff
+2. **你加了什麼** —— 讀使用者的檔，講他的客製是什麼
+3. **建議怎麼融合** —— 插在哪一段後面；或判斷「不用融合」（他的寫法已經涵蓋）
+
+> `wiki/ops/collab.md`
+> 　新版多了 `## 分工` 一段：角色卡放 `wiki/meta/roles/`、在線狀態看 `coordination.md`
+> 　你這份加了 R-collab-1～10（本 vault 的協作裁示）
+> 　建議：新段插在 §格式 後面，你的 R- 條款完全不動
+> 　這樣合？[y / n / 改]
+
+答 n → 記 `opted_out`，之後不再報這個檔。
+
+## Step 4　執行
+
+```bash
+python "${CLAUDE_PLUGIN_ROOT}/scripts/skeleton_check.py" <vault> --apply-safe
+```
+
+組①② 由腳本做（純複製，不經判斷）。**組③ 由你用 Edit 寫** —— 融合是判斷，腳本不碰。
+
+## Step 5　回報
+
+做了什麼、跳過什麼、升級史在 `wiki/meta/init-history.md`（腳本自動寫，人不手改）。
+
+> 🔑 `init_vault.py --force` 也能補缺檔，但它不知道哪些是「你沒動過所以能安全換」，
+> 也不留對帳基準。升級一律走這裡，`--force` 只在建新 vault 中斷後補檔時用。
