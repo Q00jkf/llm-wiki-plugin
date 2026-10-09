@@ -1,0 +1,197 @@
+# vault 骨架升級（skeleton upgrade）
+
+> 狀態：待使用者審 ｜ 提出 2026-10-09 ｜ 使用者裁示的設計，IT（user-f4）撰寫
+
+## 1. 問題
+
+`wiki-init` 建骨架是**一次性快照**：照當時的 `templates/vault/` 複製 30 多個檔
+（`CLAUDE.md`、`wiki/ops/` 7 支、`wiki/meta/`、`Templates/`、`.claude/settings.json`）。
+
+之後 plugin 升級，`skills/` 會跟著更新（從 plugin 讀），但**已建好的 vault 那 30 個檔永遠停在建立那天**。
+
+更根本的是：**沒有任何東西會發現它沒成長**。
+
+- vault 裡沒有骨架版本戳記（`raw/.manifest.json` 記的是 ingest 來源，不是骨架）
+- `rules_check.py` 只查規則層內部一致性（F1–F6），不比對 plugin 樣板
+- `wiki-adopt` 是一次性「接上 plugin」，不是持續升級
+
+**實例（2026-10-09）**：`06-coordination格式.md` 新增「狀態欄開頭寫登記日」，`tidy_check.py` 的 T9 靠它。
+舊 vault 的 `coordination.md` 沒有這個欄位規則，使用者也不會知道要加 —— skill 更新了，資料結構沒有，T9 永遠只報個數。
+
+## 2. 目標與非目標
+
+**目標**
+
+1. 知道某個 vault 的骨架停在哪一版，以及與現行樣板差在哪
+2. 用人話說明「新版多了什麼功能」，不是只丟檔名或 diff
+3. 對客製過的檔給出融合方式，**使用者同意後才寫檔**
+4. 留下可追的升級史
+
+**非目標**
+
+- 不自動升級（不做無人值守的 migration）
+- 不碰 vault 自己新增的檔（不在樣板裡的一律不管）
+- 不處理 plugin 降版（只往前）
+
+## 3. 資料結構
+
+### 3.1 `.skeleton.json`（vault 根，隱藏檔）
+
+與 `raw/.manifest.json` 同一慣例。每個樣板檔記**兩個** hash：
+
+```json
+{
+  "plugin_version": "1.4.0",
+  "created_with": "1.0.4",
+  "updated_at": "2026-10-09",
+  "files": {
+    "wiki/ops/collab.md": {
+      "template_hash": "<上次對帳時 plugin 樣板的 hash>",
+      "local_hash": "<上次對帳時這個 vault 的 hash>"
+    },
+    "wiki/ops/query.md": { "opted_out": true }
+  }
+}
+```
+
+兩個 hash 才分得出「樣板變了」與「使用者改了」—— 這是 base／theirs／mine 的三方比較。
+只記一個就只知道「有差異」，分不出是誰造成的，也就提不出融合建議。
+
+`opted_out`：使用者明確說不要的檔，之後不再報缺檔。
+
+### 3.2 `wiki/meta/init-history.md`（人讀，**腳本 append**）
+
+🔴 **只由腳本寫，人不手改。** 手寫的升級史漏記一次就永遠對不上。
+`wiki/meta/_guard-status/` 已是這個模式。
+
+```markdown
+## 2026-10-09　1.0.4 → 1.4.0
+
+- 新增 3：`wiki/ops/naming.md`（文件命名規則）、`Templates/角色卡模板.md`（角色接手用）、…
+- 更新 4（未客製）：`wiki/ops/end.md`、`wiki/ops/start.md`、…
+- 融合 1：`wiki/ops/collab.md` —— 新版多了 T9 登記日規則，插在 §格式 之後；R-collab-1～10 保留
+- 跳過 1：`wiki/ops/query.md`（使用者刪過，記為 opted_out）
+```
+
+寫的是**實際做了什麼**，不是計畫；使用者說 no 的不寫進來。
+
+### 3.3 三者分工
+
+| 檔 | 存什麼 | 誰寫 |
+|---|---|---|
+| `.skeleton.json` | 當前狀態 | 腳本 |
+| `wiki/meta/init-history.md` | 升級史 | 腳本 append |
+| `wiki/log.md` | **不重複寫**，當天條目放一行 `→ [[wiki/meta/init-history]]` 指過去 | 既有流程 |
+
+最後一列是刻意的：升級史已經有家，再寫進 log 就是兩個家。
+
+## 4. 分類邏輯（腳本，純機械）
+
+對每個樣板檔 `f`：
+
+| 條件 | 歸類 |
+|---|---|
+| vault 沒有 `f` 且未 opted_out | **① 缺檔** |
+| `hash(樣板) == template_hash` | 不報（絕大多數落這裡） |
+| 樣板變了 ＋ `hash(vault 檔) == local_hash` | **② 未客製** → 可安全換 |
+| 樣板變了 ＋ vault 檔也變了 | **③ 已客製** → 要融合 |
+
+### 4.1 降級模式（沒有 `.skeleton.json`）
+
+**現有 vault 全都沒有這個檔**，第一次跑時 base 未知：
+
+- 缺檔判斷照常準確
+- vault 有的檔只能比「vault 檔 vs 現行樣板」：相同 → 不報；不同 → **一律進組③**（保守，會多問幾次）
+
+跑完寫出 `.skeleton.json`，第二次起②③才分得清。
+
+## 5. 誰做什麼
+
+| | 腳本 `scripts/skeleton_check.py` | `wiki-init` skill（Claude） |
+|---|---|---|
+| 比對、分類、產 diff | ✅ | |
+| 用人話講「多了什麼功能」 | ❌ 只看得到行差異 | ✅ 讀 diff 總結 |
+| 組①② 寫檔 | ✅ `--apply-safe`（純複製，無判斷） | |
+| 組③ 融合 | ❌ | ✅ 提方案 → 等同意 → Edit 寫入 |
+| 寫 `.skeleton.json`／`init-history.md` | ✅ | |
+
+**升級一定要 Claude 在場**，不能純腳本跑完 —— 「多了什麼功能」與「怎麼融合」都是判斷。
+這也沿用 plugin 既有慣例：腳本只列候選，判斷交給 Claude（見 `wiki-doctor`）。
+
+### 5.1 腳本介面
+
+```
+python skeleton_check.py              # 人讀的三組分類報告
+python skeleton_check.py --json       # 給 skill 吃的結構化輸出（含每檔 diff）
+python skeleton_check.py --apply-safe # 只做組①②，寫檔並更新 .skeleton.json
+python skeleton_check.py --record '<json>'  # 組③由 skill 寫完後，補記 hash 與 history
+```
+
+`--apply-safe` 不碰組③，即使誤用也不會毀客製內容。
+
+## 6. 操作流程
+
+`/wiki-init <路徑>`：目標已是 vault（有 `wiki/` 或 `raw/.manifest.json`）→ **自動進升級模式**，不另開指令。
+
+```
+Step 0  skeleton_check.py --json
+Step 1  沒有差異 → 一句「骨架已是最新（1.4.0）」，結束
+Step 2  組① 缺檔：列出檔名＋我讀樣板後寫的「這個檔是幹嘛的」，整批問一次 [y/n]
+Step 3  組② 未客製：列出檔名＋「這版改了什麼」，整批問一次 [y/n]
+Step 4  組③ 已客製：逐檔
+          - 新版多了什麼（我讀 diff 講）
+          - 你加了什麼（我讀你的檔講）
+          - 建議的融合方式（插在哪、要不要插）
+          - [y / n / 改]
+Step 5  執行：①② 走 --apply-safe；③ 我用 Edit 寫
+Step 6  skeleton_check.py --record → 更新 .skeleton.json、append init-history.md
+Step 7  回報：做了什麼、跳過什麼、init-history 連結
+```
+
+## 7. 邊界情況
+
+| 情況 | 處理 |
+|---|---|
+| 使用者故意刪掉某樣板檔 | 答 n 時記 `opted_out: true`，之後不再報 |
+| plugin 降版（樣板比 vault 舊） | 不報。只往前 |
+| vault 自己加的檔（不在樣板裡） | 完全不管 |
+| 客製過、樣板也變了 | hash 是整檔的，所以**分類一定會進組③**；但報告只呈現樣板變動的那幾段，不把整檔 diff 丟出來。使用者改的部分與樣板改的部分不重疊時，我的融合建議就是「直接插入，不衝突」 |
+| `.skeleton.json` 損毀／手動刪除 | 退回降級模式，不報錯 |
+| 樣板檔被 plugin 刪掉 | 不動 vault 的檔，只在報告提一句 |
+
+## 8. 測試策略
+
+🔴 **plugin 現在沒有 Python 測試框架**（只有 `plugins/pixel-office/*.test.tsx`）。
+這套東西會寫使用者的檔，不能只靠「跑一次看起來對」。
+
+本案建立 repo 第一支 Python 測試 `scripts/test_skeleton_check.py`（stdlib `unittest`，與腳本同樣只用 stdlib）：
+
+| 案例 | 驗什麼 |
+|---|---|
+| 全新 vault，樣板無變更 | 零差異，不報 |
+| 缺一個檔 | 進組① |
+| 樣板變、local 未動 | 進組② |
+| 樣板變、local 也變 | 進組③ |
+| 無 `.skeleton.json`（降級） | 有差異的一律進組③ |
+| `opted_out` 的檔 | 不報缺檔 |
+| `--apply-safe` | 只動①②，組③檔案 byte 不變 |
+| plugin 降版 | 不報 |
+
+測試在 `tmp` 目錄建假 vault，不碰真實 vault。
+
+## 9. 影響範圍
+
+| 檔 | 動作 |
+|---|---|
+| `scripts/skeleton_check.py` | 新增 |
+| `scripts/test_skeleton_check.py` | 新增 |
+| `skills/wiki-init/SKILL.md` | 加「升級模式」分支（原 5 步是建新 vault 的路徑，不動） |
+| `templates/vault/wiki/meta/init-history.md` | 新增（空殼＋檔頭說明「本檔由腳本寫，勿手改」） |
+| `.claude-plugin/plugin.json` | bump minor |
+| `README.md`／`docs/design.md` | 升級流程各補一行 |
+| `wiki/ops/tools.md`（各 vault） | 新腳本要登記，否則 `rules_check` F6 會報未登記 |
+
+## 10. 未決事項
+
+無。設計已由使用者在 2026-10-09 對話中逐項裁示：
+只報告→改為同意後才改（使用者修正）、三組批次同意、加 `init-history` 紀錄層。
