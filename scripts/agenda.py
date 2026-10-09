@@ -352,7 +352,9 @@ def main():
     if not agenda.is_file():
         return 0  # vault 尚未啟用日程：開場安靜
     n = report(events, bad, a.days, a.tag, today)
-    if _guard_status is not None:
+    # 🔴 只有未過濾的執行才落盤：`--days 14 --tag QMS` 是人工查詢，
+    # 它的數字寫進 _guard-status 會污染 vault_state 的 trend（看起來像「5 項降到 1 項」）
+    if _guard_status is not None and not a.tag and a.days == ap.get_default("days"):
         try:
             _guard_status.record("agenda", f"{n} 項" if n else "CLEAN", 0)
         except Exception:  # 守門留痕失敗不影響窗口
