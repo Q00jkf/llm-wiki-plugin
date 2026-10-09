@@ -1,6 +1,6 @@
 ---
 name: wiki-core
-description: "LLM Wiki 的架構與鐵律 —— 這是給團隊與 PM 的**專案管理系統**，知識庫是其中一個能力。任何涉及本 vault 的操作（開專案夾／排日程／分工／掛來源／ingest／查詢／判斷該不該寫進 wiki）都先讀這份。也用於回答「這個系統管什麼」「我該把東西放哪」「為什麼不能直接抄進 wiki」。Triggers on: wiki 架構, 這個系統管什麼, 這要放哪, 系統原則, wiki-core, 這個 vault 怎麼用。"
+description: "本系統的架構與鐵律（給團隊／PM 的專案管理系統，知識庫是其中一個能力）。任何涉及本 vault 的操作都先讀這份。Triggers: wiki 架構, 這個系統管什麼, 這要放哪, 系統原則, wiki-core。"
 ---
 
 # LLM Wiki — 系統核心

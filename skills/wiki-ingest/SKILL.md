@@ -1,6 +1,6 @@
 ---
 name: wiki-ingest
-description: "把原始檔編譯成 wiki 知識層：建 catalog 卡、更新主題索引、記錄 manifest。支援本地 raw/ 與外部 repo（alias::路徑），依文件是否會變動決定做指標卡或完整摘要。Triggers on: wiki-ingest, ingest, 建卡, 把這份加進 wiki, 編譯到 wiki, 讀這份文件, 批次匯入。"
+description: "把原始檔編譯成 wiki 知識層：建卡、更新主題索引、記 manifest；支援 raw/ 與外部 repo（alias::路徑）。Triggers: wiki-ingest, ingest, 建卡, 加進 wiki, 編譯到 wiki, 批次匯入。"
 ---
 
 # wiki-ingest：素材 → 知識層

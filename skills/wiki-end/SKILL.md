@@ -1,6 +1,6 @@
 ---
 name: wiki-end
-description: "結束工作：本 session 今天的收尾入口——寫 hot.md 今日結論、落盤、commit、交接。單一 session 與協作主管共用；有主管在線時一般 session 只回報主管。使用者明說「結束工作」「收工」「今天到這裡」「收尾」「今天的總結」，或 /wiki-end 時觸發。一般對話裡「總結一下這段」只是要對話內摘要，不觸發。"
+description: "收工：寫 hot.md 今日結論、落盤、commit、交接；有主管在線時只回報主管。Triggers: 結束工作, 收工, 今天到這裡, 收尾, wiki-end。（對話裡「總結一下這段」不觸發）"
 ---
 
 # wiki-end：結束工作

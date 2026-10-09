@@ -1,6 +1,6 @@
 ---
 name: wiki-init
-description: "建立新 vault（團隊／PM 的專案管理系統），引導填出專屬的 CLAUDE.md（管理對象、術語、工作習慣、資料夾用途）。產出薄骨架，不複製 skills／commands。團隊導入請走 references/setup-interview.md。Triggers on: wiki-init, 建立 wiki, 導入這套系統, 我要用這套系統, 初始化 vault, 團隊導入, 新人第一次用。"
+description: "建立新 vault 並引導填出專屬的 CLAUDE.md；產出薄骨架，不複製 skills／commands。Triggers: wiki-init, 建立 wiki, 導入這套系統, 初始化 vault, 團隊導入。"
 ---
 
 # wiki-init：建立新 vault

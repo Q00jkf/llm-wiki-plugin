@@ -1,6 +1,6 @@
 ---
 name: wiki-fold
-description: "把 wiki/log.md 最舊的約 2^k 條（對齊日期邊界）操作紀錄摺疊成一頁摘要（wiki/folds/），extractive、不憑空生成；可選封存原文讓 log.md 變短。Dry-run 預設只印到 stdout。Triggers on: fold the log, run a fold, run wiki-fold, log rollup, 摺疊 log, 壓縮 log, log 太長."
+description: "把 wiki/log.md 最舊的 2^k 條摺成一頁 extractive 摘要（wiki/folds/），預設 dry-run 只印不寫。Triggers: wiki-fold, 摺疊 log, 壓縮 log, log 太長, log rollup。"
 ---
 
 # wiki-fold：log.md 摺疊

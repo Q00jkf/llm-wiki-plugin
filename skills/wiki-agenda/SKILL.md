@@ -1,6 +1,6 @@
 ---
 name: wiki-agenda
-description: "日程管理：wiki/agenda.md 是唯一真相來源，一行一事，由 agenda.py 讀寫。使用者說某日有會／要交件／每月 X 日做 Y、問這週要做什麼／有沒有逾期、要把日程匯到 Google Calendar 或 Telegram 推播時用。Triggers on: 日程, 行程, 排程, 哪天有會, 要交件, 每月幾號, 這週要做什麼, 逾期, 提醒我, agenda, 匯 ics, 日曆。"
+description: "日程：wiki/agenda.md 是唯一真相來源，agenda.py 讀寫；排期、查逾期、匯 ics／推播。Triggers: 日程, 行程, 排程, 哪天有會, 要交件, 每月幾號, 這週要做什麼, 逾期, 提醒我, agenda, 日曆。"
 ---
 
 # wiki-agenda：日程

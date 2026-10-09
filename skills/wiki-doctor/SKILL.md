@@ -1,6 +1,6 @@
 ---
 name: wiki-doctor
-description: "知識庫老化健檢。量測 vault 成熟度、抓出 log 過大／單頁過大／hot 沒輪替／健檢過期／來源檔消失／repo 路徑失效／守門失聯，並說明每一項該怎麼處理；也涵蓋 tidy_check／stale_check／log_index 三支守門腳本的用法。Triggers on: wiki-doctor, 健檢, 知識庫體檢, 系統老化, vault 狀態, 這個 wiki 還健康嗎, 該整理了嗎。"
+description: "知識庫老化健檢：成熟度、log／單頁過大、hot 沒輪替、來源檔消失、守門失聯，附每項的處理方式。Triggers: wiki-doctor, 健檢, 體檢, 系統老化, vault 狀態, 該整理了嗎。"
 ---
 
 # wiki-doctor：老化健檢

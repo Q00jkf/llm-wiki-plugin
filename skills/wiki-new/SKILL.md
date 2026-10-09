@@ -1,6 +1,6 @@
 ---
 name: wiki-new
-description: "開一個新的工作資料夾（專案／產品／客戶／交付夾）並在 wiki 登錄：複製 Templates/_folder-template/ 到 raw/<name>/、寫 _README.md 執行節點、建 topic stub、更新 index／log。也定義 _README.md 的維護規則與取用副本夾（_manifest.json）模式。Triggers on: wiki-new, 開新資料夾, 新專案, 新產品, 建資料夾, new folder, _README 怎麼寫, 執行節點, 取用副本夾, 稽核夾。"
+description: "開新工作資料夾（raw/<name>/）並在 wiki 登錄：_README 執行節點、topic stub、index、log；也定義 _README 維護規則與取用副本夾。Triggers: wiki-new, 開新資料夾, 新專案, 新產品, _README 怎麼寫, 取用副本夾。"
 ---
 
 # wiki-new：開新資料夾 ＋ 登錄

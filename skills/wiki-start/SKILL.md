@@ -1,6 +1,6 @@
 ---
 name: wiki-start
-description: "開始工作：本 session 今天的開工入口——接上次的進度、做 vault 自訂的開工項目、在協作模式下向主管報到。系統層檢查（vault 狀態、日程、tidy、規則對帳）已由 SessionStart hook 自動跑，本 skill 不重複。使用者說「開始工作」「開工」或 /wiki-start 時觸發。"
+description: "開工：接上次的進度、做 vault 自訂的開工項目、協作模式下向主管報到。系統層檢查由 SessionStart hook 跑，本 skill 不重複。Triggers: 開始工作, 開工, wiki-start。"
 ---
 
 # wiki-start：開始工作

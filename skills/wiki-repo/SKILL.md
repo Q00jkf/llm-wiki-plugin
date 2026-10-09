@@ -1,6 +1,6 @@
 ---
 name: wiki-repo
-description: "把散在各處的 git 專案／資料夾掛進同一個 wiki 管理。註冊、列出、掃描變更、解除註冊。檔案留在原地不搬家，wiki 只存指標。Triggers on: wiki-repo, 註冊 repo, 加入外部專案, 管理多個 git, 掃描 repo, 這個 wiki 也要管 XXX, 我的專案散在好幾個資料夾。"
+description: "把散在各處的 git 專案掛進同一個 wiki：註冊／列出／掃描變更／解除。檔案留在原地，wiki 只存指標。Triggers: wiki-repo, 註冊 repo, 加入外部專案, 掃描 repo, 專案散在好幾個資料夾。"
 ---
 
 # wiki-repo

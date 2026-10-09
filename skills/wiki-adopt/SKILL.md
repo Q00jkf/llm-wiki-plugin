@@ -1,6 +1,6 @@
 ---
 name: wiki-adopt
-description: "既有 vault 改用 plugin 版系統：找出 skill／command 撞名、把客製化搬到個人層、刪掉 vault 自帶的舊版。用於「我本來就有 wiki，怎麼接上這個 plugin」「兩份同名的要用哪個」「升級成新版系統」。Triggers on: wiki-adopt, 撞名, 我本來就有 wiki, 升級系統, 遷移到 plugin, 兩份同名, 舊 vault 接新系統。"
+description: "既有 vault 接上 plugin：找出 skill／command 撞名、客製搬到個人層、刪掉 vault 自帶的舊版。Triggers: wiki-adopt, 撞名, 我本來就有 wiki, 升級系統, 遷移到 plugin, 兩份同名。"
 ---
 
 # wiki-adopt：既有 vault 接上 plugin

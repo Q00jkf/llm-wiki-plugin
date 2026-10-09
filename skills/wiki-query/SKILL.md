@@ -1,6 +1,6 @@
 ---
 name: wiki-query
-description: "從知識庫查詢並附來源引用。依序讀 hot → index → 指定頁，會變動的數值一律回正本即時讀。Triggers on: wiki-query, 查一下, 我們有沒有, 這個規格是多少, 之前怎麼決定的, 從 wiki 查, 知識庫裡有什麼。"
+description: "從知識庫查詢並附來源引用：hot → index → 指定頁；會變動的數值一律回正本即時讀。Triggers: wiki-query, 查一下, 我們有沒有, 之前怎麼決定的, 從 wiki 查。"
 ---
 
 # wiki-query：查詢

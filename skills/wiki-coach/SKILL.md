@@ -1,6 +1,6 @@
 ---
 name: wiki-coach
-description: "看這個 vault 的實際狀態，只告訴你下一步做哪一件事；也回答「為什麼要這樣設計」與「我這樣寫對嗎」。新人入口。Triggers on: 怎麼用, 下一步, 給我建議, 我卡住了, 這樣對嗎, 新手, 教我, coach, wiki-coach, 該做什麼, 不知道從哪開始。"
+description: "看這個 vault 的實際狀態，只講下一步該做的一件事；也答「為什麼這樣設計」「我這樣寫對嗎」。新人入口。Triggers: 怎麼用, 下一步, 給我建議, 我卡住了, 這樣對嗎, 新手, 教我, coach。"
 ---
 
 # wiki-coach：只講一件事
