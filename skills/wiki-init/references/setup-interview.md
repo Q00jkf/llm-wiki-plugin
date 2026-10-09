@@ -70,7 +70,7 @@ wiki/ 只是目錄                              coordination 有人看、健檢�
 | B4 | **誰負責定期健檢**（`/wiki-doctor`）？多久一次？ | 沒人跑＝規則靜靜死掉而沒人發現 |
 | B5 | 有沒有人只能看不能改？ | → `wiki-repo` 的 `writable` 與寫入權限四級 |
 
-> 多 session 主管制是**內建功能**，不是訪談題：第二個 Claude session 開起來就 `/wiki-collab takeover`。
+> 多 session 主管制是**內建功能**，不是訪談題：第二個 Claude session 開起來就說「你來當主管」。
 > 訪談只問人（誰維護、誰能改），不問 session。
 
 🔴 **B2–B4 只要有一題答「還沒想」，就先別擴大範圍。** 沒有維護者的區塊會在三個月內腐爛。

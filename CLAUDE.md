@@ -58,26 +58,30 @@
 
 ---
 
-## 🔴 守門腳本：部分掃描不落盤
+## 🔴 守門腳本：落盤的那個數字必須是算完全部得出的
 
-守門腳本把結果寫進 `wiki/meta/_guard-status/<機器>.json`；`vault_state` 讀它印「健檢過期 N 天」
-與趨勢（`trend_report`）。**加了過濾參數的執行 MUST 不寫 `_guard_status.record()`。**
+守門腳本把結果寫進 `wiki/meta/_guard-status/<機器>.json`；`vault_state` 讀它印
+「健檢過期 N 天」與趨勢（`trend_report`）。
 
-| 檔 | 條件 | 怎麼做對的 |
+🔑 **判準只有一條：`record()` 寫進去的那個值，是不是這次執行真的算完全部得出的。**
+不是「有沒有加旗標」—— 旗標縮的是**計算**還是只縮**顯示**，結論相反：
+
+| 旗標縮的是 | 要不要守衛 | 實例 |
 |---|---|---|
-| `rules_check.py` | `if not a.only:` | 只跑 F1,F3 不算一次完整對帳 |
-| `tidy_check.py` | `if whole:` | 指定路徑就不是 whole |
-| `stale_check.py` | `scope=rel` | 另一種解法：落盤但標明掃了哪個範圍 |
-| `agenda.py` | `not a.tag and a.days == 預設` | **2026-10-10 補的**，原本無條件落盤 |
+| **計算**（跳過檢查、只掃子樹、數字來自過濾後的集合）| **MUST 守衛，不落盤** | `rules_check.py:268 if not a.only`（`total` 只累加 `want` 內的）<br>`tidy_check.py:444 if whole`（指定路徑＝只掃子樹）<br>`agenda.py not a.tag and a.days==預設`（`n` 來自過濾後的窗口） |
+| **只縮顯示**（迴圈已把全部算完，過濾只發生在列印）| **MUST 不要守衛，照常落盤** | vault 的 `tidy-check.py:497 if target == ROOT`、`occupancy-check.py:441 if coord == COORD` 的 `--only` 是這一種 |
+| 兩者皆非，但範圍可標明 | 落盤並帶 `scope=` | `stale_check.py:151` |
+
+🔴 **守衛加錯方向一樣會出事**：對「只縮顯示」的旗標加守衛，會讓一次**完整掃描**不算
+「跑過了」→ 觸發假的「守門失聯／健檢過期」。假綠與假紅都是同一個錯誤的兩面。
 
 為什麼不是「verdict 印對就好」：verdict 在畫面上，看完就沒了；落盤那筆會被當成
 「這台機器某日完整掃過」沿用 N 天，還會進趨勢 —— 一次 `--tag QMS` 讓趨勢看起來像
 「5 項降到 1 項」。**畫面上的假綠是一次性的，落盤的假綠是持久的。**
 
-🔑 verdict 要不要跟著縮，看**那次執行有沒有真的算完全部**：
-一次掃描全部算完、旗標只過濾顯示 → verdict 維持全域（否則「加旗標就變綠」）；
-檢查彼此獨立、跳過就是真的沒查 → verdict 跟著縮才誠實。
-兩種語意可以並存，但 `--help` MUST 各自寫明是哪一種。
+> 2026-10-10 這條寫了兩版。第一版寫成「加了過濾參數的執行 MUST 不落盤」，被 vault 側
+> 以四支腳本的實證駁回 —— 那個寫法會逼「只縮顯示」的旗標加上錯的守衛。
+> `--help` MUST 寫明自己的旗標是哪一種。
 
 ---
 
@@ -94,7 +98,13 @@
 
 ## 改完要做的
 
-1. **跑測試**：`claude plugin test plugins/pixel-office` —— 目前**只有 pixel-office 有測試**，plugin 本體沒有，行為改動要實跑驗證，不要宣告「應該可以」
+1. **跑測試**（三組，全綠才算改完）：
+   ```bash
+   python scripts/test_skeleton_check.py        # 骨架對帳
+   python scripts/test_template_coverage.py     # 樣板跟不跟得上＋文件教的指令叫不叫得到
+   claude plugin test plugins/pixel-office      # 辦公室
+   ```
+   行為改動要實跑驗證，不要宣告「應該可以」。**合併或刪 skill／command 時，第二組會抓出文件裡的死引用。**
 2. 改了行為就 bump 對應的 `.claude-plugin/plugin.json` 版本號
 3. commit 用自己的 session 名當 author：`git -c user.name="<短代號>" commit ...`（只改 `user.name`，不動 email、不 `--global`）
 4. 本機生效：`/plugin update`

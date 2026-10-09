@@ -90,7 +90,7 @@ Templates/             ← _README模板、AI對話紀錄模板、_folder-templa
 |---|---|---|
 | `raw/<對象>/` ＋ `Templates/_folder-template/` | **專案／產品線**。`_README.md` 是該夾的執行節點（進度儀表板）| `/wiki-new <name>` 開夾 |
 | `wiki/agenda.md` ＋ `wiki/meta/agenda-system.md` | **日程**。唯一真相來源，開場自動印窗口 | `/wiki-agenda add "…"` |
-| `wiki/meta/coordination.md` | **多 session 分工**。第二個 session 開起來就啟用主管制 | `/wiki-collab takeover` |
+| `wiki/meta/coordination.md` | **多 session 分工**。第二個 session 開起來就啟用主管制 | 說「你來當主管」 |
 | `raw/.manifest.json` 的 `repos` | **檔案資產**。散在各處的專案掛進來，檔案留原地；多人權限看擁有者 | `/wiki-repo discover`／`add` |
 | `wiki/{catalog,topics}/` ＋ `hot/index/log` | **知識庫**。raw → wiki 的編譯產物 | `/wiki-ingest` |
 | `wiki/ops/*.md` | 按需規則模組（空殼，有東西才寫）| 彈性層，隨用隨填 |

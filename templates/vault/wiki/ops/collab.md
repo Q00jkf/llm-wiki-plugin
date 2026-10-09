@@ -22,7 +22,7 @@ updated: {{today}}
 
 ## 分工
 
-專責角色（職責、必讀、守門腳本、目前持有者）各一張卡在 `wiki/meta/roles/`，`/wiki-role list` 看全部；這裡不重寫。
+專責角色（職責、必讀、守門腳本、目前持有者）各一張卡在 `wiki/meta/roles/`，問「**角色清單**」看全部；這裡不重寫。
 現在哪個 session 在線、在做什麼 → `wiki/meta/coordination.md`。
 
 ## 收尾要跑的本 vault 自訂檢查

@@ -63,7 +63,7 @@
 
 | 層 | 內容 | 怎麼來 |
 |---|---|---|
-| **內建即有** | 上表五件事的機制、健檢、教練、Read 守門 | plugin 給的，裝上就有；要用就啟用（如第二個 session 開起來就 `/wiki-collab takeover`） |
+| **內建即有** | 上表五件事的機制、健檢、教練、Read 守門 | plugin 給的，裝上就有；要用就啟用（如第二個 session 開起來就說「你來當主管」） |
 | **彈性修改** | 管什麼對象、`raw/` 怎麼分、術語、查詢路由、工作習慣、鐵律／踩雷 | `/wiki-init` 問出來，填進該 vault 的 `CLAUDE.md`；之後隨用隨改 |
 
 內建層升級 plugin 就更新；彈性層在 vault 裡，升級不會覆蓋。
@@ -166,11 +166,11 @@
 | `/wiki-coach [問題]` | 教練：看 vault 狀態只講下一步一件事；答「為什麼」「這樣對嗎」 |
 | `/wiki-new <name>` | 開新資料夾：`Templates/_folder-template/` → `raw/<name>/`，建 `_README` 執行節點＋topic stub |
 | `/wiki-agenda [add "…"｜done 關鍵字｜--ics｜--notify]` | 日程：逾期／今天／7 天內窗口；匯出 ics／Telegram 文字 |
-| `/wiki-collab [status｜takeover｜wrapup]` | 多 session 主管：三層權責、派工、佔用登記、每日收尾 |
-| `/wiki-role [take <角色>｜list｜new <角色>｜save]` | 角色卡（`wiki/meta/roles/`）：接手只讀必讀清單、卡上記持有者的 ListAgents 名稱、收工更新進行中事項；持有者在線不搶 |
-| `/wiki-meet <題目> <參與者…> <輸出資料夾>` | 多 session 開會：參與者依職責提案、彼此直接協調，第一位主持、寫方案、散會通知主管；主管開會後不參與 |
 | `/wiki-fold [k]` | 把 log.md 最舊 2^k 條摺成一頁摘要 |
 | `/wiki-adopt [vault]` | 既有 vault 接上 plugin：找撞名、搶救裁示／踩雷、刪 vault 自帶舊版 |
+
+> 🔴 **協作／開會／角色卡／開工收工沒有 command**，用說法觸發（2026-10-09 六個 skill 併成 `wiki-collabteam` 與 `wiki-day`，對應 command 同時刪除）：
+> 「**你來當主管**」「大家狀態」「誰在動 XX」｜「**開會**」＋題目／參與者／輸出資料夾｜「**你是 &lt;角色&gt;，接手**」「角色清單」｜「**開工**」「**收工**」。
 
 ### 新 vault 只有薄骨架
 

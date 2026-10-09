@@ -161,9 +161,11 @@ SessionStart 時 `vault_state.py` 量測 vault，依成熟度給不同深度的�
 | `/wiki-coach [問題]` | 不知道下一步／卡住／這樣對嗎 → 看 vault 現況，只講一件該做的事 |
 | `/wiki-new <名稱>` | 開新資料夾：`_README` 執行節點＋topic stub，更新 index／log |
 | `/wiki-agenda [add…\|done…\|--ics\|--notify]` | 日程：逾期／今天／7 天內；匯出 ics／Telegram 文字 |
-| `/wiki-collab [status\|takeover\|wrapup]` | 多 session 主管：登記、派工、佔用、收尾 |
 | `/wiki-fold [k]` | 把 log.md 最舊 2^k 條摺成一頁摘要 |
 | `/wiki-adopt` | 本來就有 wiki、想接上 plugin：撞名分析＋搶救裁示後才刪 vault 版 |
+
+> 🔴 **協作／開會／角色卡／開工收工沒有 command**，用說法觸發（2026-10-09 六個 skill 併成 `wiki-collabteam` 與 `wiki-day`，對應 command 同時刪除）：
+> 「**你來當主管**」「大家狀態」「誰在動 XX」｜「**開會**」＋題目／參與者／輸出資料夾｜「**你是 &lt;角色&gt;，接手**」「角色清單」｜「**開工**」「**收工**」。
 
 ---
 
