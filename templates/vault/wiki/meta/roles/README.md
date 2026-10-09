@@ -15,12 +15,15 @@ updated: {{today}}
 
 | 要做什麼 | 怎麼做 |
 |---|---|
-| 接手角色 | `/wiki-role take <角色>`（或對它說「你是 <角色>，接手」） |
-| 看誰持有哪張卡 | `/wiki-role list` |
-| 建新卡 | `/wiki-role new <角色>` —— 使用者明說要建才做 |
-| 收工更新進行中事項 | `wiki-day` 的收工流程會呼叫，不用自己記得 |
+| 接手角色 | 對它說「**你是 &lt;角色&gt;，接手**」 |
+| 看誰持有哪張卡 | 問「**角色清單**」，或自己跑 `python scripts/role_cards.py list` |
+| 建新卡 | 說「**建一張 &lt;角色&gt; 的卡**」—— 使用者明說要建才做 |
+| 收工更新進行中事項 | 收工流程會自動呼叫，不用自己記得 |
 
-範本在 `Templates/角色卡模板.md`，流程在 plugin `wiki-collabteam` 的 `role.md`。
+> 這裡寫的是**說法**不是 slash command：指令會隨 plugin 改版被合併或刪掉，
+> 觸發詞與腳本相對穩定。流程在 plugin `llm-wiki:wiki-collabteam` 的 `role.md`。
+
+範本在 `Templates/角色卡模板.md`。
 
 🔴 「定義」段（職責、必讀、守門腳本）**只有使用者或主管能改**，持有者只維護「進行中事項」。
 
