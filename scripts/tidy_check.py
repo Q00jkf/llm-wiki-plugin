@@ -16,6 +16,7 @@
   T6 超出型別上限  依 maintenance 型別查 token／項數上限（POLICY），外加檔頭自訂「≤N 行」
   T7 跨檔編號斷鏈  引用 coordination 的 `#N` 已不存在（僅 wiki/meta/coordination.md 存在時）
   T8 裁示未清登記  log.md 說「不得再提」的 `#N` 在 coordination 仍未結案（同上）
+  T9 登記逾期提醒  coordination 未結案列的登記日超過 STALE_DAYS 天（提醒用，不計入待整理）
 
 用法：tidy_check.py [path] [--quiet]。exit 一律 0，只列候選不擋 git。
 """
@@ -23,6 +24,7 @@ import json
 import os
 import re
 import sys
+from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -44,6 +46,12 @@ POLICY = {
     "append-only":   {"tokens": None, "items": None, "guard_bytes": 100_000},
     "frozen":        {"tokens": None, "items": None},            # 凍結：不受上限約束，也不掃
 }
+
+# T9：登記超過這麼多天還沒結案就每天提醒一次（使用者 2026-10-09 裁示 1 天）。
+# 登記日寫在狀態欄開頭（`2026-10-08｜🟡 …`），不另外加欄 —— 加欄會讓待辦列變 5 欄，
+# 被 T1 的「進度勾選表」排除條件吃掉。
+STALE_DAYS = 1
+LOGGED_ON = re.compile(r"^(\d{4}-\d{2}-\d{2})")
 
 SNAPSHOT_FILES = ("wiki/hot.md", "wiki/meta/coordination.md")
 COORD = "wiki/meta/coordination.md"
@@ -261,6 +269,34 @@ def coord_rows():
     return out
 
 
+def check_stale(lines, md: Path):
+    """T9：未結案的待辦放著不動就會沉掉，所以每天提醒一次。回 (逾期列, 沒寫登記日的數量)。
+
+    只看 coordination；沒有登記日的不逐條唸（舊列全都沒有，一次噴幾十條等於沒人看），
+    只在摘要裡報個數。
+    """
+    if _rel(md) != COORD:
+        return [], 0
+    today, hits, undated = date.today(), [], 0
+    for i, l in enumerate(lines, 1):
+        if not ROW_ID.match(l) or CLOSED_MARK.search(l) or CLOSED_WORD.search(l):
+            continue
+        cells = [c.strip() for c in l.split("|")]
+        m = LOGGED_ON.match(cells[-2]) if len(cells) >= 2 else None
+        if not m:
+            undated += 1
+            continue
+        try:
+            days = (today - date.fromisoformat(m.group(1))).days
+        except ValueError:
+            undated += 1
+            continue
+        if days > STALE_DAYS:
+            hits.append((i, days, ROW_ID.match(l).group(1), _WS.sub(" ", cells[2] if len(cells) > 2 else l)[:40]))
+    hits.sort(key=lambda h: -h[1])
+    return hits, undated
+
+
 def _rel(md: Path):
     return md.relative_to(ROOT).as_posix()
 
@@ -360,6 +396,12 @@ def main():
     undeclared = check_undeclared() if whole else []
     total += len(undeclared)
 
+    # T9 不計入 total：它是「該催了」不是「該整理了」，混進去會讓 verdict 永遠不綠
+    stale, undated = [], 0
+    coord_md = ROOT / COORD
+    if whole and coord_md.is_file():
+        stale, undated = check_stale(coord_md.read_text(encoding="utf-8", errors="replace").split(chr(10)), coord_md)
+
     kinds = ", ".join(sorted({k for _, _, k, _ in files})) or "—"
     if not quiet:
         print("=== tidy-check ===")
@@ -385,6 +427,15 @@ def main():
     if not quiet:
         print()
         print("-" * 60)
+    if stale or undated:
+        head = f"📌 coordination 登記逾 {STALE_DAYS} 天未結案：{len(stale)} 條"
+        if stale:
+            head += "　" + "、".join(f"#{n}({d}天) {t}" for _, d, n, t in stale[:3])
+            if len(stale) > 3:
+                head += f" …另 {len(stale) - 3} 條"
+        if undated:
+            head += f"（另 {undated} 條沒寫登記日）"
+        print(head)
     if total == 0:
         print("verdict : 🟢 CLEAN —— 無待整理項目")
     else:
