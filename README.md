@@ -107,7 +107,7 @@
 | `log_index.py --query <詞>` | 查操作日誌 |
 | `adopt.py` | 既有 vault 要改用本系統：算差異、找撞名（`/wiki-adopt` 的後端） |
 | `role_cards.py` | 角色卡列表、接手成本估算（只算必讀清單）、登記持有者、建卡；`check` 驗卡上的 Obsidian 連結（檔案＋標題）沒有老化 |
-| `occupancy_check.py` | 多人同時改同一個檔的違規偵測（`/wiki-collab` 的後端） |
+| `occupancy_check.py` | 多人同時改同一個檔的違規偵測（多 session 協作的後端）。🔴 掛 obsidian-git 的 vault 要在 `raw/.manifest.json` 的 `config.occupancy_ignore_authors` 填自動備份帳號，否則佔用表會被洗成廢物 |
 | `audit_copy_check.py` | 取用副本夾與正本的一致性 |
 | `skeleton_check.py` | **骨架對帳**：你的 vault 跟現行 plugin 樣板差在哪（缺檔／可安全換／要融合），`--verbose` 連「判斷不用報」的也列出來。純讀；要寫檔走 `/wiki-init` 的升級模式 |
 
@@ -175,7 +175,7 @@
 ### 升級之後：讓已經建好的 vault 跟上
 
 plugin 升級時 skills 會自動更新，但**你的 vault 那些檔不會** —— 它們是建立那天的快照。
-新功能常常需要 vault 多一個檔或多一種格式（例：`/wiki-start`、`/wiki-end` 要讀
+新功能常常需要 vault 多一個檔或多一種格式（例：開工／收工要讀
 `wiki/ops/start.md`／`end.md`，那是 1.1.1 才加進樣板的），舊 vault 沒有就默默失效。
 
 對著既有 vault 跑一次 `/wiki-init <vault 路徑>`，它會進**升級模式**：
