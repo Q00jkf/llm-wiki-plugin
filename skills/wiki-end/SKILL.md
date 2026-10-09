@@ -17,6 +17,12 @@ vault 自訂的收尾項目在 **`wiki/ops/end.md`**（每個 vault 自己寫，
 | 主管在線，我不是主管 | **B. peer** |
 | 我就是主管 | **C. 主管** → `manager.md` |
 
+## 收工前先問自己一句（MUST，三條路都要）
+
+**今天有沒有發現、但還沒登記的問題？** 有就先進 `wiki/meta/coordination.md` 再收工
+（進哪一區、「等誰」怎麼填 → `wiki-collabteam` 的 `06-coordination格式.md`）。
+只寫在角色卡、`log.md` 或產出物裡的，等於沒有收件人，收工後就沉掉。
+
 ## A. 單一 session
 
 1. 照 `wiki/ops/end.md` 做 vault 自訂項目。
