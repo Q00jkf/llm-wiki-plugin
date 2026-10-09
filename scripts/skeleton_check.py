@@ -196,7 +196,11 @@ def classify(root: Path, template_dir=None, plugin_version=None):
     now = ver_tuple(plugin_version if plugin_version is not None else current_plugin_version())
     was = ver_tuple((sk or {}).get("plugin_version"))
     if now and was and now < was:
-        return ([], [], []), {"degraded": degraded, "downgrade": (was, now), "trivial": []}
+        return ([], [], []), {"degraded": degraded, "downgrade": (was, now), "trivial": [], "retired": []}
+    # plugin 這版不再提供的樣板檔：只說一聲，絕不碰 vault 裡那個檔。
+    # 判斷依據是「上次對帳記錄裡有、現在的樣板沒有」，所以降級模式（沒有 .skeleton.json）看不出來。
+    live = set(template_files(tdir))
+    retired = sorted(r for r, n in recorded.items() if r not in live and not n.get("opted_out"))
     missing, safe, custom, trivial = [], [], [], []
     for rel in template_files(tdir):
         note = recorded.get(rel, {})
@@ -244,7 +248,8 @@ def classify(root: Path, template_dir=None, plugin_version=None):
             custom.append({"rel": rel, "tpl_hash": tpl_hash, "local_hash": local_hash,
                            "sections": new_sections(tpl, local), "lines": lines, "n_added": n, "n_removed": gone,
                            "why": "樣板更新了，你也改過這個檔"})
-    return (missing, safe, custom), {"degraded": degraded, "downgrade": None, "trivial": trivial}
+    return (missing, safe, custom), {"degraded": degraded, "downgrade": None,
+                                     "trivial": trivial, "retired": retired}
 
 
 def write_skeleton(root: Path, tdir: Path, version: str, only=None, opted_out=None):
@@ -382,6 +387,10 @@ def main():
                     print(f"             {ln[:76]}")
                 if it["n_added"] > len(it["lines"]):
                     print(f"             … 另 {it['n_added'] - len(it['lines'])} 行")
+    if info.get("retired"):
+        print(f"\n[⚪ plugin 不再提供] {len(info['retired'])}　—— 你的檔不會被動，只是 plugin 這版起不再維護它")
+        for rel in info["retired"]:
+            print(f"      {rel}")
     if info["trivial"]:
         if a.verbose:
             print(f"\n[略過 —— 有差異但判斷不用報] {len(info['trivial'])}")

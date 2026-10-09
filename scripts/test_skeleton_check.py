@@ -215,6 +215,26 @@ class TestApply(Base):
         self.assertIn("融合", hist)
         self.assertIn("跳過", hist)
 
+    def test_17_retired_templates_are_reported_but_never_deleted(self):
+        """plugin 不再提供的樣板檔：要說一聲，但絕不碰 vault 裡那個檔。"""
+        self.seal()
+        (self.tpl / "wiki" / "ops" / "start.md").unlink()        # plugin 這版拿掉它
+        (_, _, _), info = self.run_classify()
+        self.assertEqual(info["retired"], ["wiki/ops/start.md"])
+        self.assertTrue((self.vault / "wiki" / "ops" / "start.md").is_file(),
+                        "樣板不再提供 ≠ 該刪掉使用者的檔")
+
+    def test_18_policy_globs_must_match_something(self):
+        """死 glob 會無聲腐爛：樣板改名後那條規則就失效了，而且沒人知道。"""
+        import fnmatch
+        rels = [p.relative_to(sc.TEMPLATE_DIR).as_posix()
+                for p in sc.TEMPLATE_DIR.rglob("*") if p.is_file()]
+        for g in sc.skip_globs():
+            if g == sc.POLICY:
+                continue
+            hit = any(fnmatch.fnmatch(r, g) or fnmatch.fnmatch(r, g.lstrip("*/")) for r in rels)
+            self.assertTrue(hit, f".skeleton-policy 的 `{g}` 沒有命中任何樣板檔（樣板改名了？）")
+
     def test_11_downgrade_is_not_reported(self):
         """plugin 降版（樣板比 vault 舊）只往前，不倒退。"""
         self.seal()

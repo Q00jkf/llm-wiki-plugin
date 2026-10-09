@@ -194,5 +194,13 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/skeleton_check.py" <vault> --apply-safe
 
 做了什麼、跳過什麼、升級史在 `wiki/meta/init-history.md`（腳本自動寫，人不手改）。
 
+## 🔴 這套對帳看不到什麼（要照實說，不要讓使用者以為升完就齊了）
+
+- **skill 層的格式要求**：plugin 的 skill 改了規則（例如「coordination 狀態欄要寫登記日」），
+  但那個要求沒有反映在 `templates/vault/` 的檔上 → 對帳偵測不到。
+- **被 `.skeleton-policy` 排除的檔**（`coordination.md`、`log.md`、`hot.md`…）：
+  它們的內容本來就每個 vault 不同，所以連格式變更也不比對。新格式只能靠 skill 在使用當下帶進來。
+- **降級模式**（第一次跑、沒有 `.skeleton.json`）：看不出 plugin 這版「刪掉」了哪些樣板檔。
+
 > 🔑 `init_vault.py --force` 也能補缺檔，但它不知道哪些是「你沒動過所以能安全換」，
 > 也不留對帳基準。升級一律走這裡，`--force` 只在建新 vault 中斷後補檔時用。
