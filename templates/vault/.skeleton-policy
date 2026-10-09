@@ -1,0 +1,20 @@
+# 骨架對帳政策 —— 哪些樣板檔「不比內容」
+#
+# 為什麼要有這份而不是寫在 skeleton_check.py 裡：這是一份會長的清單，
+# 而加樣板檔的人（改 templates/vault/ 的人）跟改腳本的人未必是同一次動作。
+# 清單放在被管理的東西旁邊，加檔時順手維護；寫在程式裡就會漏。
+#
+# 格式：一行一個 glob（相對 templates/vault/），`#` 之後是為什麼。
+# 本檔自己不會被複製進新 vault。
+#
+# ── 資料檔：內容本來就該長成每個 vault 自己的樣子，列入對帳等於每次都報「已客製」
+wiki/log.md                 # 歷程，append-only
+wiki/hot.md                 # 每日輪替
+wiki/index.md               # 導航，隨 vault 內容長
+wiki/agenda.md              # 日程
+wiki/meta/coordination.md   # 登記簿
+raw/.manifest.json          # ingest 來源紀錄
+.claude/settings.json       # 每台機器自己的權限與設定
+#
+# ── 佔位檔
+**/.gitkeep                 # 只為了讓 git 留住空資料夾

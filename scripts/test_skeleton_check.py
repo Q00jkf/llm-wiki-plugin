@@ -54,21 +54,22 @@ class Base(unittest.TestCase):
 class TestClassify(Base):
     def test_1_no_diff(self):
         self.seal()
-        (missing, safe, custom), degraded = self.run_classify()
+        (missing, safe, custom), info = self.run_classify()
+        degraded = info["degraded"]
         self.assertFalse(degraded)
         self.assertEqual((missing, safe, custom), ([], [], []))
 
     def test_2_missing_file(self):
         self.seal()
         (self.vault / "wiki" / "ops" / "start.md").unlink()
-        (missing, safe, custom), _ = self.run_classify()
+        (missing, safe, custom), _i = self.run_classify()
         self.assertEqual([m["rel"] for m in missing], ["wiki/ops/start.md"])
         self.assertEqual((safe, custom), ([], []))
 
     def test_3_template_changed_local_untouched(self):
         self.seal()
         write(self.tpl / "wiki" / "ops" / "start.md", "## 開工" + NL + "項目 A" + NL + "項目 B（新）" + NL)
-        (missing, safe, custom), _ = self.run_classify()
+        (missing, safe, custom), _i = self.run_classify()
         self.assertEqual([s["rel"] for s in safe], ["wiki/ops/start.md"])
         self.assertIn("項目 B（新）", safe[0]["lines"])
         self.assertEqual(custom, [])
@@ -77,7 +78,7 @@ class TestClassify(Base):
         self.seal()
         write(self.tpl / "wiki" / "ops" / "start.md", "## 開工" + NL + "項目 A" + NL + "項目 B（新）" + NL)
         write(self.vault / "wiki" / "ops" / "start.md", "## 開工" + NL + "項目 A" + NL + "我自己加的" + NL)
-        (missing, safe, custom), _ = self.run_classify()
+        (missing, safe, custom), _i = self.run_classify()
         self.assertEqual([c["rel"] for c in custom], ["wiki/ops/start.md"])
         self.assertIn("項目 B（新）", custom[0]["lines"])
         self.assertEqual(safe, [])
@@ -85,7 +86,8 @@ class TestClassify(Base):
     def test_5_degraded_without_skeleton(self):
         write(self.vault / "wiki" / "ops" / "start.md", "## 開工" + NL + "我改過" + NL + "項目 A" + NL)
         write(self.tpl / "wiki" / "ops" / "start.md", "## 開工" + NL + "項目 A" + NL + "樣板新規則" + NL)
-        (missing, safe, custom), degraded = self.run_classify()
+        (missing, safe, custom), info = self.run_classify()
+        degraded = info["degraded"]
         self.assertTrue(degraded)
         self.assertEqual([c["rel"] for c in custom], ["wiki/ops/start.md"])
         self.assertEqual(safe, [], "降級模式分不出未客製，不該有②")
@@ -96,7 +98,7 @@ class TestClassify(Base):
         sk = json.loads((self.vault / sc.SKELETON).read_text(encoding="utf-8"))
         sk["files"]["Templates/t.md"] = {"opted_out": True}
         write(self.vault / sc.SKELETON, json.dumps(sk, ensure_ascii=False))
-        (missing, _, _), _ = self.run_classify()
+        (missing, _, _), _i = self.run_classify()
         self.assertEqual(missing, [])
 
     def test_7_placeholder_lines_are_not_news(self):
@@ -104,13 +106,22 @@ class TestClassify(Base):
         self.seal()
         write(self.tpl / "CLAUDE.md", "# {{name}}" + NL + "規則一" + NL + "{{domain}}" + NL)
         write(self.vault / "CLAUDE.md", "# 我的 vault" + NL + "規則一" + NL)
-        (_, _, custom), _ = self.run_classify()
+        (_, _, custom), _i = self.run_classify()
         self.assertEqual(custom, [], "差異只有佔位符時不該列出來")
 
     def test_8_heading_with_note_is_same_section(self):
         """`## 分工` 與 `## 分工（註解）` 是同一段，不該報成新段落。"""
         self.assertTrue(sc.same_heading("## 分工", "## 分工（名稱會變，以專長欄為準）"))
         self.assertFalse(sc.same_heading("## 分工", "## 派工"))
+
+
+    def test_12_policy_file_controls_what_is_compared(self):
+        """不對帳的清單在 .skeleton-policy（樣板旁邊），不是寫在腳本裡。"""
+        write(self.tpl / sc.POLICY, "wiki/ops/*.md   # 測試：ops 不對帳" + NL + "# 整行註解" + NL)
+        rels = sc.template_files(self.tpl)
+        self.assertNotIn("wiki/ops/start.md", rels, "policy 列的 glob 應該被排除")
+        self.assertNotIn(sc.POLICY, rels, "政策檔自己不該被對帳")
+        self.assertIn("CLAUDE.md", rels, "沒列到的照常對帳")
 
 
 class TestApply(Base):
@@ -138,7 +149,7 @@ class TestApply(Base):
         write(self.tpl / "CLAUDE.md", "# {{name}}" + NL + "規則一" + NL + "樣板新規則" + NL)
         write(self.vault / "CLAUDE.md", "# 我的" + NL + "規則一" + NL + "我的客製" + NL)
         sc.apply_safe(self.vault, self.tpl)
-        (_, _, custom), _ = self.run_classify()
+        (_, _, custom), _i = self.run_classify()
         self.assertEqual([c["rel"] for c in custom], ["CLAUDE.md"], "待融合的檔被 apply_safe 吞掉了")
         sk = json.loads((self.vault / sc.SKELETON).read_text(encoding="utf-8"))
         self.assertEqual(sk["files"]["wiki/ops/start.md"]["local_hash"],
@@ -146,7 +157,7 @@ class TestApply(Base):
         hist = (self.vault / sc.HISTORY).read_text(encoding="utf-8")
         self.assertIn("wiki/ops/start.md", hist, "升級史要記這次做了什麼")
         # 再跑一次 classify 應該乾淨了
-        (missing, safe, custom), _ = self.run_classify()
+        (missing, safe, custom), _i = self.run_classify()
         self.assertEqual((missing, safe), ([], []))
 
     def test_11_downgrade_is_not_reported(self):
@@ -156,7 +167,7 @@ class TestApply(Base):
         sk["plugin_version"] = "9.9.9"
         write(self.vault / sc.SKELETON, json.dumps(sk, ensure_ascii=False))
         write(self.tpl / "wiki" / "ops" / "start.md", "## 開工" + NL + "舊版內容" + NL)
-        (missing, safe, custom), _ = sc.classify(self.vault, self.tpl, plugin_version="1.0.0")
+        (missing, safe, custom), _i = sc.classify(self.vault, self.tpl, plugin_version="1.0.0")
         self.assertEqual((missing, safe, custom), ([], [], []), "降版不該報任何東西")
 
 

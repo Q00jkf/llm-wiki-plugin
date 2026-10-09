@@ -55,7 +55,8 @@ def main():
 
     files = sorted(p for p in TEMPLATES.rglob("*") if p.is_file())
     dirs = sorted({p.parent.relative_to(TEMPLATES) for p in files} - {Path(".")})
-    real = [p for p in files if p.name != ".gitkeep"]
+    # `.skeleton-policy` 是對帳政策（給 skeleton_check 讀），不是 vault 的內容，不複製
+    real = [p for p in files if p.name not in (".gitkeep", ".skeleton-policy")]
     # 🔴 既有檔永遠不碰：CLAUDE.md／log.md／rulings.md 是使用者累積的裁示與日誌，覆寫＝無聲清空。
     # （#33：dry-run 曾把 19 個既有檔全標「會建立」，--force 真的會蓋掉 log.md）
     exists = {p for p in real if (root / p.relative_to(TEMPLATES)).exists()}

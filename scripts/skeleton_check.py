@@ -42,28 +42,42 @@ SKELETON = ".skeleton.json"
 NL = chr(10)
 HISTORY = "wiki/meta/init-history.md"
 
-# 這些檔的內容本來就該長成每個 vault 自己的樣子（樣板只是空殼），不列入骨架對帳 ——
-# 列進去等於每次都報「已客製」，純噪音。骨架對帳只管「規則與模板」，不管「資料」。
-DATA_FILES = {
-    "wiki/log.md",            # 歷程，append-only
-    "wiki/hot.md",            # 每日輪替
-    "wiki/index.md",          # 導航，隨 vault 內容長
-    "wiki/agenda.md",         # 日程
-    "wiki/meta/coordination.md",  # 登記簿
-    "raw/.manifest.json",     # ingest 來源紀錄
-    ".claude/settings.json",  # 每台機器自己的設定
-}
+POLICY = ".skeleton-policy"
+
+# 佔位符：init_vault.render() 在建 vault 時把 `{{key}}` 換成實際值。
+# 🔴 兩邊是同一套語法，改一邊要改另一邊（這裡只判斷存在，不做代換，所以沒有共用模組）。
+PLACEHOLDER = "{{"
+
+
+def skip_globs(tdir=None):
+    """讀 `.skeleton-policy`：不比內容的樣板檔（glob，相對樣板根）。
+
+    清單放在樣板旁邊而不是寫在這支腳本裡 —— 加樣板檔的人跟改腳本的人不是同一次動作，
+    寫在程式裡就會漏。政策檔自己也不對帳、不複製進 vault。
+    """
+    tdir = tdir or TEMPLATE_DIR
+    p = tdir / POLICY
+    out = [POLICY]
+    if not p.is_file():
+        return out
+    for line in p.read_text(encoding="utf-8", errors="replace").split(NL):
+        pat = line.split("#")[0].strip()
+        if pat:
+            out.append(pat)
+    return out
 
 
 def template_files(tdir=None):
-    """樣板裡該納入對帳的檔（相對路徑）。.gitkeep 是佔位，不是骨架。"""
+    """樣板裡該納入對帳的檔（相對路徑）。排除 `.skeleton-policy` 列的那些。"""
+    import fnmatch
     tdir = tdir or TEMPLATE_DIR
+    skips = skip_globs(tdir)
     out = []
     for p in sorted(tdir.rglob("*")):
         if not p.is_file():
             continue
         rel = p.relative_to(tdir).as_posix()
-        if p.name == ".gitkeep" or rel in DATA_FILES:
+        if any(fnmatch.fnmatch(rel, g) or fnmatch.fnmatch(rel, g.lstrip("*/")) for g in skips):
             continue
         out.append(rel)
     return out
@@ -121,7 +135,7 @@ def added_lines(tpl: Path, local: Path, limit=6):
     for d in difflib.unified_diff(rd(local), rd(tpl), lineterm="", n=0):
         if d.startswith("+") and not d.startswith("+++"):
             t = d[1:].strip()
-            if t and "{{" not in t:
+            if t and PLACEHOLDER not in t:
                 out.append(t)
     return out[:limit], len(out)
 
@@ -147,7 +161,11 @@ def load_skeleton(root: Path):
 
 
 def classify(root: Path, template_dir=None, plugin_version=None):
-    """回 (三組, 降級模式?)。每項 = {rel, tpl_hash, local_hash, sections, lines, n_added, why}"""
+    """回 (三組, info)。
+
+    info = {degraded, downgrade, trivial}。trivial 是「有差異但判斷不用報」的檔與原因 ——
+    🔴 降噪一定要留得下紀錄，否則判斷錯就等於把變更藏起來，跟這支腳本要解決的病一樣。
+    """
     tdir = template_dir or TEMPLATE_DIR
     sk = load_skeleton(root)
     degraded = sk is None
@@ -156,8 +174,8 @@ def classify(root: Path, template_dir=None, plugin_version=None):
     now = ver_tuple(plugin_version if plugin_version is not None else current_plugin_version())
     was = ver_tuple((sk or {}).get("plugin_version"))
     if now and was and now < was:
-        return ([], [], []), degraded
-    missing, safe, custom = [], [], []
+        return ([], [], []), {"degraded": degraded, "downgrade": (was, now), "trivial": []}
+    missing, safe, custom, trivial = [], [], [], []
     for rel in template_files(tdir):
         note = recorded.get(rel, {})
         if note.get("opted_out"):
@@ -177,7 +195,8 @@ def classify(root: Path, template_dir=None, plugin_version=None):
                 lines, n = added_lines(tpl, local)
                 secs = new_sections(tpl, local)
                 if not secs and n == 0:
-                    continue      # 差異只有佔位符／你自己加的東西，樣板沒帶來新內容 → 不用唸
+                    trivial.append((rel, "有差異，但扣掉佔位符與你自己加的之後，樣板沒帶來新內容"))
+                    continue
                 custom.append({"rel": rel, "tpl_hash": tpl_hash, "local_hash": local_hash,
                                "sections": secs, "lines": lines, "n_added": n,
                                "why": "降級模式：沒有 .skeleton.json，無法分辨是你改的還是樣板改的"})
@@ -186,7 +205,8 @@ def classify(root: Path, template_dir=None, plugin_version=None):
             continue                                  # 樣板沒變，絕大多數落這裡
         lines, n = added_lines(tpl, local)
         if not new_sections(tpl, local) and n == 0:
-            continue      # 樣板這次沒帶來新內容（差異只有佔位符／潤稿）→ 不用唸
+            trivial.append((rel, "樣板這次只動了佔位符或潤稿，沒有新內容"))
+            continue
         if local_hash == base_local:
             safe.append({"rel": rel, "tpl_hash": tpl_hash, "local_hash": local_hash,
                          "sections": new_sections(tpl, local), "lines": lines, "n_added": n,
@@ -195,7 +215,7 @@ def classify(root: Path, template_dir=None, plugin_version=None):
             custom.append({"rel": rel, "tpl_hash": tpl_hash, "local_hash": local_hash,
                            "sections": new_sections(tpl, local), "lines": lines, "n_added": n,
                            "why": "樣板更新了，你也改過這個檔"})
-    return (missing, safe, custom), degraded
+    return (missing, safe, custom), {"degraded": degraded, "downgrade": None, "trivial": trivial}
 
 
 def write_skeleton(root: Path, tdir: Path, version: str, only=None, opted_out=None):
@@ -244,7 +264,7 @@ def apply_safe(root: Path, template_dir=None, version=None):
     tdir = template_dir or TEMPLATE_DIR
     ver = version or current_plugin_version()
     sk_before = (load_skeleton(root) or {}).get("plugin_version")
-    (missing, safe, _), _ = classify(root, tdir, ver)
+    (missing, safe, _), _info = classify(root, tdir, ver)
     for it in missing + safe:
         dst = root / it["rel"]
         dst.parent.mkdir(parents=True, exist_ok=True)
@@ -261,6 +281,7 @@ def main():
     ap = argparse.ArgumentParser(add_help=True)
     ap.add_argument("vault", nargs="?", default=None)
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--verbose", action="store_true", help="連「有差異但判斷不用報」的也列出來")
     ap.add_argument("--apply-safe", action="store_true",
                     help="只做①②（補缺檔、換未客製的），不碰已客製的檔")
     a = ap.parse_args()
@@ -279,7 +300,8 @@ def main():
             print(f"升級史：{root / HISTORY}")
         return 0
 
-    (missing, safe, custom), degraded = classify(root)
+    (missing, safe, custom), info = classify(root)
+    degraded = info["degraded"]
     sk = load_skeleton(root) or {}
     if a.json:
         print(json.dumps({"vault": str(root), "degraded": degraded,
@@ -312,6 +334,13 @@ def main():
                     print(f"             {ln[:76]}")
                 if it["n_added"] > len(it["lines"]):
                     print(f"             … 另 {it['n_added'] - len(it['lines'])} 行")
+    if info["trivial"]:
+        if a.verbose:
+            print(f"\n[略過 —— 有差異但判斷不用報] {len(info['trivial'])}")
+            for rel, why in info["trivial"]:
+                print(f"      {rel}  —— {why}")
+        else:
+            print(f"\n（另有 {len(info['trivial'])} 個檔有差異但判斷不用報，--verbose 看是哪些）")
     print(f"\nverdict : 🟡 {total} 項（缺 {len(missing)}／可換 {len(safe)}／要融合 {len(custom)}）")
     print("          本腳本只比對，不寫任何檔。升級走 /wiki-init（它會逐組問你）")
     return 0
