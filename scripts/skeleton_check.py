@@ -30,6 +30,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
+import init_vault  # noqa: E402  —— 共用 render()，佔位符語法只有一處定義
 from _lib.filehash import md5_of  # noqa: E402
 from _lib.vaultpaths import find_vault_root  # noqa: E402
 
@@ -122,22 +123,43 @@ def new_sections(tpl: Path, local: Path):
     return [h for h in headings(tpl) if not any(same_heading(h, m) for m in mine)]
 
 
-def added_lines(tpl: Path, local: Path, limit=6):
-    """樣板新增的行。只看「多了什麼」——使用者自己加的東西他自己知道，不用唸回去。
+def diff_lines(tpl: Path, local: Path, limit=6):
+    """樣板相對於你的檔，多了哪幾行、少了幾行。回 (前 limit 行新增, 新增數, 刪除數)。
 
-    含 `{{…}}` 的行一律不算：那是 init 當下會被填掉的佔位符（`updated: {{today}}`、`# {{name}}`），
-    vault 裡早就是實際值，永遠比得出差異。2026-10-09 乾跑 wiki-test 時 9 個檔有 5 個
-    的「差異」全是這個，純誤報。
+    **新增**：講「這版多了什麼功能」用的。你自己加的東西你知道，不唸回去。
+    **刪除**：樣板廢掉一條規則也是升級，只看新增會整個漏掉
+    （llm-wiki-aegiverse-e4 2026-10-09 review 指出；該 vault 前一天剛廢掉一條判準）。
+
+    兩邊都先把「佔位符那一組行」拿掉再比：樣板的 `updated: {{today}}` 與 vault 的
+    `updated: 2026-09-21` 是同一行的兩個樣子，不先配掉的話，前者算新增、後者算刪除，
+    一行製造兩筆誤報。
     """
     import difflib
+    import re
     rd = lambda p: p.read_text(encoding="utf-8", errors="replace").split(chr(10)) if p.is_file() else []
-    out = []
-    for d in difflib.unified_diff(rd(local), rd(tpl), lineterm="", n=0):
+    tl, ll = rd(tpl), rd(local)
+    # 樣板的佔位符行 → 比對式（`updated: {{today}}` → `^updated:\s*.*$`），用來認出 vault 裡被填過的那一行
+    pats = []
+    for line in tl:
+        if PLACEHOLDER not in line:
+            continue
+        # 🔴 整行只有佔位符（`{{domain}}`）→ 比對式會變成 `^.*$`，把 local 每一行都當成它，
+        # 整個檔的差異被抹平。那種行沒有可辨識的骨架，只能放棄配對（代價是多報一筆，不是漏報）。
+        if not re.sub(r"\{\{\w+\}\}", "", line).strip():
+            continue
+        pats.append(re.compile("^" + re.sub(r"\\\{\\\{\w+\\\}\\\}", ".*", re.escape(line.strip())) + "$"))
+    tl = [l for l in tl if PLACEHOLDER not in l]
+    ll = [l for l in ll if not any(p.match(l.strip()) for p in pats)]
+    out, removed = [], 0
+    for d in difflib.unified_diff(ll, tl, lineterm="", n=0):
+        t = d[1:].strip()
+        if not t:
+            continue
         if d.startswith("+") and not d.startswith("+++"):
-            t = d[1:].strip()
-            if t and PLACEHOLDER not in t:
-                out.append(t)
-    return out[:limit], len(out)
+            out.append(t)
+        elif d.startswith("-") and not d.startswith("---"):
+            removed += 1
+    return out[:limit], len(out), removed
 
 
 def first_line(p: Path):
@@ -192,10 +214,13 @@ def classify(root: Path, template_dir=None, plugin_version=None):
         if degraded or base_tpl is None:
             # base 未知：只能比「你的 vs 現行樣板」，不同就當客製過
             if local_hash != tpl_hash:
-                lines, n = added_lines(tpl, local)
+                lines, n, _gone = diff_lines(tpl, local)
                 secs = new_sections(tpl, local)
+                # 降級模式不看「你有、樣板沒有」的行數：沒有 base 就分不出那是你加的
+                # 還是樣板廢掉的，而絕大多數是前者（wiki-test 的 rulings.md 有 80 行自己的裁示）。
+                # 報出來只會變噪音，所以這裡只認「樣板帶來了新內容」。
                 if not secs and n == 0:
-                    trivial.append((rel, "有差異，但扣掉佔位符與你自己加的之後，樣板沒帶來新內容"))
+                    trivial.append((rel, "有差異，但扣掉佔位符之後樣板沒帶來新內容（降級模式看不出刪除）"))
                     continue
                 custom.append({"rel": rel, "tpl_hash": tpl_hash, "local_hash": local_hash,
                                "sections": secs, "lines": lines, "n_added": n,
@@ -203,17 +228,21 @@ def classify(root: Path, template_dir=None, plugin_version=None):
             continue
         if tpl_hash == base_tpl:
             continue                                  # 樣板沒變，絕大多數落這裡
-        lines, n = added_lines(tpl, local)
-        if not new_sections(tpl, local) and n == 0:
-            trivial.append((rel, "樣板這次只動了佔位符或潤稿，沒有新內容"))
+        lines, n, gone = diff_lines(tpl, local)
+        if not new_sections(tpl, local) and n == 0 and gone == 0:
+            trivial.append((rel, "樣板這次只動了佔位符或潤稿，沒有新增也沒有刪除"))
             continue
-        if local_hash == base_local:
+        # 🔴 `local_hash == base_local` 只代表「上次對帳後沒再動」，不代表它曾經等於樣板。
+        # CLAUDE.md／wiki/ops/*.md 建 vault 當天就是真規則層、樣板是空殼，而且常常幾個月沒人動 ——
+        # 少了 base_local == base_tpl 這個條件，樣板一改它就落進「可安全換」，整份被覆蓋。
+        # （llm-wiki-aegiverse-e4 2026-10-09 review 實跑驗出；一開始就分岔的檔永遠只能進組③）
+        if local_hash == base_local and base_local == base_tpl:
             safe.append({"rel": rel, "tpl_hash": tpl_hash, "local_hash": local_hash,
-                         "sections": new_sections(tpl, local), "lines": lines, "n_added": n,
+                         "sections": new_sections(tpl, local), "lines": lines, "n_added": n, "n_removed": gone,
                          "why": "樣板更新了，你沒動過這個檔"})
         else:
             custom.append({"rel": rel, "tpl_hash": tpl_hash, "local_hash": local_hash,
-                           "sections": new_sections(tpl, local), "lines": lines, "n_added": n,
+                           "sections": new_sections(tpl, local), "lines": lines, "n_added": n, "n_removed": gone,
                            "why": "樣板更新了，你也改過這個檔"})
     return (missing, safe, custom), {"degraded": degraded, "downgrade": None, "trivial": trivial}
 
@@ -265,10 +294,12 @@ def apply_safe(root: Path, template_dir=None, version=None):
     ver = version or current_plugin_version()
     sk_before = (load_skeleton(root) or {}).get("plugin_version")
     (missing, safe, _), _info = classify(root, tdir, ver)
+    subs = {"name": root.name, "domain": "", "today": datetime.date.today().isoformat()}
     for it in missing + safe:
         dst = root / it["rel"]
         dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(str(tdir / it["rel"]), str(dst))
+        # 🔴 要走 render，否則 `updated: {{today}}` 原樣落地（2026-10-09 review 實跑驗出 3 個檔中招）
+        dst.write_bytes(init_vault.render(tdir / it["rel"], subs))
     done = [m["rel"] for m in missing] + [s["rel"] for s in safe]
     if done:
         append_history(root, sk_before, ver,
@@ -328,6 +359,8 @@ def main():
             print(f"      {it['rel']}" + (f"  —— {it['about']}" if it.get("about") else ""))
             for h in it.get("sections", [])[:3]:
                 print(f"         ＋新段落：{h}")
+            if it.get("n_removed"):
+                print(f"         －你有、樣板沒有：{it['n_removed']} 行（樣板這版廢掉的，或你自己加的）")
             if it.get("n_added"):
                 print(f"         ＋樣板多了 {it['n_added']} 行：")
                 for ln in it["lines"]:

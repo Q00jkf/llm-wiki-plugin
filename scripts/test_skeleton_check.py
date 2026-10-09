@@ -160,6 +160,43 @@ class TestApply(Base):
         (missing, safe, custom), _i = self.run_classify()
         self.assertEqual((missing, safe), ([], []))
 
+    def test_13_never_overwrite_a_file_that_never_matched_the_template(self):
+        """🔴 從第一天就跟樣板不一樣的檔，永遠不可以進組②（會被整檔覆蓋）。
+
+        `local_hash == base_local` 只代表「上次對帳後你沒再動它」，不代表它曾經等於樣板。
+        CLAUDE.md／wiki/ops/*.md 這種檔建 vault 當天就是真規則層、樣板是空殼，
+        而且常常好幾個月沒人動 → 樣板一改就落進「未客製，可安全換」→ 整份被蓋掉。
+        （llm-wiki-aegiverse-e4 2026-10-09 review 實跑驗出）
+        """
+        write(self.vault / "CLAUDE.md", "# 我的 vault" + NL + "我累積的規則層" + NL)  # 一開始就 ≠ 樣板
+        self.seal()
+        write(self.tpl / "CLAUDE.md", "# {{name}}" + NL + "規則一" + NL + "樣板改了一行" + NL)
+        (_, safe, custom), _i = self.run_classify()
+        self.assertEqual(safe, [], "從來不等於樣板的檔不可以被歸成『可安全換』")
+        self.assertEqual([c["rel"] for c in custom], ["CLAUDE.md"])
+        sc.apply_safe(self.vault, self.tpl)
+        self.assertIn("我累積的規則層", (self.vault / "CLAUDE.md").read_text(encoding="utf-8"),
+                      "apply_safe 把使用者的規則層蓋掉了")
+
+    def test_14_template_removals_are_reported(self):
+        """樣板「刪掉」一條規則也是升級。只看新增行會整個漏掉，而且理由字串會說謊。"""
+        self.seal()
+        write(self.tpl / "wiki" / "ops" / "start.md", "## 開工" + NL)   # 刪掉「項目 A」
+        (_, safe, custom), info = self.run_classify()
+        self.assertEqual(info["trivial"], [], "刪除不是潤稿，不可以被判成 trivial")
+        self.assertEqual(len(safe) + len(custom), 1, "樣板移除內容要報出來")
+        hit = (safe + custom)[0]
+        self.assertEqual(hit["n_removed"], 1)
+
+    def test_15_placeholders_are_rendered_when_copying(self):
+        """補缺檔時要經過 init_vault.render()，否則 `{{today}}` 原樣落地。"""
+        self.seal()
+        write(self.tpl / "wiki" / "ops" / "new.md", "updated: {{today}}" + NL + "# {{name}}" + NL)
+        sc.apply_safe(self.vault, self.tpl)
+        got = (self.vault / "wiki" / "ops" / "new.md").read_text(encoding="utf-8")
+        self.assertNotIn("{{", got, "佔位符沒有被代換就落地了")
+        self.assertIn(self.vault.name, got, "{{name}} 應該換成 vault 目錄名")
+
     def test_11_downgrade_is_not_reported(self):
         """plugin 降版（樣板比 vault 舊）只往前，不倒退。"""
         self.seal()

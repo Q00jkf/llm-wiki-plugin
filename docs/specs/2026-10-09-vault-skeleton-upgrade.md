@@ -189,7 +189,7 @@ Step 7  回報：做了什麼、跳過什麼、init-history 連結
 | `templates/vault/wiki/meta/init-history.md` | 新增（空殼＋檔頭說明「本檔由腳本寫，勿手改」） |
 | `.claude-plugin/plugin.json` | bump minor |
 | `README.md`／`docs/design.md` | 升級流程各補一行 |
-| `wiki/ops/tools.md`（各 vault） | 新腳本要登記，否則 `rules_check` F6 會報未登記 |
+| ~~`wiki/ops/tools.md`（各 vault）~~ | **不需要**。`rules_check.py` 的 F6 是 `sdir = c.root / "scripts"`，只掃 vault 自己的腳本；`skeleton_check.py` 住在 plugin，F6 看不到（llm-wiki-aegiverse-e4 2026-10-09 實跑 `[F6] 🟢 0 筆` 指正）。要不要為了好查而登記是規則層的另一個決定 |
 
 ## 10. 未決事項
 
@@ -241,3 +241,29 @@ spec 是動手前的決定，以下是實作與實跑 `wiki-test` 時才發現�
 
 12 支，`scripts/test_skeleton_check.py`。比 spec §8 多的：`test_12` 驗 policy 的 glob
 與政策檔自身不對帳；`test_10` 多驗待融合的檔不被吞掉。
+
+### 11.6 review 抓到的三條（2026-10-09，llm-wiki-aegiverse-e4）
+
+都是實跑驗出來的，不是讀程式碼的推測。三條都已修、各補一支測試。
+
+**🔴 組②會毀掉「本來就該跟樣板分岔」的檔**（`test_13`）
+`local_hash == base_local` 只代表「上次對帳後沒再動」，**不代表它曾經等於樣板**。
+`CLAUDE.md`／`wiki/ops/*.md` 建 vault 當天就是真規則層、樣板是空殼，而且常常幾個月沒人動 →
+樣板一改就落進「未客製，可安全換」→ 整份被 `copyfile` 蓋掉，連 `{{name}}` 都沒代換。
+修法：組② 多一個條件 `base_local == base_tpl`。一開始就分岔的檔**永遠**只能進組③。
+
+**🔴 樣板「刪掉」內容時不會被報**（`test_14`）
+原本只收 unified_diff 的 `+`。樣板廢掉一條過時規則 → 判成 trivial → 只有 `--verbose` 看得到，
+而且理由字串寫「只動了佔位符或潤稿」是**錯的**。降噪可查的前提是理由要真。
+修法：trivial 判準加入刪除行數。**但只在正常模式** —— 降級模式沒有 base，
+分不出「你有、樣板沒有」是你加的還是樣板廢的，而絕大多數是前者
+（wiki-test 的 `rulings.md` 有 80 行自己的裁示），算進去只會變噪音。報告端的標籤也照實寫成
+「你有、樣板沒有：N 行（樣板這版廢掉的，或你自己加的）」，不假裝分得出來。
+
+**🟡 補缺檔不經 `render()`**（`test_15`）
+`shutil.copyfile` 讓 `updated: {{today}}` 原樣落地（wiki-test 實跑 2 個檔中招）。
+修法：共用 `init_vault.render()`，`name` 取 vault 目錄名、`today` 取當天。
+
+連帶修掉一個自己引入的誤報：兩邊比對前要先把「佔位符那一組行」配掉
+（樣板 `updated: {{today}}` ↔ vault `updated: 2026-09-21` 是同一行的兩個樣子），
+否則一行製造兩筆。整行只有佔位符的（`{{domain}}`）無法定位，放棄配對 —— 代價是多報一筆，不是漏報。
