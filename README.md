@@ -74,7 +74,7 @@
 
 | 指令 | 做什麼 |
 |---|---|
-| `/wiki-init` | 建立新 vault，問三題後產出骨架 |
+| `/wiki-init` | 建立新 vault（問三題後產出骨架）；**目標已經是 vault 就進升級模式**，把骨架補到跟現行 plugin 一樣 |
 | `/wiki` | 現況：規模、有沒有老化訊號、下一步 |
 | `/wiki-new <名稱>` | 開一個新工作夾，附進度儀表板（`_README.md`） |
 | `/wiki-agenda add "…"` | 記日程；不帶參數印逾期／今天／7 天內 |
@@ -83,11 +83,8 @@
 | `/wiki-query <問題>` | 查詢，附來源；要數字時幫你開原檔 |
 | `/wiki-coach` | 系統教練，只講下一步 |
 | `/wiki-doctor` | 健檢：找過期、孤兒、死連結、規則漂移 |
-| `/llm-wiki:wiki-day`（開工） | 開始工作：接上次進度、做 vault 自訂開工項（`wiki/ops/start.md`）、向主管報到 |
-| `/llm-wiki:wiki-day`（收工） | 結束工作：寫 hot.md 今日結論、落盤、commit、交接；vault 自訂收尾項在 `wiki/ops/end.md` |
-| `/wiki-collab` | 同時開多個 Claude session 時的協調（主管制） |
-| `/wiki-role` | 角色卡：session 重開或 /clear 後接手同一個專責角色；主管從卡上對到現在的 session |
-| `/wiki-meet` | 開會：主管出題、點名參與者，參與者依職責提案並互相討論，結果寫進指定資料夾、散會通知主管 |
+| 說「開工」／「收工」 | 接上次進度、做 vault 自訂項（`wiki/ops/start.md`／`end.md`）、向主管報到；收工寫 hot.md 今日結論、落盤、commit、交接 |
+| 說「當主管」／「接手 &lt;角色&gt;」／「開會討論 X」 | 多 session 協作三件事，同一個 skill：**主管**（派工、撞檔仲裁、收尾）、**角色卡**（session 重開或 /clear 後接手同一個專責角色）、**開會**（出題、點名、各自提案、主持人寫方案） |
 | `/wiki-fold` | log 太長時摺疊成摘要 |
 | `/wiki-adopt` | 本來就有 wiki 的人接上這套系統 |
 
@@ -112,10 +109,12 @@
 | `role_cards.py` | 角色卡列表、接手成本估算（只算必讀清單）、登記持有者、建卡；`check` 驗卡上的 Obsidian 連結（檔案＋標題）沒有老化 |
 | `occupancy_check.py` | 多人同時改同一個檔的違規偵測（`/wiki-collab` 的後端） |
 | `audit_copy_check.py` | 取用副本夾與正本的一致性 |
+| `skeleton_check.py` | **骨架對帳**：你的 vault 跟現行 plugin 樣板差在哪（缺檔／可安全換／要融合），`--verbose` 連「判斷不用報」的也列出來。純讀；要寫檔走 `/wiki-init` 的升級模式 |
 
 其餘 4 支是內部件，由指令或 hook 驅動，不必手動跑：
 `init_vault.py`（`/wiki-init`）、`wiki_fold_parse.py`（`/wiki-fold`）、
 `big_read_guard.py`（PreToolUse：擋整份讀大檔）、`_guard_status.py`（守門分類帳）。
+`test_*.py` 是 plugin 自己的測試（`skeleton_check` 20 支），不在 vault 跑。
 另有 `_lib/` 放共用函式。
 
 開 Claude Code 時 `vault_state`／`tidy_check`／`agenda`／`rules_check` 會自動跑一次，有事才出聲。
@@ -172,6 +171,23 @@
 /plugin marketplace add Q00jkf/llm-wiki-plugin
 /plugin install llm-wiki
 ```
+
+### 升級之後：讓已經建好的 vault 跟上
+
+plugin 升級時 skills 會自動更新，但**你的 vault 那些檔不會** —— 它們是建立那天的快照。
+新功能常常需要 vault 多一個檔或多一種格式（例：`/wiki-start`、`/wiki-end` 要讀
+`wiki/ops/start.md`／`end.md`，那是 1.1.1 才加進樣板的），舊 vault 沒有就默默失效。
+
+對著既有 vault 跑一次 `/wiki-init <vault 路徑>`，它會進**升級模式**：
+
+```
+缺檔        → 樣板有、你沒有。整批問一次，補進來
+未客製      → 你沒動過，樣板有更新。整批問一次，直接換新版
+已客製      → 你改過的檔。一個一個讀 diff，講新版多了什麼、建議怎麼融合，你說可以才寫
+```
+
+**一個 byte 都不自動改**，三組都問過你才動手。做過的事會記進 `wiki/meta/init-history.md`。
+只想看差異不想動 → `python scripts/skeleton_check.py <vault>`，純讀。
 
 ### 選裝：pixel-office 像素辦公室
 
