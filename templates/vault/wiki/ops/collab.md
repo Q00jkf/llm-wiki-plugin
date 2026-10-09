@@ -8,7 +8,7 @@ updated: {{today}}
 
 > 這裡管的是**同一個使用者開多個 Claude session**。多**人**協作走 `wiki-repo`（各自 clone、各自 add、權限看擁有者），不在這份。
 
-> **規則層**，個案不寫這裡。流程與權責見 plugin `wiki-collab` skill；**當前狀態**（主管／佔用／待裁示）見 `wiki/meta/coordination.md`。
+> **規則層**，個案不寫這裡。流程與權責見 plugin `wiki-collabteam` skill 的 `collab.md`；**當前狀態**（主管／佔用／待裁示）見 `wiki/meta/coordination.md`。
 > 這裡只寫本 vault 的**共用檔清單**與**分工**。空著沒關係。
 
 ## 共用檔（動之前 `ListAgents` ＋ 登記佔用）

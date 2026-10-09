@@ -53,7 +53,7 @@
 |---|---|---|
 | 1 | **專案／產品線** | `wiki-new`（開工作資料夾＋`_README` 執行節點＝進度儀表板）|
 | 2 | **日程** | `wiki-agenda`（唯一真相來源、開場窗口、`--ics` 匯出、`--notify`）|
-| 3 | **多 session 分工** | `wiki-collab`（主管制：登記／派工／回報節奏／撞檔仲裁／收尾）。多**人**不走這裡：同事各自 clone＋`add`，權限看 #4 |
+| 3 | **多 session 分工** | `wiki-collabteam`／`collab.md`（主管制：登記／派工／回報節奏／撞檔仲裁／收尾）。多**人**不走這裡：同事各自 clone＋`add`，權限看 #4 |
 | 4 | **檔案資產與權限** | `wiki-repo`（多來源掛載、可攜路徑、擁有者、寫入權限四級）|
 | 5 | **知識庫** | `wiki-core`／`wiki-ingest`／`wiki-query`／`wiki-fold` |
 

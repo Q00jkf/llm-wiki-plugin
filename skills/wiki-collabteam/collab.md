@@ -1,8 +1,3 @@
----
-name: wiki-collab
-description: "多 session 協作的主管（coordinator）角色：登記／彙整／撞檔仲裁／派工／收尾。當本 session 被要求「當主管／協調各 session」，或已是 wiki/meta/coordination.md 記載的現任主管且收到 cross-session-message（peer 回報狀態、申請動共用檔、回報衝突），或使用者問「大家在幹嘛」「誰在動 XX」「目前主管是誰」時觸發。純被動，靠訊息到達的回合觸發，不用 /loop 自我喚醒。Triggers: 當主管, 你來協調, 大家狀態, 誰在動, 檔案佔用, 主管是誰, coordination, 派工, 收尾, 整合各session, 階段回報."
----
-
 # wiki-collab：多 session 主管協調
 
 前提：全域規則已定義 `ListAgents`／`SendMessage`（deferred，先 `ToolSearch("select:SendMessage")`）、

@@ -1,7 +1,7 @@
 # 收尾：主管段
 
 > 驗證 → 清理 → 落盤 → push → 交接
-> 上層：`wiki-end/SKILL.md`（協作模式且本 session 是主管時才走這份；2026-10-04 自 wiki-collab/05-收尾.md 搬入）
+> 上層：`wiki-end/SKILL.md`（協作模式且本 session 是主管時才走這份；2026-10-04 自 wiki-collab/05-收尾.md 搬入；該 skill 2026-10-09 併入 wiki-collabteam）
 🔴 **順序不可顛倒：先驗證，再落盤，最後 push。** 驗證失敗就不落盤，免得把壞狀態記成事實。
 
 ## A. 驗證（全部要綠才往下）
@@ -22,7 +22,7 @@
 
 | 檔 | 刪什麼 |
 |---|---|
-| `wiki/meta/coordination.md` | ① 退休／離線的 session 列（含卸任前主管）② 已釋放的佔用列 ③ 已裁示／不做／已消解的待辦列 ④ **展開成多行的列**：原文搬進當天 log（`<details>` 包）、本頁縮成一行指向 log（見 `wiki-collab` 06）；本頁超過約 8 KB 時逐列檢查 |
+| `wiki/meta/coordination.md` | ① 退休／離線的 session 列（含卸任前主管）② 已釋放的佔用列 ③ 已裁示／不做／已消解的待辦列 ④ **展開成多行的列**：原文搬進當天 log（`<details>` 包）、本頁縮成一行指向 log（見 `wiki-collabteam` 的 `06-coordination格式.md`）；本頁超過約 8 KB 時逐列檢查 |
 | 當天用過的 `_README.md` | ① 已完成的缺口列與工作順序列 ② 已被裁示不做的列 ③ 與現況矛盾的過期敘述 |
 | `wiki/hot.md` | 依檔頭輪替規則修剪（≤150 行；標「里程碑保留」者不刪） |
 

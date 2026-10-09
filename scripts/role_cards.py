@@ -2,7 +2,7 @@
 """role_cards —— 角色卡（wiki/meta/roles/<角色>.md）的列表、交接成本估算、登記持有者、建卡。
 
 為什麼：session 關掉或 /clear 後沒有記憶、ListAgents 名稱也會變；角色卡讓新 session 照卡接手，
-主管從卡上的 agent 欄對到現在的 ListAgents 名稱，不必逐一發訊確認。流程見 plugin `wiki-role` skill。
+主管從卡上的 agent 欄對到現在的 ListAgents 名稱，不必逐一發訊確認。流程見 plugin `wiki-collabteam` skill 的 role.md。
 
 用法：
     python role_cards.py list                 # 所有角色：持有者（ListAgents 名稱）、接手時間、職稱、必讀份數、進行中行數

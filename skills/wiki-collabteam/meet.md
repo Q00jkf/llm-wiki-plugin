@@ -1,8 +1,3 @@
----
-name: wiki-meet
-description: "多 session 開會討論：主管出題目、點名參與者（不限 team）、指定結果放哪個資料夾，參與者各從自己的職責提案、彼此直接討論，第一位參與者主持並寫出方案，散會時通知主管。主管開會後不參與，只回答主持人決定不了的裁示。使用者說「開會討論 XX」「找 A、B 討論出方案」「讓他們自己討論」，或本 session 收到 wiki-meet 開會通知（訊息開頭 `📋 開會`）、主持人的確認／協調請求、主持人送來的 `請裁示：` 時觸發。不設期限，主持人判斷有結果就散會。Triggers: 開會, 討論出方案, 讓他們討論, wiki-meet, 📋 開會, 請裁示, 散會."
----
-
 # wiki-meet：多 session 開會討論
 
 前提：`ListAgents`／`SendMessage`（deferred，先 `ToolSearch("select:SendMessage")`）的規則見全域 CLAUDE.md；

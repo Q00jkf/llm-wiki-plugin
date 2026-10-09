@@ -2,7 +2,7 @@
 description: 多 session 開會：主管出題、點名參與者、指定結果資料夾；參與者依職責提案並彼此討論，第一位主持、散會時通知主管。
 ---
 
-Read the `wiki-meet` skill and follow it exactly.
+Read the `wiki-collabteam` skill, then follow its `meet.md`。
 
 $ARGUMENTS
 

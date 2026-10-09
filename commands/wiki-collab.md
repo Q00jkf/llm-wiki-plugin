@@ -2,7 +2,7 @@
 description: 多 session 協作主管：接手／狀態彙整／派工／收尾。子指令 status｜takeover｜wrapup。
 ---
 
-Read the `wiki-collab` skill and follow it exactly.
+Read the `wiki-collabteam` skill, then follow its `collab.md`（再依該檔的表進 01-～07-）。
 
 $ARGUMENTS
 

@@ -1,8 +1,3 @@
----
-name: wiki-role
-description: "角色卡：讓 session 關掉、/clear 或換視窗後接手同一個專責角色（例：QMS 專員、某產品線負責人）。每個角色一張卡 wiki/meta/roles/<角色>.md，記職責、必讀清單、守門腳本、辦公室登記參數、進行中事項，以及目前持有者的 ListAgents 名稱。使用者說「你是 <角色>，接手」「接手 <角色>」「我是誰的角色」、主管問「<角色> 現在是哪個 session」「角色清單」，或 /wiki-role 時觸發。收工時由 wiki-end 呼叫 save。Triggers: 接手, 你是, 角色卡, 角色清單, wiki-role, role card, 交接."
----
-
 # wiki-role：角色卡與接手
 
 為什麼：session 沒有跨視窗記憶，ListAgents 名稱在重開或 `/clear` 後也會變（只有使用者能 `/rename`，session 改不了自己的名字）。

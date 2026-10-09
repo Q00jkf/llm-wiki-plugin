@@ -77,7 +77,7 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/new_folder.py" <name> [--under raw] [--sub
 | 2 | 寫 `_README.md`（代換名稱／日期／份數／目錄樹） | 腳本 |
 | 3 | 建 `wiki/topics/<name>.md` stub（`status: initializing`） | 腳本 |
 | 4 | `wiki/index.md` `## Topics` 加一列；`wiki/log.md` 最上方加 `## 日期 \| new \| <name>` | 腳本 |
-| 5 | 🔴 **CLAUDE.md「資料夾用途」表加一列**（腳本只提醒，不動 CLAUDE.md）。`/wiki-new` 是使用者下的指令，加這一列＝執行該指令的一部分，**直接加、回報加了什麼**；不算「改規則層」（規則層＝鐵律／流程，見 `wiki-collab` 01） | 你 |
+| 5 | 🔴 **CLAUDE.md「資料夾用途」表加一列**（腳本只提醒，不動 CLAUDE.md）。`/wiki-new` 是使用者下的指令，加這一列＝執行該指令的一部分，**直接加、回報加了什麼**；不算「改規則層」（規則層＝鐵律／流程，見 `wiki-collabteam` 的 `01-邊界與權責.md`） | 你 |
 
 先 `--dry-run` 給使用者看，確認後才實際執行。目標已存在會拒絕，不覆寫。
 
