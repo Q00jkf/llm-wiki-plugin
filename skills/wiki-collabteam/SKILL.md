@@ -14,13 +14,18 @@ description: "多 session 團隊協作：當主管（派工／撞檔仲裁／收
 | 開會討論、收到 `📋 開會` 通知、主持人送來「請裁示：」 | `meet.md` |
 | 「你是 &lt;角色&gt;，接手」／問角色清單／收工更新角色卡「進行中事項」 | `role.md` |
 
-子指令對應（三個指令名都還在，沒有改使用習慣）：
+## 子指令（使用者可能直接說這些詞）
 
-| 指令 | 進哪一份 |
-|---|---|
-| `/wiki-collab [status｜takeover｜wrapup]` | `collab.md` |
-| `/wiki-meet <題目> <參與者…> <輸出資料夾>` | `meet.md` |
-| `/wiki-role [take <角色>｜list｜new｜save]` | `role.md` |
+| 說法 | 做什麼 | 讀 |
+|---|---|---|
+| `status`（預設） | 進入路徑 3：讀 `wiki/meta/coordination.md` ＋ `ListAgents` 核對，輸出彙整表 | `collab.md` |
+| `takeover` | 進入路徑 1：接任主管（舊主管仍在線先問使用者） | `collab.md` |
+| `wrapup` | 走 **`wiki-day`** 的 `end.md`（主管段 `end-manager.md`）：驗證 → 清理 → 落盤 → push → 交接點 | — |
+| `take <角色>`／「你是 &lt;角色&gt;，接手」 | 讀卡、查前一位持有者、只讀必讀清單、登記、報到 | `role.md` |
+| `list` | 角色清單＋在線核對 | `role.md` |
+| `new <角色>` | 從範本建卡（**使用者明說要建才做**） | `role.md` |
+| `save` | 更新本 session 角色卡的進行中事項（`wiki-day` 的 `end.md` 會呼叫） | `role.md` |
+| 開會（題目＋參與者＋輸出資料夾） | 缺任何一項必填就先問，不要猜 | `meet.md` |
 
 > 2026-10-09 由 `wiki-collab`＋`wiki-meet`＋`wiki-role` 三個 skill 合併（使用者裁示）。
 > 合併的只有 frontmatter 與入口，**三份內容一字未改**，各自的鐵律留在各自那份裡。

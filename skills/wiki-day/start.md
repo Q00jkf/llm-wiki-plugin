@@ -1,8 +1,3 @@
----
-name: wiki-start
-description: "開工：接上次的進度、做 vault 自訂的開工項目、協作模式下向主管報到。系統層檢查由 SessionStart hook 跑，本 skill 不重複。Triggers: 開始工作, 開工, wiki-start。"
----
-
 # wiki-start：開始工作
 
 vault 自訂的開工項目在 **`wiki/ops/start.md`**（每個 vault 自己寫，本 skill 不管內容）；不存在就跳過並在回報裡說一句。

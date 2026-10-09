@@ -82,4 +82,4 @@
 4. `role_cards.py check --quiet`：有斷掉的連結或「疑似抄了 _README」就修正後再 commit。
 5. commit 這張卡（和當天其他自己的檔一起）。
 
-主管收工（`wiki-end` 主管段）時讀各卡的進行中事項彙整，不改別人的卡。
+主管收工（`wiki-day` 的 `end-manager.md`）時讀各卡的進行中事項彙整，不改別人的卡。

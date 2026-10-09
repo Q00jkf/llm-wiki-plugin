@@ -1,8 +1,3 @@
----
-name: wiki-end
-description: "收工：寫 hot.md 今日結論、落盤、commit、交接；有主管在線時只回報主管。Triggers: 結束工作, 收工, 今天到這裡, 收尾, wiki-end。（對話裡「總結一下這段」不觸發）"
----
-
 # wiki-end：結束工作
 
 vault 自訂的收尾項目在 **`wiki/ops/end.md`**（每個 vault 自己寫，本 skill 不管內容）；不存在就跳過並在回報裡說一句。
@@ -15,7 +10,7 @@ vault 自訂的收尾項目在 **`wiki/ops/end.md`**（每個 vault 自己寫，
 |---|---|
 | 沒有主管，或主管不在線 | **A. 單一 session** |
 | 主管在線，我不是主管 | **B. peer** |
-| 我就是主管 | **C. 主管** → `manager.md` |
+| 我就是主管 | **C. 主管** → `end-manager.md` |
 
 ## 收工前先問自己一句（MUST，三條路都要）
 
@@ -42,7 +37,7 @@ vault 自訂的收尾項目在 **`wiki/ops/end.md`**（每個 vault 自己寫，
 
 ## C. 主管
 
-走 `manager.md`（驗證 → 清理 → 落盤 → push → 交接）。落盤時由主管寫 hot.md 今日結論一塊，彙整所有 peer 的回報。
+走 `end-manager.md`（驗證 → 清理 → 落盤 → push → 交接）。落盤時由主管寫 hot.md 今日結論一塊，彙整所有 peer 的回報。
 
 ## hot.md 今日結論格式
 

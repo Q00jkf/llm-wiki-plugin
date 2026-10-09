@@ -77,7 +77,7 @@ wiki/index.md          ← 全局目錄
 wiki/hot.md            ← 最近上下文（輪替制 ≤150 行）
 wiki/log.md            ← 操作日誌（只增不減，只能 Grep）
 wiki/{catalog,topics,questions,projects}/   ← projects/ 是專案頁，不是知識頁
-wiki/ops/{ingest,query,naming,collab,rulings,start,end}.md  ← 規則模組（空殼，有東西才寫；start／end 由 wiki-start／wiki-end 讀）
+wiki/ops/{ingest,query,naming,collab,rulings,start,end}.md  ← 規則模組（空殼，有東西才寫；start／end 由 `wiki-day` 讀）
 wiki/agenda.md         ← 日程唯一真相來源
 wiki/meta/{coordination,agenda-system}.md
 Templates/             ← _README模板、AI對話紀錄模板、_folder-template（/wiki-new 用）
@@ -137,7 +137,7 @@ plugin 不自動改 `obsidian.json`（Obsidian 執行中改它會被覆蓋，且
 
 **為什麼需要**：建骨架是一次性快照。plugin 升級後 `skills/` 會跟著更新（從 plugin 讀），
 但已建好的 vault 那些檔永遠停在建立那天，而且沒有東西會發現。
-實例：`wiki-start`／`wiki-end` 是 1.1.1 加的，skill 在那個 vault 早就能用，
+實例：開工／收工的 vault 自訂項（現在的 `wiki-day`）是 1.1.1 加的，skill 在那個 vault 早就能用，
 但它要讀的 `wiki/ops/start.md`／`end.md` 根本不存在。
 
 🔴 **一個 byte 都不自動改。** 三組分開問，使用者說可以才寫。
@@ -158,7 +158,7 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/skeleton_check.py" <vault> --json
 列檔名，**每個補一句「這個檔是幹嘛的」**（讀樣板的第一個標題與開頭，不要只丟路徑）。
 
 > 缺 4 個檔：
-> - `wiki/ops/start.md`、`wiki/ops/end.md` —— 開工／收工時這個 vault 自訂的項目（`/wiki-start`、`/wiki-end` 會讀）
+> - `wiki/ops/start.md`、`wiki/ops/end.md` —— 開工／收工時這個 vault 自訂的項目（`wiki-day` 會讀）
 > - …
 > 補進來？[y/n]
 

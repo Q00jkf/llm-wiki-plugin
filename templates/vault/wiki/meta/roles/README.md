@@ -18,7 +18,7 @@ updated: {{today}}
 | 接手角色 | `/wiki-role take <角色>`（或對它說「你是 <角色>，接手」） |
 | 看誰持有哪張卡 | `/wiki-role list` |
 | 建新卡 | `/wiki-role new <角色>` —— 使用者明說要建才做 |
-| 收工更新進行中事項 | `wiki-end` 會呼叫，不用自己記得 |
+| 收工更新進行中事項 | `wiki-day` 的收工流程會呼叫，不用自己記得 |
 
 範本在 `Templates/角色卡模板.md`，流程在 plugin `wiki-collabteam` 的 `role.md`。
 

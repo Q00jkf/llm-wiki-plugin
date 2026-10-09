@@ -176,7 +176,7 @@
 
 `/wiki-init` 把 plugin 的 `templates/vault/` 整棵複製過去（CLAUDE.md、manifest、index／hot／log／agenda、`wiki/ops/` 五個空規則模組、`wiki/meta/coordination.md`、`Templates/`），不複製 skills／commands —— 系統由 plugin 提供，`git pull` 就升級。要改新 vault 長什麼樣，改 `templates/vault/`，不改腳本。
 
-> `wiki/ops/{ingest,query,naming,collab,rulings}.md` 是兩個成熟 vault 各自長出來、高度重複的模組，init 時先把格子建好（1.1.1 起另加 `start`／`end`，給 `wiki-start`／`wiki-end` 讀）；CLAUDE.md 的 🔴 裁示／⚠️ 踩雷各只留最近 5 條一句話，全文進 `rulings.md` —— 開場載入量固定。
+> `wiki/ops/{ingest,query,naming,collab,rulings}.md` 是兩個成熟 vault 各自長出來、高度重複的模組，init 時先把格子建好（1.1.1 起另加 `start`／`end`，給 `wiki-day` 讀）；CLAUDE.md 的 🔴 裁示／⚠️ 踩雷各只留最近 5 條一句話，全文進 `rulings.md` —— 開場載入量固定。
 
 > 舊做法（每個範本夾帶一整套 skills 拷貝）已實測失敗：同一批範本的 skill 數量
 > 分岔成 **18 / 18 / 30 / 31**，而且沒有人發現。拷貝一定會漂。

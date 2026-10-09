@@ -83,8 +83,8 @@
 | `/wiki-query <問題>` | 查詢，附來源；要數字時幫你開原檔 |
 | `/wiki-coach` | 系統教練，只講下一步 |
 | `/wiki-doctor` | 健檢：找過期、孤兒、死連結、規則漂移 |
-| `/wiki-start` | 開始工作：接上次進度、做 vault 自訂開工項（`wiki/ops/start.md`）、向主管報到 |
-| `/wiki-end` | 結束工作：寫 hot.md 今日結論、落盤、commit、交接；vault 自訂收尾項在 `wiki/ops/end.md` |
+| `/llm-wiki:wiki-day`（開工） | 開始工作：接上次進度、做 vault 自訂開工項（`wiki/ops/start.md`）、向主管報到 |
+| `/llm-wiki:wiki-day`（收工） | 結束工作：寫 hot.md 今日結論、落盤、commit、交接；vault 自訂收尾項在 `wiki/ops/end.md` |
 | `/wiki-collab` | 同時開多個 Claude session 時的協調（主管制） |
 | `/wiki-role` | 角色卡：session 重開或 /clear 後接手同一個專責角色；主管從卡上對到現在的 session |
 | `/wiki-meet` | 開會：主管出題、點名參與者，參與者依職責提案並互相討論，結果寫進指定資料夾、散會通知主管 |
