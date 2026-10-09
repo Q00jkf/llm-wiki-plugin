@@ -7,7 +7,9 @@ title: 操作日誌
 
 > 🔴 **只增不減，一律用 append。** 檔案會長到無法整份讀 —— 查詢用 `Grep`，不要 `Read`。
 
+<!-- 每條開頭帶一行索引註解，`log_index.py --query` 靠它；漏了可以 `--apply` 回填 -->
 ## {{today}} | init | vault 建立
+<!-- log kind:init scope:vault -->
 
 - 由 `llm-wiki` plugin 的 `/wiki-init` 產生
 - 骨架：raw/ + wiki/{catalog,topics,questions,projects}

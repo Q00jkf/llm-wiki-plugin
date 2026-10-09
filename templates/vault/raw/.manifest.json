@@ -2,7 +2,9 @@
   "config": {
     "big_read_limit_bytes": 100000,
     "max_slice_lines": 2000,
-    "coach": "auto"
+    "coach": "auto",
+    "_occupancy_note": "occupancy_check.py 用：把自動備份／機器人帳號列在這裡，它們的 commit 不算「有人在動這個檔」。obsidian-git 的自動備份帳號一定要加，否則佔用表會被洗成廢物（實測：一個檔三天 76 筆全是同一個備份帳號）。寫 git user.name。",
+    "occupancy_ignore_authors": []
   },
   "repos": {
     "_scope_note": "外部來源 repo 註冊表。檔案留在原地，wiki 只存指標。sources 的 key 用 {alias}::{repo內相對路徑}；無 :: 者等同 _self。管理用 /wiki-repo。",
