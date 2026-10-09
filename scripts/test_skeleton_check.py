@@ -197,6 +197,24 @@ class TestApply(Base):
         self.assertNotIn("{{", got, "佔位符沒有被代換就落地了")
         self.assertIn(self.vault.name, got, "{{name}} 應該換成 vault 目錄名")
 
+    def test_16_record_seals_merged_and_opts_out_skipped(self):
+        """組③由 skill 融合完之後要能封存；使用者說不要的檔記 opted_out，之後不再報。"""
+        self.seal()
+        write(self.tpl / "wiki" / "ops" / "start.md", "## 開工" + NL + "項目 A" + NL + "樣板新規則" + NL)
+        write(self.tpl / "Templates" / "t.md", "模板" + NL + "樣板也動了這個" + NL)
+        write(self.vault / "wiki" / "ops" / "start.md", "## 開工" + NL + "項目 A" + NL + "樣板新規則" + NL + "我的客製" + NL)
+
+        sc.record(self.vault, self.tpl, merged=["wiki/ops/start.md"], skipped=["Templates/t.md"])
+
+        (_, safe, custom), _i = self.run_classify()
+        self.assertEqual([c["rel"] for c in custom], [], "融合過的檔不該再報")
+        self.assertEqual([s["rel"] for s in safe], [], "說不要的檔不該再報")
+        sk = json.loads((self.vault / sc.SKELETON).read_text(encoding="utf-8"))
+        self.assertTrue(sk["files"]["Templates/t.md"]["opted_out"])
+        hist = (self.vault / sc.HISTORY).read_text(encoding="utf-8")
+        self.assertIn("融合", hist)
+        self.assertIn("跳過", hist)
+
     def test_11_downgrade_is_not_reported(self):
         """plugin 降版（樣板比 vault 舊）只往前，不倒退。"""
         self.seal()

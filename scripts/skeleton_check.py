@@ -308,6 +308,21 @@ def apply_safe(root: Path, template_dir=None, version=None):
     return len(done)
 
 
+def record(root: Path, template_dir=None, merged=None, skipped=None, version=None):
+    """組③由 skill 融合完之後呼叫：封存這些檔的新 hash、把使用者說不要的記 opted_out。
+
+    🔴 只封存指定的 rel（同 write_skeleton 的理由）—— 沒處理的檔不能被宣告「已對帳」。
+    """
+    tdir = template_dir or TEMPLATE_DIR
+    ver = version or current_plugin_version()
+    was = (load_skeleton(root) or {}).get("plugin_version")
+    merged, skipped = list(merged or []), list(skipped or [])
+    if merged or skipped:
+        append_history(root, was, ver, [], [], merged, skipped)
+    write_skeleton(root, tdir, ver, only=merged, opted_out=skipped)
+    return len(merged) + len(skipped)
+
+
 def main():
     ap = argparse.ArgumentParser(add_help=True)
     ap.add_argument("vault", nargs="?", default=None)
