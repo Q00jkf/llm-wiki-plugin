@@ -98,6 +98,10 @@ class Ctx:
         return out
 
 
+# 佔位符：資料夾用途表寫 `raw/{專案代號}/`、`raw/members/<人>/` 這種命名規則時用的字元
+PLACEHOLDER = "{<*"
+
+
 # ---------------------------------------------------------------- F1
 def check_f1(c):
     raw = c.root / "raw"
@@ -109,10 +113,14 @@ def check_f1(c):
         return [], "CLAUDE.md 無「資料夾用途」表，略過"
     listed = set()
     for l in table:
-        for m in re.finditer(r"`raw/([^/`]+)/?`", l):
-            name = m.group(1)
-            if any(ch in name for ch in "{<*"):      # `raw/{專案代號}/` 是命名規則，不是某一夾
+        # 尾段允許續接，否則 `raw/members/<人>/` 整列對不上 —— 舊正則要求 `/` 後面緊接反引號，
+        # 而「按人分」正是多人 vault 的標準寫法，於是每場都誤報 members 沒登記（ISS-003）。
+        for m in re.finditer(r"`raw/([^/`]+)(/[^`]*)?`", l):
+            name, tail = m.group(1), m.group(2) or ""
+            if any(ch in name for ch in PLACEHOLDER):  # `raw/{專案代號}/` 是命名規則，不是某一夾
                 continue
+            if tail not in ("", "/") and not any(ch in tail for ch in PLACEHOLDER):
+                continue                               # `raw/issues/ISS-001.md` 是檔案路徑，不是在列夾
             listed.add(name)
     hits = []
     for miss in sorted(actual - listed):
