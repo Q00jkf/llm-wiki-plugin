@@ -193,10 +193,14 @@ def classify(root: Path, template_dir=None, plugin_version=None):
     degraded = sk is None
     recorded = (sk or {}).get("files", {})
     # 降版（樣板比 vault 記錄的舊）只往前不倒退：使用者裝回舊 plugin 時不該被要求「升級」回去
-    now = ver_tuple(plugin_version if plugin_version is not None else current_plugin_version())
+    local_ver = plugin_version if plugin_version is not None else current_plugin_version()
+    now = ver_tuple(local_ver)
     was = ver_tuple((sk or {}).get("plugin_version"))
     if now and was and now < was:
-        return ([], [], []), {"degraded": degraded, "downgrade": (was, now), "trivial": [], "retired": []}
+        # 🔴 回空的三組是**保護**（不要求使用者「升級」回舊版），不是「沒事」——
+        # 呼叫端 MUST 讀 downgrade 並照實說，否則就是假綠（ISS-002）。
+        return ([], [], []), {"degraded": degraded, "trivial": [], "retired": [],
+                              "downgrade": ((sk or {}).get("plugin_version"), local_ver)}
     # plugin 這版不再提供的樣板檔：只說一聲，絕不碰 vault 裡那個檔。
     # 判斷依據是「上次對帳記錄裡有、現在的樣板沒有」，所以降級模式（沒有 .skeleton.json）看不出來。
     live = set(template_files(tdir))
@@ -250,6 +254,23 @@ def classify(root: Path, template_dir=None, plugin_version=None):
                            "why": "樣板更新了，你也改過這個檔"})
     return (missing, safe, custom), {"degraded": degraded, "downgrade": None,
                                      "trivial": trivial, "retired": retired}
+
+
+def downgrade_note(info):
+    """降版保護觸發時要對使用者講的話。None＝沒觸發。
+
+    為什麼要有這支：`classify` 原本設了 `downgrade` 旗標卻沒有任何地方讀它，
+    輸出是「🟢 骨架已是最新」—— 本機 plugin 比骨架舊的時候這句話是假的（ISS-002）。
+    多人共用 vault 是這條路徑第一次會被走到的場景：`.skeleton.json` 跟著 git 走。
+    """
+    d = info.get("downgrade")
+    if not d:
+        return None
+    was, now = d
+    return (f"🔴 本機 plugin {now or '（讀不到版本）'} 比骨架紀錄的 {was} 舊。" + NL
+            + "   這次**什麼都沒有比對** —— 不代表骨架是最新的。" + NL
+            + "   先更新 plugin（`/plugin update`），再跑一次這支。" + NL
+            + "   （多人共用 vault 常見：別人升了 plugin 也升過骨架，`.skeleton.json` 跟著 git 進到你這邊。）")
 
 
 def write_skeleton(root: Path, tdir: Path, version: str, only=None, opted_out=None):
@@ -357,6 +378,7 @@ def main():
     if a.json:
         print(json.dumps({"vault": str(root), "degraded": degraded,
                           "recorded_version": sk.get("plugin_version"),
+                          "downgrade": info.get("downgrade"),
                           "missing": missing, "safe": safe, "custom": custom},
                          ensure_ascii=False, indent=1))
         return 0
@@ -368,6 +390,12 @@ def main():
     print(f"骨架版本: {sk.get('plugin_version') or '（沒有 .skeleton.json）'}")
     if degraded:
         print("模式    : 🟡 降級 —— 無法分辨「你改的」與「樣板改的」，有差異一律歸到③；跑過一次升級後就準")
+    note = downgrade_note(info)
+    if note:
+        print()
+        print(note)
+        print(NL + "verdict : 🔴 無法對帳 —— 本機 plugin 比骨架舊，先更新 plugin")
+        return 1
     if total == 0:
         print("\nverdict : 🟢 骨架已是最新")
         return 0

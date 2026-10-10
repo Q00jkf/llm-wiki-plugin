@@ -5,6 +5,7 @@
 用法：python test_skeleton_check.py（stdlib unittest，相容 3.9）
 """
 import json
+import os
 import shutil
 import sys
 import tempfile
@@ -244,6 +245,46 @@ class TestApply(Base):
         write(self.tpl / "wiki" / "ops" / "start.md", "## 開工" + NL + "舊版內容" + NL)
         (missing, safe, custom), _i = sc.classify(self.vault, self.tpl, plugin_version="1.0.0")
         self.assertEqual((missing, safe, custom), ([], [], []), "降版不該報任何東西")
+
+
+class Downgrade(Base):
+    """ISS-002：骨架紀錄比本機 plugin 新時，不得印 🟢。
+
+    > 共用 vault 第一次會走到這條路：`.skeleton.json` 跟著 git 走，
+    > 誰先升 plugin 並升骨架，**所有還沒更新 plugin 的人都會被問候「已是最新」**。
+    > 原本 `classify` 設了 `downgrade` 旗標（`skeleton_check.py:199`）卻沒有任何人讀它。
+    """
+
+    def test_19_downgrade_info_carries_readable_versions(self):
+        self.seal()
+        sk = json.loads((self.vault / sc.SKELETON).read_text(encoding="utf-8"))
+        sk["plugin_version"] = "9.9.9"
+        write(self.vault / sc.SKELETON, json.dumps(sk, ensure_ascii=False))
+
+        groups, info = sc.classify(self.vault, self.tpl, plugin_version="1.7.3")
+        self.assertEqual(groups, ([], [], []), "降版時三組要清空，不可要求使用者「升級」回去")
+        self.assertEqual(info["downgrade"], ("9.9.9", "1.7.3"),
+                         "旗標要帶看得懂的版本字串，不是 ver_tuple")
+        note = sc.downgrade_note(info)
+        self.assertIsNotNone(note, "降版保護觸發時必須有話對使用者講")
+        self.assertIn("9.9.9", note)
+        self.assertIn("1.7.3", note)
+
+    def test_20_downgrade_never_prints_green(self):
+        """跑真正的 CLI —— bug 在輸出層，測旗標測不到。"""
+        import subprocess
+        write(self.vault / sc.SKELETON,
+              json.dumps({"plugin_version": "9999.0.0", "files": {}}, ensure_ascii=False))
+        (self.vault / "wiki").mkdir(exist_ok=True)
+        r = subprocess.run([sys.executable, str(Path(__file__).parent / "skeleton_check.py"),
+                            str(self.vault)],
+                           capture_output=True, text=True, encoding="utf-8",
+                           env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+        out = (r.stdout or "") + (r.stderr or "")
+        self.assertNotIn("骨架已是最新", out,
+                         "本機 plugin 比骨架舊的時候說「已是最新」＝假綠" + NL + out)
+        self.assertIn("9999.0.0", out, "要把紀錄的版本講出來" + NL + out)
+        self.assertRegex(out, "舊|更新 plugin", "要告訴使用者該去更新 plugin" + NL + out)
 
 
 if __name__ == "__main__":
