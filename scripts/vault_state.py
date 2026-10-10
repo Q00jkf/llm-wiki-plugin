@@ -26,6 +26,21 @@ try:
 except ImportError:      # 守門留痕模組缺席不該讓開場量測掛掉
     _guard_status = None
 
+def _this_host():
+    """本機名稱，和 `wiki/meta/_guard-status/<機器>.json` 用的是同一套正規化。
+
+    讀不到就回 ""，呼叫端當作「分不出是誰的機器」處理（照舊回報，不要靜音）。
+    """
+    try:
+        import platform
+        name = platform.node()
+    except Exception:
+        return ""
+    if _guard_status is not None and hasattr(_guard_status, "_safe_host"):
+        return _guard_status._safe_host(name)
+    return name or ""
+
+
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -192,6 +207,7 @@ def collect(root: Path):
         "git_traces": [],
         "broken_sources": [],
         "broken_repos": [],
+        "foreign_repos": [],      # (alias, 機器名)：路徑不在，但 owner 標明是別人的機器
         "orphan_cards": [],
         "cards_no_scope": [],
         "cards_abs_path": [],
@@ -264,10 +280,19 @@ def collect(root: Path):
         if not target.exists():
             s["broken_sources"].append(key)
 
+    here = _this_host()
     for alias in s["repos"]:
-        p = repos_cfg.get(alias, {}).get("path", "")
-        if p and not resolve_repo_path(root, p).exists():  # #27
-            s["broken_repos"].append(alias)
+        cfg = repos_cfg.get(alias, {})
+        p = cfg.get("path", "")
+        if not p or resolve_repo_path(root, p).exists():   # #27
+            continue
+        # 🔴 掛載路徑是相對 vault 根的，而 manifest 是 tracked —— 共用 vault 之後，
+        # 除了註冊者以外每個人每場都會看到「路徑失效」。那不是壞了，是別人機器上的（ISS-004）。
+        owner_machine = (cfg.get("owner") or {}).get("machine") or ""
+        if owner_machine and here and owner_machine != here:
+            s["foreign_repos"].append((alias, owner_machine))
+        else:
+            s["broken_repos"].append(alias)                # 分不出是誰的 → 照舊報，不靜音
 
     # 🔴 #28 反向對帳：catalog 卡存在、manifest 卻沒有對應的 sources 條目。
     # broken_sources 抓的是 manifest → 檔案不見；這裡抓的是卡 → 沒有來源紀錄。
@@ -538,7 +563,9 @@ def render(s, brief=False):
     out.append(f"成熟度：{tier}　頁數：{s['pages']}　來源：{s['sources']}"
                f"　raw/ 待編：{s['raw_pending']}")
     if s["repos"]:
-        out.append(f"外部 repo：{', '.join(s['repos'])}")
+        foreign = dict(s["foreign_repos"])
+        names = [f"{a}（{foreign[a]} 上，本機沒有）" if a in foreign else a for a in s["repos"]]
+        out.append(f"外部 repo：{', '.join(names)}")
     if s["days_since_commit"] is not None:
         out.append(f"最後 commit：{int(s['days_since_commit'])} 天前")
     mode = coach_mode(s["root"])
