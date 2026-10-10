@@ -98,16 +98,16 @@
 
 ## 改完要做的
 
-1. **跑測試**（三組，全綠才算改完）：
+1. **跑測試**（全綠才算改完。不要手列清單 —— 列了就會漏）：
    ```bash
-   python scripts/test_skeleton_check.py        # 骨架對帳
-   python scripts/test_template_coverage.py     # 樣板跟不跟得上＋文件教的指令叫不叫得到
-   claude plugin test plugins/pixel-office      # 辦公室
+   for f in scripts/test_*.py; do python "$f" || break; done   # Git Bash
+   claude plugin test plugins/pixel-office                     # 辦公室（bun 測試，不是 python）
    ```
    行為改動要實跑驗證，不要宣告「應該可以」。**合併或刪 skill／command 時，第二組會抓出文件裡的死引用。**
 2. 改了行為就 bump 對應的 `.claude-plugin/plugin.json` 版本號
-3. commit 用自己的 session 名當 author：`git -c user.name="<短代號>" commit ...`（只改 `user.name`，不動 email、不 `--global`）
-4. 本機生效：`/plugin update`
+3. 🔴 **bump 的那個 commit 同時寫 `CHANGELOG.md`** —— 改了什麼／為什麼／commit／issue 四件。事後補就會變成第二份會漂的清單（ISS-005：vault 端抄的版本紀錄開張同一天就落後兩版）
+4. commit 用自己的 session 名當 author：`git -c user.name="<短代號>" commit ...`（只改 `user.name`，不動 email、不 `--global`）
+5. 本機生效：`/plugin update`
 
 ---
 

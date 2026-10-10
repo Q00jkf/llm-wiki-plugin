@@ -91,14 +91,17 @@ class TestTemplateCoverage(unittest.TestCase):
 # 是 Claude Code 內建或別人的 plugin，查了只會變成雜訊
 OWN_NAMESPACE = re.compile(r"(?<![A-Za-z0-9_/.\-])/(?:llm-wiki:)?((?:wiki|office)[a-z0-9\-]*)")
 
-# 掃 .md 時跳過的地方
-SKIP_DIRS = {".git", "node_modules", "docs/specs"}
+# 掃 .md 時跳過的路徑（目錄或單檔）。判準：這份檔是不是**歷史紀錄** ——
+# 記載「當時存在什麼」的檔，寫已刪的指令名是正確的，不是死引用。
+SKIP_PATHS = {".git", "node_modules",
+              "docs/specs",      # 帶日期的規格書
+              "CHANGELOG.md"}    # 「1.6.0 刪除 /wiki-collab」必須寫得出那個名字
 
 
 def _md_files():
     for md in sorted(ROOT.rglob("*.md")):
         rel = md.relative_to(ROOT).as_posix()
-        if any(rel == d or rel.startswith(d + "/") for d in SKIP_DIRS):
+        if any(rel == d or rel.startswith(d + "/") for d in SKIP_PATHS):
             continue
         yield md, rel
 
