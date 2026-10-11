@@ -145,9 +145,42 @@ def load(path: Path):
     return text, fields, body
 
 
+# roles/ 底下預期會有、但不是角色卡的檔。報它們等於每個 vault 都唸一次（ISS-007 的 A8）
+NOT_A_CARD = {"README.md"}
+
+
 def all_cards(root: Path):
+    """角色卡 ＝ frontmatter 有 `role:` 的檔。**正面判準，不是排除法。**
+
+    舊版用「檔名不以 `_` 開頭」排除，於是 1.5.2 加進樣板的 `roles/README.md`
+    被列成一個叫「README」的角色（ISS-007）。排除法每多一種非卡文件就要補一條，
+    正面判準一次解決。
+    """
+    return [p for p, _f in _scan(root)[0]]
+
+
+def _scan(root: Path):
+    """回 (卡, 被排除的)。被排除的要講出來 —— 卡漏寫 `role:` 而靜默消失，
+    比多列一個 README 危險（接手的人會以為沒人持有那個角色）。"""
     d = root / ROLES_REL
-    return sorted(p for p in d.glob("*.md") if not p.name.startswith("_")) if d.is_dir() else []
+    if not d.is_dir():
+        return [], []
+    cards, skipped = [], []
+    for q in sorted(q for q in d.glob("*.md") if not q.name.startswith("_")):
+        _, f, _ = load(q)
+        if f.get("role"):
+            cards.append((q, f))
+        elif q.name not in NOT_A_CARD:
+            skipped.append(q)
+    return cards, skipped
+
+
+def _print_skipped(root: Path, skipped):
+    if not skipped:
+        return
+    names = "、".join(q.name for q in skipped)
+    print(f"{chr(9888)}️ {ROLES_REL.as_posix()}/ 底下 {len(skipped)} 個檔沒有 `role:`，未列入：{names}")
+    print("   —— 不是角色卡就沒關係；是角色卡請補 frontmatter 的 `role:`")
 
 
 def card_problems(root: Path, body: str):
@@ -162,8 +195,10 @@ def card_problems(root: Path, body: str):
 
 
 def cmd_list(root: Path) -> int:
-    cards = all_cards(root)
+    pairs, skipped = _scan(root)
+    cards = [q for q, _f in pairs]
     if not cards:
+        _print_skipped(root, skipped)
         print(f"沒有角色卡（{ROLES_REL.as_posix()}/ 不存在或是空的）。建卡：python role_cards.py new <角色>")
         return 0
     print("| 角色 | 持有者（ListAgents） | 接手 | 職稱 | 必讀 | 進行中 | 注意 |")
@@ -173,6 +208,7 @@ def cmd_list(root: Path) -> int:
         reads = must_reads(body)
         n = len(card_problems(root, body))
         print(f"| {f.get('role') or p.stem} | {f.get('agent') or '（無人）'} | {f.get('taken') or '—'} | {f.get('office_title') or '—'} | {len(reads)} | {in_progress_lines(body)} | {f'{n} 項，跑 check' if n else ''} |")
+    _print_skipped(root, skipped)
     return 0
 
 
@@ -189,6 +225,7 @@ def cmd_check(root: Path, quiet: bool) -> int:
                 print(f"   - {x}")
         elif not quiet:
             print(f"✅ {p.relative_to(root).as_posix()}")
+    _print_skipped(root, _scan(root)[1])
     if total == 0 and not quiet:
         print("角色卡沒有斷掉的指標")
     return 0
