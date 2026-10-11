@@ -77,5 +77,59 @@ class ForeignRepos(unittest.TestCase):
         self.assertEqual(s["foreign_repos"], [], "路徑在就什麼都不用講")
 
 
+class RawPendingHiddenDirs(unittest.TestCase):
+    """ISS-015：`_raw_pending` 用絕對路徑判隱藏資料夾 → vault 在 `.` 開頭的目錄底下就假綠。
+
+    > `vault_state.py:180` 用 `p.parts`（絕對），而**同一支檔的 :82-84 用 `rel.parts`**
+    > 並且註解明文寫了這個坑。知識寫在同一個檔裡，不到 100 行後還是犯了 ——
+    > 這不是沒想到，是沒有守門（同 ISS-002、ISS-004：守門自己說謊）。
+    """
+
+    def setUp(self):
+        # 🔴 父目錄故意以 `.` 開頭 —— 這就是重現條件
+        self.base = Path(tempfile.mkdtemp(prefix="vstate-"))
+        self.hidden = self.base / ".aaproject"
+        self.plain = self.base / "plain"
+        self.vaults = {}
+        for tag, parent in (("hidden", self.hidden), ("plain", self.plain)):
+            v = parent / "v"
+            (v / "wiki").mkdir(parents=True)
+            (v / "raw").mkdir()
+            (v / "raw" / "a.md").write_text("A", encoding="utf-8")
+            (v / "raw" / "b.md").write_text("B", encoding="utf-8")
+            (v / "raw" / "_README.md").write_text("dash", encoding="utf-8")
+            (v / "raw" / ".hidden").mkdir()
+            (v / "raw" / ".hidden" / "c.md").write_text("C", encoding="utf-8")
+            (v / "raw" / ".manifest.json").write_text(
+                json.dumps({"config": {}, "sources": {}, "repos": {}}, ensure_ascii=False),
+                encoding="utf-8")
+            self.vaults[tag] = v
+
+    def tearDown(self):
+        shutil.rmtree(self.base, ignore_errors=True)
+
+    def pending(self, tag):
+        return vs.collect(self.vaults[tag])["raw_pending"]
+
+    def test_01_hidden_parent_does_not_hide_the_whole_raw(self):
+        """A1 重現測試：修前這支會是 0。"""
+        self.assertEqual(self.pending("hidden"), 2,
+                         "vault 的父目錄以 . 開頭時，raw/ 底下的檔不該被當成隱藏檔")
+
+    def test_02_both_paths_agree(self):
+        """A2：同內容、不同路徑，數字必須一樣（修前不一樣）。"""
+        self.assertEqual(self.pending("hidden"), self.pending("plain"))
+
+    def test_03_真的隱藏資料夾仍然跳過(self):
+        """A3：別把 raw/.hidden/c.md 算進來 —— 否則就修壞另一邊。"""
+        self.assertEqual(self.pending("plain"), 2, "剛好 a.md 與 b.md，不含 .hidden/c.md")
+
+    def test_04_dash_readme_still_excluded(self):
+        """A4：`_README.md` 是資料夾儀表板，既有行為不變。"""
+        v = self.vaults["plain"]
+        (v / "raw" / "_README.md").write_text("still a dashboard", encoding="utf-8")
+        self.assertEqual(self.pending("plain"), 2)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

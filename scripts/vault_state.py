@@ -177,7 +177,10 @@ def _raw_pending(root: Path, manifest):
         for p in raw.rglob("*"):
             if not p.is_file() or p.suffix.lower() not in INGESTABLE:
                 continue
-            if p.name == "_README.md" or any(x.startswith(".") for x in p.parts):
+            # 🔴 只看 raw/ 內的相對路徑：絕對路徑可能含 . 開頭的父目錄（ISS-015）。
+            # 同一支檔的 :84 早就這樣寫、註解也寫了這個坑，這裡仍犯了 —— 靠守門不靠註解。
+            if p.name == "_README.md" or any(
+                    x.startswith(".") for x in p.relative_to(raw).parts):
                 continue
             if str(p.relative_to(root)).replace("\\", "/") not in done:
                 n += 1
