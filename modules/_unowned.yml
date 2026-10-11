@@ -1,0 +1,9 @@
+# 真的不屬於任何模組的東西。🔴 本清單只能縮、不能長。
+# baseline: 16   ← 階段 1 開始時的孤兒數（ISS-022）。要新增必須同一個 commit 調降 baseline 並說明
+# 每筆要有 why；不是建置產物的要有 iss（＝有單在追）
+- path: scripts/__pycache__/
+  why: 建置產物
+  iss: null
+- path: scripts/_lib/__pycache__/
+  why: 建置產物
+  iss: null
