@@ -1,0 +1,9 @@
+{
+  "id": "agenda-gantt",
+  "name": "日程甘特圖",
+  "version": "0.4.0",
+  "minAppVersion": "1.4.0",
+  "description": "把 wiki/agenda.md 畫成甘特圖：拖拉改期、拉條改工期、打勾、新增、畫接；資料與寫回一律走 llm-wiki 的 agenda.py",
+  "author": "llm-wiki",
+  "isDesktopOnly": true
+}
