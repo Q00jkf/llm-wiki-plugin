@@ -25,7 +25,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from _lib.filehash import md5_of  # noqa: E402
 from _lib.vaultpaths import find_vault_root  # noqa: E402
 
-MODULES = Path(__file__).resolve().parent.parent / "addons"
+ADDONS = Path(__file__).resolve().parent.parent / "addons"
 RECORD = ".llm-wiki-addon.json"
 
 UP_TO_DATE, OUTDATED, MODIFIED, ABSENT = "最新", "需更新", "vault 有改動", "未裝"
@@ -33,8 +33,8 @@ UP_TO_DATE, OUTDATED, MODIFIED, ABSENT = "最新", "需更新", "vault 有改動
 
 def available():
     out = {}
-    if MODULES.is_dir():
-        for d in sorted(MODULES.iterdir()):
+    if ADDONS.is_dir():
+        for d in sorted(ADDONS.iterdir()):
             f = d / "addon.json"
             if f.is_file():
                 out[d.name] = json.loads(f.read_text(encoding="utf-8"))
@@ -43,8 +43,10 @@ def available():
 
 def targets(mid, meta):
     """[(plugin 內來源, vault 相對路徑)]"""
-    src = MODULES / mid
-    pairs = [(p, f".obsidian/plugins/{mid}/{p.name}") for p in sorted((src / "obsidian").iterdir()) if p.is_file()]
+    src = ADDONS / mid
+    local = {x.rstrip("/") for x in meta.get("local", [])}  # vault 自己的檔：就算正本誤放了同名檔也不裝
+    pairs = [(p, f".obsidian/plugins/{mid}/{p.name}") for p in sorted((src / "obsidian").iterdir())
+             if p.is_file() and p.name not in local]
     pairs += [(src / "scripts" / s, f"scripts/{s}") for s in meta.get("scripts", [])]
     return pairs
 

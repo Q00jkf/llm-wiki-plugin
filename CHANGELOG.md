@@ -23,6 +23,7 @@
   - `vault_state` 老化訊號加「模組需更新／vault 有改動」，只看已裝的
   - pdf-translate 新增 vault 自有的 `local-rules.json`（接在問 wiki／各動作的系統提示後），安裝不覆蓋
   - 新 skill `wiki-addons`；`wiki-doctor` 表加一列；測試 `test_addons.py`
+- **已知限制**：新版刪掉或改名的檔，vault 裡的舊檔不會被收掉（例：`scripts/` 的舊腳本），要手動刪
 - **為什麼**：使用者 10-20 要拆成多個 vault，自製外掛原本每個 vault 手動複製一份會對不上；要可選裝、doctor 提醒更新。外掛作者改為使用者本人、去除特定公司內容（使用者裁示）
 - **commit**：待補
 - **issue**：無

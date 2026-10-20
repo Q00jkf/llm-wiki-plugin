@@ -29,11 +29,11 @@ class Modules(unittest.TestCase):
         (src / "addon.json").write_text(json.dumps(META), encoding="utf-8")
         self.vault = self.tmp / "vault"
         (self.vault / "wiki").mkdir(parents=True)
-        self._orig = M.MODULES
-        M.MODULES = self.mods
+        self._orig = M.ADDONS
+        M.ADDONS = self.mods
 
     def tearDown(self):
-        M.MODULES = self._orig
+        M.ADDONS = self._orig
         shutil.rmtree(self.tmp)
 
     def st(self):
@@ -81,6 +81,18 @@ class Modules(unittest.TestCase):
         (self.mods / "demo" / "obsidian" / "main.js").write_text("v2", encoding="utf-8")
         M.install(self.vault, "demo", META)
         self.assertEqual(local.read_text(encoding="utf-8"), '{"ask": "x"}')
+
+
+    def test_local_declared_file_in_source_is_never_installed(self):
+        """正本 obsidian/ 誤放了 local 宣告的檔，也不能蓋掉 vault 的設定。"""
+        meta = {**META, "local": ["local-rules.json", "cache/"]}
+        (self.mods / "demo" / "obsidian" / "local-rules.json").write_text('{"ask": "plugin"}', encoding="utf-8")
+        local = self.vault / ".obsidian" / "plugins" / "demo" / "local-rules.json"
+        local.parent.mkdir(parents=True)
+        local.write_text('{"ask": "vault"}', encoding="utf-8")
+        self.assertTrue(M.install(self.vault, "demo", meta))
+        self.assertEqual(local.read_text(encoding="utf-8"), '{"ask": "vault"}')
+        self.assertNotIn(".obsidian/plugins/demo/local-rules.json", [r for _, r in M.targets("demo", meta)])
 
 
 if __name__ == "__main__":
