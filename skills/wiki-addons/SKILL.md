@@ -41,4 +41,5 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/addons.py" check             # 已裝要�
 
 - 模組正本**不放任何特定 vault／公司的內容**（產品名、人名、公司規定）。vault 專屬的行為放 `addon.json` 的 `local` 檔（例：AI 助手的 `local-rules.json`），安裝與更新永遠不碰。
 - 改模組 → bump `addons/<id>/addon.json` 與 `obsidian/manifest.json` 的 `version`，CHANGELOG 記一筆。
+- AI 助手（pdf-translate）改走轉發伺服器：vault 放 `local-config.json`（endpoint＋keyEnv），通行碼放各人環境變數、不進 git
 - `requires` 缺檔只警告不擋：模組照裝，相關功能在 vault 補齊前不出現。

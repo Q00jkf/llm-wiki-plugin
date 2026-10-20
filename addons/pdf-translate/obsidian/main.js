@@ -1,7 +1,7 @@
 /* PDF 翻譯（pdf-translate）—— 2026-10-18
  * 右側欄跟著 PDF 目前頁顯示繁中譯文：翻頁 → 停 1 秒 → 抓該頁文字送 Claude API（串流，邊翻邊出現）→ 存快取 → 預翻下一頁。
  * 文字太少（掃描頁）改送頁面影像。key 讀 Windows 環境變數，不存在任何檔案裡；外掛與譯文進 git 共享（使用者 10-18），
- * 沒有 key 的同事只看得到已翻好的頁。之後改走公司伺服器只改 ENDPOINT 與 headers()。
+ * 沒有 key 的同事只看得到已翻好的頁。要改走自己的轉發伺服器（金鑰不發給個人）→ vault 放 local-config.json，見 CONN。
  * 快取 cache/<PDF 內容 sha1 前 16 碼>/<頁>.md：搬檔改名照樣命中；一頁一檔，兩人同翻一份不會 git 衝突。
  * 頁碼與 pdf.js 物件走 Obsidian 未公開結構（view.viewer.child.pdfViewer.pdfViewer），Obsidian 改版可能失效。
  */
@@ -10,7 +10,16 @@ const { execFileSync, execFile } = require("child_process");
 const fs = require("fs"), nodePath = require("path"), crypto = require("crypto");
 
 const VIEW = "pdf-translate";
-const ENDPOINT = "https://api.anthropic.com/v1/messages";
+/* 連線：預設直連 Anthropic、金鑰讀 ANTHROPIC_API_KEY。vault 可用 local-config.json 改走自己的轉發伺服器：
+ * { "endpoint": "http://<伺服器>/v1/messages", "keyEnv": "<環境變數名>" } —— 檔裡只寫「去哪個環境變數拿」，
+ * 通行碼本身放各人電腦的環境變數，不進 git。安裝／更新模組不覆蓋此檔。 */
+const CONN = { endpoint: "https://api.anthropic.com/v1/messages", keyEnv: "ANTHROPIC_API_KEY", custom: false };
+function loadConn(dir) {
+  let c;
+  try { c = JSON.parse(fs.readFileSync(nodePath.join(dir, "local-config.json"), "utf8")); } catch { return; }
+  if (typeof c.endpoint === "string" && /^https?:\/\/[^\s]+$/.test(c.endpoint)) { CONN.endpoint = c.endpoint; CONN.custom = true; }
+  if (typeof c.keyEnv === "string" && /^[A-Za-z_][A-Za-z0-9_]*$/.test(c.keyEnv)) CONN.keyEnv = c.keyEnv;
+}
 const MODEL = "claude-sonnet-5-5"; // 便宜一點改 claude-haiku-5-5
 /* 金額換算（使用者 10-18）：US$／百萬 tokens [輸入, 輸出]，claude.com/pricing 2026-10-18 查；Haiku 取 ≤100K 級距。匯率為粗估，換算只供參考，實際以 Console 帳單為準 */
 const PRICES = { "claude-sonnet-5-5": [2, 10], "claude-opus-5-5": [4, 20], "claude-haiku-5-5": [0.1, 0.5] };
@@ -65,17 +74,20 @@ const ASSIST = {
 
 /* key：先看 process.env；Obsidian 比環境變數早開時讀不到，改直接讀使用者層級登錄 */
 function apiKey() {
-  if (process.env.ANTHROPIC_API_KEY) return process.env.ANTHROPIC_API_KEY;
+  const name = CONN.keyEnv; // loadConn 已限制成合法變數名，可安全放進 RegExp
+  if (process.env[name]) return process.env[name];
   try {
-    const out = execFileSync("reg", ["query", "HKCU\\Environment", "/v", "ANTHROPIC_API_KEY"], { encoding: "utf8", windowsHide: true });
-    const m = out.match(/ANTHROPIC_API_KEY\s+REG_\w+\s+(\S+)/);
+    const out = execFileSync("reg", ["query", "HKCU\\Environment", "/v", name], { encoding: "utf8", windowsHide: true });
+    const m = out.match(new RegExp(name + "\\s+REG_\\w+\\s+(\\S+)"));
     return m ? m[1] : "";
   } catch { return ""; }
 }
 
 function headers() {
   const key = apiKey();
-  if (!key) throw new Error("這台電腦沒有設定 ANTHROPIC_API_KEY，只能看已經翻好的頁");
+  if (!key) throw new Error(CONN.custom
+    ? `這台電腦沒有設定 ${CONN.keyEnv}（轉發伺服器的個人通行碼），只能看已經翻好的頁；請向管理者申請`
+    : `這台電腦沒有設定 ${CONN.keyEnv}，只能看已經翻好的頁`);
   return { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" };
 }
 
@@ -151,7 +163,7 @@ async function imageContent(app, file) {
 
 /* 串流呼叫（含 tool use）；onText 每收到一段就回傳本輪累積的文字 */
 async function chat(body, onText) {
-  const res = await fetch(ENDPOINT, {
+  const res = await fetch(CONN.endpoint, {
     method: "POST", headers: headers(),
     body: JSON.stringify({ model: MODEL, max_tokens: 8000, stream: true, ...body }),
   });
@@ -645,6 +657,7 @@ module.exports = class PdfTranslate extends Plugin {
     this.glossary = nodePath.join(dir, "glossary.txt");
     // vault 自己的補充規則（安裝／更新模組不覆蓋）：{ "ask": "接在問 wiki 系統提示後", "<ASSIST 鍵>": "接在該動作系統提示後" }
     try { this.local = JSON.parse(fs.readFileSync(nodePath.join(dir, "local-rules.json"), "utf8")); } catch { this.local = {}; }
+    loadConn(dir);
     this.inflight = new Map();
     this.hashes = new Map();
     try { this.auto = localStorage.getItem(LS_AUTO) === "1"; } catch { this.auto = false; }
