@@ -29,11 +29,13 @@ class Modules(unittest.TestCase):
         (src / "addon.json").write_text(json.dumps(META), encoding="utf-8")
         self.vault = self.tmp / "vault"
         (self.vault / "wiki").mkdir(parents=True)
-        self._orig = M.ADDONS
+        self._orig = M.ADDONS, M.PLUGIN_JSON
         M.ADDONS = self.mods
+        M.PLUGIN_JSON = self.tmp / "plugin.json"
+        M.PLUGIN_JSON.write_text('{"version": "1.0.0"}', encoding="utf-8")
 
     def tearDown(self):
-        M.ADDONS = self._orig
+        M.ADDONS, M.PLUGIN_JSON = self._orig
         shutil.rmtree(self.tmp)
 
     def st(self):
@@ -114,6 +116,30 @@ class Modules(unittest.TestCase):
         self._bump_vault_record("1.2.0")
         self.assertFalse(M.install(self.vault, "demo", META))
         self.assertEqual((self.vault / ".obsidian" / "plugins" / "demo" / "main.js").read_text(encoding="utf-8"), "v9")
+
+    def _vault_installed_by_newer_plugin(self, plugin_ver):
+        """別人用較新的 plugin 裝過，但 addon 版號沒 bump（只改內容）。"""
+        M.install(self.vault, "demo", META)
+        rec = self.vault / ".obsidian" / "plugins" / "demo" / M.RECORD
+        d = json.loads(rec.read_text(encoding="utf-8"))
+        d["plugin"] = plugin_ver
+        rec.write_text(json.dumps(d), encoding="utf-8")
+
+    def test_forgot_addon_bump_still_blocked_by_plugin_version(self):
+        self._vault_installed_by_newer_plugin("2.0.0")
+        main = self.vault / ".obsidian" / "plugins" / "demo" / "main.js"
+        main.write_text("v9", encoding="utf-8")
+        rec = self.vault / ".obsidian" / "plugins" / "demo" / M.RECORD
+        d = json.loads(rec.read_text(encoding="utf-8"))
+        d["files"][".obsidian/plugins/demo/main.js"] = M.md5_of(main)
+        rec.write_text(json.dumps(d), encoding="utf-8")
+        self.assertEqual(self.st()["state"], M.PLUGIN_OLD)
+        self.assertFalse(M.install(self.vault, "demo", META))
+
+    def test_newer_plugin_record_with_same_content_is_up_to_date(self):
+        """plugin 升版但這個 addon 沒變：內容一樣就是最新，不該叫人更新 plugin。"""
+        self._vault_installed_by_newer_plugin("2.0.0")
+        self.assertEqual(self.st()["state"], M.UP_TO_DATE)
 
     def test_version_compare_is_numeric(self):
         self.assertGreater(M.vtuple("0.10.0"), M.vtuple("0.9.9"))

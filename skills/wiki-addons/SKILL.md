@@ -35,6 +35,7 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/addons.py" check             # 已裝要�
 
 不連網。vault 跟著 git 給所有人，安裝紀錄記著版本：只要有一個人用新版 plugin 裝過，
 其他人的 plugin 比較舊時，開場就會報「plugin 比較舊」。沒有人先升級的話不會知道 GitHub 有新版。
+比對同時看 addon 與 plugin 版號；兩個都沒 bump 就改內容會分不出新舊，所以發版一律 bump `plugin.json`。
 
 ## 規則
 

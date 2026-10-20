@@ -28,6 +28,7 @@ from _lib.filehash import md5_of  # noqa: E402
 from _lib.vaultpaths import find_vault_root  # noqa: E402
 
 ADDONS = Path(__file__).resolve().parent.parent / "addons"
+PLUGIN_JSON = ADDONS.parent / ".claude-plugin" / "plugin.json"
 RECORD = ".llm-wiki-addon.json"
 CHOICES = ".obsidian/llm-wiki-addons.json"
 
@@ -41,6 +42,13 @@ def vtuple(v):
         digits = "".join(c for c in part if c.isdigit())
         out.append(int(digits) if digits else 0)
     return tuple(out)
+
+
+def plugin_version():
+    try:
+        return json.loads(PLUGIN_JSON.read_text(encoding="utf-8")).get("version")
+    except (OSError, ValueError):
+        return None
 
 
 def available():
@@ -90,9 +98,6 @@ def status(root, mid, meta):
     rec = _record(root, mid) or {}
     base = {"id": mid, "installed": rec.get("version"), "latest": meta.get("version"),
             "missing_requires": [r for r in meta.get("requires", []) if not (root / r).exists()]}
-    # vault 裡的版本比本機正本新＝別人用較新的 plugin 裝過；這時「不一致」不代表該更新，更新就是降版
-    if rec.get("version") and vtuple(rec["version"]) > vtuple(meta.get("version")):
-        return {**base, "state": PLUGIN_OLD, "files": []}
     recorded = rec.get("files", {})
     changed, stale = [], []
     for src, rel in targets(mid, meta):
@@ -105,6 +110,12 @@ def status(root, mid, meta):
             changed.append(rel)
         else:
             stale.append(rel)
+    # 內容不同時，先看是不是別人用較新的 plugin 裝的：那樣「不一致」不代表該更新，更新就是降版。
+    # 同時比 addon 版號與 plugin 版號 —— 只比 addon 版號的話，改了內容忘了 bump 就擋不住（主管審 1.10.0）
+    if (changed or stale) and (
+            vtuple(rec.get("version")) > vtuple(meta.get("version"))
+            or vtuple(rec.get("plugin")) > vtuple(plugin_version())):
+        return {**base, "state": PLUGIN_OLD, "files": []}
     state = MODIFIED if changed else OUTDATED if stale else UP_TO_DATE
     return {**base, "state": state, "files": changed or stale}
 
@@ -165,7 +176,8 @@ def install(root, mid, meta, force=False):
         shutil.copyfile(src, dst)
         files[rel] = md5_of(src)
     rec = root / ".obsidian" / "plugins" / mid / RECORD
-    rec.write_text(json.dumps({"version": meta["version"], "files": files}, ensure_ascii=False, indent=2) + "\n",
+    rec.write_text(json.dumps({"version": meta["version"], "plugin": plugin_version(), "files": files},
+                              ensure_ascii=False, indent=2) + "\n",
                    encoding="utf-8")
     _enable(root, mid)
     _undismiss(root, mid)

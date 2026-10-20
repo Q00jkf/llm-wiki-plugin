@@ -15,6 +15,14 @@
 
 # llm-wiki
 
+## 1.10.1 — 2026-10-20
+
+- **改了什麼**：防降版同時比 plugin 版號 —— 安裝紀錄多記 `plugin`；內容不同時，addon 版號**或** plugin 版號比本機舊 → 「plugin 比較舊」。內容相同照樣算最新。測試 +2（共 13）
+- **已知限制**：addon 與 plugin 版號都沒 bump 就改內容，仍分不出新舊 —— 發版一律 bump `plugin.json`（本 repo CLAUDE.md 既有規則）
+- **為什麼**：主管審 1.10.0 指出只比 addon 版號時，改內容忘了 bump 那個 addon 就會被當成「需更新」而降版；三個 addon.json 自 64d96fb 起都沒改過版號
+- **commit**：待補
+- **issue**：無
+
 ## 1.10.0 — 2026-10-20
 
 - **改了什麼**：addons 兩項
