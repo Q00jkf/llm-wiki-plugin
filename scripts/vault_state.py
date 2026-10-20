@@ -221,7 +221,8 @@ def collect(root: Path):
         "guard_trend": [],
         "derived_stale": None,
         "raw_pending": 0,
-        "addons": [],            # 已裝且不是最新的模組（addons.py）；沒裝的不列
+        "addons": [],            # 已裝且不是最新的模組（addons.py）
+        "addons_new": [],        # 沒裝、也沒 dismiss 的模組
     }
 
     if not s["has_wiki"]:
@@ -341,9 +342,11 @@ def collect(root: Path):
     s["git_repo"], s["git_traces"] = _git_presence(root)
     try:
         import addons as _addons
-        s["addons"] = [m for m in _addons.statuses(root) if m["state"] != _addons.UP_TO_DATE]
+        s["addons"] = [{**m, "hint": _addons.HINT[m["state"]]}
+                       for m in _addons.statuses(root) if m["state"] != _addons.UP_TO_DATE]
+        s["addons_new"] = [mid for mid, _ in _addons.undecided(root)]
     except Exception:      # noqa: BLE001 —— 同上
-        s["addons"] = []
+        s["addons"], s["addons_new"] = [], []
     return s
 
 
@@ -424,9 +427,9 @@ def aging_flags(s):
     if s.get("derived_stale"):
         f.append(("綜合頁過期", s["derived_stale"]))
     for m in s.get("addons", []):
-        hint = ("跑 addons.py update" if m["state"] == "需更新"
-                else "vault 複本被改過：改動先搬回 plugin 的 addons/ 正本，再 update --force")
-        f.append((f"模組：{m['state']}", f"{m['id']}（{len(m['files'])} 個檔）— {hint}"))
+        f.append((f"模組：{m['state']}", f"{m['id']}（vault {m.get('installed') or '?'}／plugin {m['latest']}）— {m['hint']}"))
+    if s.get("addons_new"):
+        f.append(("有新模組可裝", f"{'、'.join(s['addons_new'])} — 跑 addons.py 看說明；要裝 install，不要 dismiss（之後不再提醒）"))
     if s.get("hot_behind_log"):
         hot_day, log_day = s["hot_behind_log"]
         f.append(("收尾沒跑",

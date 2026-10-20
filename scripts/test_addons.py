@@ -95,5 +95,38 @@ class Modules(unittest.TestCase):
         self.assertNotIn(".obsidian/plugins/demo/local-rules.json", [r for _, r in M.targets("demo", meta)])
 
 
+    def _bump_vault_record(self, version):
+        """模擬別人用較新的 plugin 裝過：vault 紀錄版本較新、檔案內容也不同。"""
+        M.install(self.vault, "demo", META)
+        rec = self.vault / ".obsidian" / "plugins" / "demo" / M.RECORD
+        (self.vault / ".obsidian" / "plugins" / "demo" / "main.js").write_text("v9", encoding="utf-8")
+        d = json.loads(rec.read_text(encoding="utf-8"))
+        d["version"] = version
+        d["files"][".obsidian/plugins/demo/main.js"] = M.md5_of(self.vault / ".obsidian" / "plugins" / "demo" / "main.js")
+        rec.write_text(json.dumps(d), encoding="utf-8")
+
+    def test_older_plugin_is_not_told_to_update(self):
+        """防降版：vault 是 1.2.0、本機 plugin 是 1.0.0 → 報 plugin 比較舊，不是需更新。"""
+        self._bump_vault_record("1.2.0")
+        self.assertEqual(self.st()["state"], M.PLUGIN_OLD)
+
+    def test_downgrade_install_refused_without_force(self):
+        self._bump_vault_record("1.2.0")
+        self.assertFalse(M.install(self.vault, "demo", META))
+        self.assertEqual((self.vault / ".obsidian" / "plugins" / "demo" / "main.js").read_text(encoding="utf-8"), "v9")
+
+    def test_version_compare_is_numeric(self):
+        self.assertGreater(M.vtuple("0.10.0"), M.vtuple("0.9.9"))
+        self.assertEqual(M.vtuple(None), (0,))
+
+    def test_undecided_lists_new_until_dismissed_or_installed(self):
+        self.assertEqual([m for m, _ in M.undecided(self.vault)], ["demo"])
+        M.dismiss(self.vault, ["demo"])
+        self.assertEqual(M.undecided(self.vault), [])
+        M.install(self.vault, "demo", META)  # 改變心意直接裝 → 自動從 dismissed 移除
+        self.assertNotIn("demo", M._choices(self.vault).get("dismissed", []))
+        self.assertEqual(M.undecided(self.vault), [])
+
+
 if __name__ == "__main__":
     unittest.main()
