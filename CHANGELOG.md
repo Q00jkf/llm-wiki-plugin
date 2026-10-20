@@ -18,11 +18,11 @@
 ## 1.9.0 — 2026-10-20
 
 - **改了什麼**：新增可選裝模組
-  - `modules/`：agenda-gantt 0.3.0、pdf-translate 0.2.0、toolbox 0.1.0（Obsidian 外掛＋各自的腳本）
-  - `scripts/modules.py`：list／install／update／check；安裝紀錄分辨「需更新」與「vault 複本被改過」，後者不覆蓋
+  - `addons/`：agenda-gantt 0.3.0、pdf-translate 0.2.0、toolbox 0.1.0（Obsidian 外掛＋各自的腳本）
+  - `scripts/addons.py`：list／install／update／check；安裝紀錄分辨「需更新」與「vault 複本被改過」，後者不覆蓋
   - `vault_state` 老化訊號加「模組需更新／vault 有改動」，只看已裝的
   - pdf-translate 新增 vault 自有的 `local-rules.json`（接在問 wiki／各動作的系統提示後），安裝不覆蓋
-  - 新 skill `wiki-modules`；`wiki-doctor` 表加一列；測試 `test_modules.py`
+  - 新 skill `wiki-addons`；`wiki-doctor` 表加一列；測試 `test_addons.py`
 - **為什麼**：使用者 10-20 要拆成多個 vault，自製外掛原本每個 vault 手動複製一份會對不上；要可選裝、doctor 提醒更新。外掛作者改為使用者本人、去除特定公司內容（使用者裁示）
 - **commit**：待補
 - **issue**：無

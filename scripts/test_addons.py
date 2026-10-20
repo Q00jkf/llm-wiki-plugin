@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""modules.py 的測試。每個案例在 tmp 自建假 vault 與假模組，不碰真實 vault 與 modules/。
+"""addons.py 的測試。每個案例在 tmp 自建假 vault 與假模組，不碰真實 vault 與 addons/。
 
-用法：python test_modules.py（stdlib unittest，相容 3.9）
+用法：python test_addons.py（stdlib unittest，相容 3.9）
 """
 import json
 import shutil
@@ -11,7 +11,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-import modules as M  # noqa: E402
+import addons as M  # noqa: E402
 
 META = {"id": "demo", "version": "1.0.0", "scripts": ["demo.py"], "requires": ["wiki/agenda.md"]}
 
@@ -19,14 +19,14 @@ META = {"id": "demo", "version": "1.0.0", "scripts": ["demo.py"], "requires": ["
 class Modules(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
-        self.mods = self.tmp / "modules"
+        self.mods = self.tmp / "addons"
         src = self.mods / "demo"
         (src / "obsidian").mkdir(parents=True)
         (src / "scripts").mkdir()
         (src / "obsidian" / "main.js").write_text("v1", encoding="utf-8")
         (src / "obsidian" / "manifest.json").write_text("{}", encoding="utf-8")
         (src / "scripts" / "demo.py").write_text("print(1)", encoding="utf-8")
-        (src / "module.json").write_text(json.dumps(META), encoding="utf-8")
+        (src / "addon.json").write_text(json.dumps(META), encoding="utf-8")
         self.vault = self.tmp / "vault"
         (self.vault / "wiki").mkdir(parents=True)
         self._orig = M.MODULES

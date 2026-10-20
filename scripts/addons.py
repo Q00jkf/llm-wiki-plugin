@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """可選裝模組（Obsidian 外掛＋它用的腳本）：列出、安裝、更新、檢查。
 
-正本在 plugin 的 modules/<id>/；vault 裡的是安裝出來的複本。裝不裝由使用者選，
+正本在 plugin 的 addons/<id>/；vault 裡的是安裝出來的複本。裝不裝由使用者選，
 沒裝的模組不檢查、不提醒。
 
 用法：
-    python modules.py                    # 列出所有模組與本 vault 的狀態
-    python modules.py install <id>...    # 安裝（已存在且被改過 → 停下，要 --force）
-    python modules.py update [<id>...]   # 更新已裝的（不給 id＝全部已裝）
-    python modules.py check [--quiet]    # 只報已裝且「需更新／vault 有改動」的（開場與 doctor 用）
+    python addons.py                    # 列出所有模組與本 vault 的狀態
+    python addons.py install <id>...    # 安裝（已存在且被改過 → 停下，要 --force）
+    python addons.py update [<id>...]   # 更新已裝的（不給 id＝全部已裝）
+    python addons.py check [--quiet]    # 只報已裝且「需更新／vault 有改動」的（開場與 doctor 用）
 
-模組結構：modules/<id>/module.json、obsidian/（→ .obsidian/plugins/<id>/）、scripts/（→ scripts/）。
-安裝紀錄：.obsidian/plugins/<id>/.llm-wiki-module.json（版本＋每個檔安裝當下的 hash），
+模組結構：addons/<id>/addon.json、obsidian/（→ .obsidian/plugins/<id>/）、scripts/（→ scripts/）。
+安裝紀錄：.obsidian/plugins/<id>/.llm-wiki-addon.json（版本＋每個檔安裝當下的 hash），
 用來分辨「plugin 出新版」與「有人在 vault 裡改了複本」—— 後者不能直接覆蓋。
-module.json 的 local 列出 vault 自己的檔（設定、快取），安裝與更新永遠不碰。
+addon.json 的 local 列出 vault 自己的檔（設定、快取），安裝與更新永遠不碰。
 """
 import argparse
 import json
@@ -25,8 +25,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 from _lib.filehash import md5_of  # noqa: E402
 from _lib.vaultpaths import find_vault_root  # noqa: E402
 
-MODULES = Path(__file__).resolve().parent.parent / "modules"
-RECORD = ".llm-wiki-module.json"
+MODULES = Path(__file__).resolve().parent.parent / "addons"
+RECORD = ".llm-wiki-addon.json"
 
 UP_TO_DATE, OUTDATED, MODIFIED, ABSENT = "最新", "需更新", "vault 有改動", "未裝"
 
@@ -35,7 +35,7 @@ def available():
     out = {}
     if MODULES.is_dir():
         for d in sorted(MODULES.iterdir()):
-            f = d / "module.json"
+            f = d / "addon.json"
             if f.is_file():
                 out[d.name] = json.loads(f.read_text(encoding="utf-8"))
     return out
@@ -103,7 +103,7 @@ def install(root, mid, meta, force=False):
         print(f"⛔ {mid}：vault 裡這些檔跟安裝時不同，可能有人改過，沒有覆蓋：")
         for f in st["files"]:
             print(f"   - {f}")
-        print("   先把改動搬回 plugin 的 modules/ 正本；確認可丟棄再加 --force")
+        print("   先把改動搬回 plugin 的 addons/ 正本；確認可丟棄再加 --force")
         return False
     files = {}
     for src, rel in targets(mid, meta):
@@ -146,7 +146,7 @@ def main():
             print(f"{s['state']:<10} {mid:<15} {ver:<12} {meta.get('name', '')}：{meta.get('description', '')}")
             for f in s["files"]:
                 print(f"{'':<11}- {f}")
-        print("\n安裝：python modules.py install <id>（Obsidian 需重新載入）")
+        print("\n安裝：python addons.py install <id>（Obsidian 需重新載入）")
         return 0
 
     if a.cmd == "check":
@@ -157,13 +157,13 @@ def main():
             return 0
         print(f"🟡 模組 {len(bad)} 個要處理：")
         for s in bad:
-            hint = "跑 modules.py update" if s["state"] == OUTDATED else "改動先搬回 plugin 正本"
+            hint = "跑 addons.py update" if s["state"] == OUTDATED else "改動先搬回 plugin 正本"
             print(f"  - {s['id']}：{s['state']}（{len(s['files'])} 個檔）→ {hint}")
         return 0
 
     if a.cmd == "install":
         if not a.ids:
-            print("要給模組 id；先跑 modules.py 看有哪些")
+            print("要給模組 id；先跑 addons.py 看有哪些")
             return 2
         ids = a.ids
     else:  # update

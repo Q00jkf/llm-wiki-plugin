@@ -21,7 +21,7 @@
 | 新 vault 建出來長什麼樣 | `templates/vault/`（`CLAUDE.md`、`wiki/`、`raw/`、`Templates/`） |
 | 版本號、marketplace 條目 | `.claude-plugin/plugin.json`、`.claude-plugin/marketplace.json` |
 | **像素辦公室** | `plugins/pixel-office/` —— 獨立 plugin、獨立版本號，見下 |
-| 可選裝模組（Obsidian 外掛＋腳本） | `modules/<id>/`（`module.json`、`obsidian/`、`scripts/`）；安裝／檢查邏輯 `scripts/modules.py`；用法 `skills/wiki-modules/` |
+| 可選裝模組（Obsidian 外掛＋腳本） | `addons/<id>/`（`addon.json`、`obsidian/`、`scripts/`）；安裝／檢查邏輯 `scripts/addons.py`；用法 `skills/wiki-addons/` |
 
 ### plugins/pixel-office/ 內部
 
