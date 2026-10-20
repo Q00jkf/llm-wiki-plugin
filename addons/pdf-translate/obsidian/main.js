@@ -11,14 +11,37 @@ const fs = require("fs"), nodePath = require("path"), crypto = require("crypto")
 
 const VIEW = "pdf-translate";
 /* 連線：預設直連 Anthropic、金鑰讀 ANTHROPIC_API_KEY。vault 可用 local-config.json 改走自己的轉發伺服器：
- * { "endpoint": "http://<伺服器>/v1/messages", "keyEnv": "<環境變數名>" } —— 檔裡只寫「去哪個環境變數拿」，
- * 通行碼本身放各人電腦的環境變數，不進 git。安裝／更新模組不覆蓋此檔。 */
-const CONN = { endpoint: "https://api.anthropic.com/v1/messages", keyEnv: "ANTHROPIC_API_KEY", custom: false };
+ * { "endpoint": "https://<伺服器>/v1/messages", "keyEnv": "<名稱>_PROXY_TOKEN" } —— 檔裡只寫「去哪個環境變數拿」，
+ * 通行碼本身放各人電腦的環境變數，不進 git。安裝／更新模組不覆蓋此檔。
+ * 🔴 此檔跟著 git，任何有 push 權的人都改得到 → 設定要「全對才採用，否則整份不用、維持直連＋側欄警告」：
+ *   - keyEnv 必填且須以 _PROXY_TOKEN 結尾：否則改一行 endpoint 就能把同事的 ANTHROPIC_API_KEY（或任一環境變數裡的密碼）送出去
+ *   - http 只准私有位址（內網 NAS 可能還沒上 TLS）；外網一律 https */
+const DIRECT = "https://api.anthropic.com/v1/messages";
+const CONN = { endpoint: DIRECT, keyEnv: "ANTHROPIC_API_KEY", custom: false, warning: "" };
+function privateHost(h) {
+  h = h.replace(/^\[|\]$/g, "").toLowerCase();
+  if (h === "localhost" || h === "::1" || h.endsWith(".local")) return true;
+  const m = h.match(/^(\d+)\.(\d+)\.\d+\.\d+$/);
+  if (!m) return false;
+  const [a, b] = [Number(m[1]), Number(m[2])];
+  return a === 10 || a === 127 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31);
+}
+function connProblem(c) {
+  let u;
+  try { u = new URL(c.endpoint); } catch { return "endpoint 不是網址"; }
+  if (u.protocol !== "https:" && !(u.protocol === "http:" && privateHost(u.hostname))) return "endpoint 只能是 https，或內網位址的 http";
+  if (typeof c.keyEnv !== "string" || !/^[A-Za-z][A-Za-z0-9_]*_PROXY_TOKEN$/.test(c.keyEnv)) return "keyEnv 必須填寫，且以 _PROXY_TOKEN 結尾";
+  return "";
+}
 function loadConn(dir) {
   let c;
-  try { c = JSON.parse(fs.readFileSync(nodePath.join(dir, "local-config.json"), "utf8")); } catch { return; }
-  if (typeof c.endpoint === "string" && /^https?:\/\/[^\s]+$/.test(c.endpoint)) { CONN.endpoint = c.endpoint; CONN.custom = true; }
-  if (typeof c.keyEnv === "string" && /^[A-Za-z_][A-Za-z0-9_]*$/.test(c.keyEnv)) CONN.keyEnv = c.keyEnv;
+  try { c = JSON.parse(fs.readFileSync(nodePath.join(dir, "local-config.json"), "utf8")); } catch (e) {
+    if (e.code !== "ENOENT") CONN.warning = "local-config.json 讀不懂，已改回直連";
+    return;
+  }
+  const bad = typeof c.endpoint === "string" ? connProblem(c) : "缺少 endpoint";
+  if (bad) { CONN.warning = `local-config.json 未採用（${bad}），已改回直連`; return; }
+  Object.assign(CONN, { endpoint: c.endpoint, keyEnv: c.keyEnv, custom: true });
 }
 const MODEL = "claude-sonnet-5-5"; // 便宜一點改 claude-haiku-5-5
 /* 金額換算（使用者 10-18）：US$／百萬 tokens [輸入, 輸出]，claude.com/pricing 2026-10-18 查；Haiku 取 ≤100K 級距。匯率為粗估，換算只供參考，實際以 Console 帳單為準 */
@@ -601,6 +624,7 @@ class TranslateView extends ItemView {
     const go = () => { const q = this.askEl.value.trim(); if (q) this.plugin.ask(q); };
     this.askEl.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) go(); }); // isComposing：注音選字的 Enter 不送出
     askRow.createEl("button", { text: "問" }).onclick = go;    if (this.plugin.hasAgenda) askRow.createEl("button", { text: "📅 日程" }).onclick = () => new AgendaModal(this.app, this.plugin).open();
+    if (CONN.warning) c.createDiv({ cls: "pt-status", text: "⚠️ " + CONN.warning });
     this.bookEl = c.createDiv("pt-status");
     this.statusEl = c.createDiv("pt-status");
     this.bodyEl = c.createDiv("pt-body");

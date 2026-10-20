@@ -19,9 +19,10 @@
 
 - **改了什麼**：addon pdf-translate 0.3.0 —— 可改走轉發伺服器
   - vault 放 `local-config.json`：`{"endpoint": "<轉發伺服器>/v1/messages", "keyEnv": "<環境變數名>"}`；沒有此檔＝照舊直連、讀 `ANTHROPIC_API_KEY`
-  - 檔裡只寫「去哪個環境變數拿」，通行碼放各人電腦，不進 git；`endpoint` 須為 http(s) URL、`keyEnv` 須為合法變數名，否則忽略
+  - 檔裡只寫「去哪個環境變數拿」，通行碼放各人電腦，不進 git
+  - 🔴 設定**全對才採用，否則整份不用、維持直連＋側欄警告**（主管審查）：`keyEnv` 必填且須以 `_PROXY_TOKEN` 結尾；http 只准私有位址（localhost／127／10／172.16–31／192.168／*.local），外網一律 https。理由：此檔跟著 git，有 push 權的人改一行 endpoint 就能把同事的 `ANTHROPIC_API_KEY`（或任一環境變數的密碼）送出去
   - 沒設通行碼時錯誤訊息改講「轉發伺服器的個人通行碼，請向管理者申請」
-  - `local-config.json` 列入 addon.json 的 `local`（安裝不覆蓋）；新增 `addons/pdf-translate/test_conn.js`（5 項）
+  - `local-config.json` 列入 addon.json 的 `local`（安裝不覆蓋）；新增 `addons/pdf-translate/test_conn.js`（14 項）
 - **為什麼**：使用者 10-20 裁示 API 走自架轉發、金鑰只在伺服器，同事用個人通行碼；plugin 正本不放公司網址
 - **commit**：待補
 - **issue**：無
