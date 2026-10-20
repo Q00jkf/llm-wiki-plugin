@@ -35,6 +35,7 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/vault_state.py" --json    # 完整訊號
 | **repo 路徑失效** | 絕對路徑換機器就死 | 看 owner 欄找擁有者要 remote；不要直接刪註冊 |
 | **守門結果變差** | 某支守門的 verdict 從 CLEAN 變成有問題、或數字變大 —— 單看現值判斷不了，看趨勢才知道 | 讀 `wiki/meta/maintenance/ledger.tsv` 找變化那天，對照 `wiki/log.md` 看當天做了什麼 |
 | **守門失聯** | 某支守門腳本太久沒成功執行＝它可能早就掛了 | 見下節；先 `compileall` 再手動跑那支 |
+| **模組需更新／vault 有改動** | 已裝的模組（Obsidian 外掛＋腳本）落後 plugin 正本，或有人直接改了 vault 複本 —— 後者一更新就會被蓋掉 | 見 `wiki-modules` skill；沒裝的模組不報 |
 
 ---
 

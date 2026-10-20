@@ -221,6 +221,7 @@ def collect(root: Path):
         "guard_trend": [],
         "derived_stale": None,
         "raw_pending": 0,
+        "modules": [],            # 已裝且不是最新的模組（modules.py）；沒裝的不列
     }
 
     if not s["has_wiki"]:
@@ -338,6 +339,11 @@ def collect(root: Path):
 
     s["hot_behind_log"] = _hot_behind_log(root)
     s["git_repo"], s["git_traces"] = _git_presence(root)
+    try:
+        import modules as _modules
+        s["modules"] = [m for m in _modules.statuses(root) if m["state"] != _modules.UP_TO_DATE]
+    except Exception:      # noqa: BLE001 —— 同上
+        s["modules"] = []
     return s
 
 
@@ -417,6 +423,10 @@ def aging_flags(s):
                   f" — alias 多半被 remove 或改名過，跑 /wiki-repo rename"))
     if s.get("derived_stale"):
         f.append(("綜合頁過期", s["derived_stale"]))
+    for m in s.get("modules", []):
+        hint = ("跑 modules.py update" if m["state"] == "需更新"
+                else "vault 複本被改過：改動先搬回 plugin 的 modules/ 正本，再 update --force")
+        f.append((f"模組：{m['state']}", f"{m['id']}（{len(m['files'])} 個檔）— {hint}"))
     if s.get("hot_behind_log"):
         hot_day, log_day = s["hot_behind_log"]
         f.append(("收尾沒跑",

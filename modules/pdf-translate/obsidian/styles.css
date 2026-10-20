@@ -1,0 +1,15 @@
+.pdf-translate { display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+.pdf-translate .pt-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.pdf-translate .pt-title { font-weight: 600; font-size: var(--font-ui-small); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pdf-translate .pt-status { color: var(--text-muted); font-size: var(--font-ui-smaller); }
+.pdf-translate .pt-body { user-select: text; line-height: 1.7; flex: 1; min-height: 0; overflow: auto; }
+.pdf-translate .pt-body.pt-streaming { white-space: pre-wrap; }
+.pdf-translate .pt-body table { font-size: var(--font-ui-small); }
+.pdf-translate .pt-ask { display: flex; gap: 6px; }
+.pdf-translate .pt-ask input { flex: 1; }
+.pdf-translate table th { text-align: left; white-space: nowrap; padding-right: 12px; color: var(--text-muted); }
+.pdf-translate .pt-seg { border-left: 3px solid transparent; padding-left: 6px; }
+.pdf-translate .pt-seg.pt-on { background: var(--text-highlight-bg); border-left-color: var(--interactive-accent); border-radius: 4px; }
+.pdf-translate .pt-layout { position: relative; flex: none; line-height: normal; }
+.pdf-translate .pt-layout canvas { position: absolute; left: 0; top: 0; }
+.pdf-translate .pt-box { position: absolute; background: #fff; color: #111; line-height: 1.2; overflow-wrap: anywhere; font-family: var(--font-interface); }

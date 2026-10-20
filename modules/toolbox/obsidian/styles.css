@@ -1,0 +1,25 @@
+/* 工具箱（toolbox）：顏色一律跟 Obsidian 主題變數，深淺色自動 */
+.tb-view { padding: 12px 16px !important; }
+.tb-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.tb-search { flex: 1; min-width: 0; }
+.tb-count { flex: none; font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.tb-warn { margin: 6px 0 10px; font-size: var(--font-ui-smaller); color: var(--text-error); }
+.tb-warn summary { cursor: pointer; }
+.tb-hint { padding: 12px 0; color: var(--text-muted); }
+.tb-cat { margin: 14px 0 6px; font-weight: 600; color: var(--text-normal); }
+.tb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.tb-card { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid var(--background-modifier-border); border-radius: 8px; background: var(--background-secondary); cursor: pointer; }
+.tb-card:hover { border-color: var(--interactive-accent); }
+.tb-head { display: flex; align-items: center; gap: 6px; }
+.tb-type { flex: none; padding: 0 5px; border-radius: 3px; font-size: 0.8em; color: var(--text-on-accent); background: var(--interactive-accent); }
+.tb-type-python { background: var(--color-green); }
+.tb-type-exe { background: var(--color-orange); }
+.tb-type-obsidian { background: var(--color-purple); }
+.tb-name { font-weight: 600; flex: 1; min-width: 0; }
+.tb-act { flex: none; font-size: 0.8em; color: var(--text-accent); }
+.tb-note { font-size: 0.8em; color: var(--text-warning); }
+.tb-cmd { display: block; margin: 6px 0; padding: 6px; white-space: pre-wrap; word-break: break-all; user-select: all; }
+.tb-desc { font-size: var(--font-ui-smaller); color: var(--text-normal); line-height: 1.45; }
+.tb-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.tb-tag { font-size: 0.8em; color: var(--text-accent); }
+.tb-meta { font-size: 0.75em; color: var(--text-faint); word-break: break-all; }

@@ -1,0 +1,11 @@
+{
+  "id": "toolbox",
+  "version": "0.1.0",
+  "name": "工具箱",
+  "description": "掃 vault 內 <入口檔>.tool.json 列出工具，按一下開啟",
+  "scripts": [
+    "toolbox.py",
+    "hook-toolbox-nudge.py"
+  ],
+  "requires": []
+}

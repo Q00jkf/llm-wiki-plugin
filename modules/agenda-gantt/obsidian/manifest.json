@@ -1,0 +1,9 @@
+{
+  "id": "agenda-gantt",
+  "name": "日程甘特圖",
+  "version": "0.3.0",
+  "minAppVersion": "1.4.0",
+  "description": "把 wiki/agenda.md 畫成甘特圖（資料來自 scripts/agenda.py --json；打勾與拖拉改日期一律走 agenda.py done／move）",
+  "author": "呂冠佑 (Lu Guan-You)",
+  "isDesktopOnly": true
+}

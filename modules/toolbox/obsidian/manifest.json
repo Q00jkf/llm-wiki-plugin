@@ -1,0 +1,9 @@
+{
+  "id": "toolbox",
+  "name": "工具箱",
+  "version": "0.1.0",
+  "minAppVersion": "1.4.0",
+  "description": "掃 vault 內工具旁的 <入口檔>.tool.json 列出公司工具，按一下開啟（第一期：HTML 用系統預設瀏覽器開）",
+  "author": "呂冠佑 (Lu Guan-You)",
+  "isDesktopOnly": true
+}
