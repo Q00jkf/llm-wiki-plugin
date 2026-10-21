@@ -230,7 +230,7 @@ const translate = async (content, system, onText) => {
 /* ── 問 wiki（使用者 10-19：只搜 wiki/；進度題請問負責人）：查法照 plugin llm-wiki:wiki-query ── */
 const MAX_ROUNDS = 8;
 const SKIP_SEARCH = ["wiki/log.md", "wiki/synthesis/status.md"]; // log 走 log_query（熱門產品 grep 一次回幾百行）；status.md 已停止維護
-const ASK_SYSTEM = (products) => `你是團隊 wiki 的查詢助理，替同事回答問題。只能用工具查 wiki/ 資料夾；raw/ 正本、腳本、網路都不能用。用繁體中文回答。
+const ASK_SYSTEM = (products) => `你是團隊 wiki 的查詢助理，替同事回答問題。只能用工具查 wiki/ 資料夾；raw/ 正本、腳本、網路都不能讀（但工具回傳的「正本」路徑可以引用）。用繁體中文回答。
 
 ## 查詢順序（由便宜到貴，夠了就停）
 1. wiki/hot.md（最近上下文）
@@ -253,7 +253,7 @@ tier 為 1 或 type 為 doc-index 的頁故意不放數值：不要引用它上�
 
 ## 回答格式
 - 開頭直接給結論；能用表格就用表格。
-- 每個結論後面接出處：[[wiki 頁路徑]] 或「wiki/log.md L行號」。
+- 每個結論後面接出處，**正本優先**（同事要找的是原始 PDF／筆記，不是 wiki 頁）：命中頁有列「正本」→ 先寫 [[正本路徑]]（PDF 且頁上寫了頁碼就加 #page=N），再附 [[wiki 頁路徑]] 當索引；沒列正本才只寫 [[wiki 頁路徑]]。歷程類寫「wiki/log.md L行號」。
 - 用到 wiki 以外的一般知識，必須標「[⚠️ 非資料庫：一般知識]」。
 - 查不到就明說「wiki 中無足夠資料回答此問題」，並列出查了哪幾處、哪些資料可能相關。
 - 不確定就說不確定，不要編造數字。`;
@@ -270,7 +270,7 @@ const PAGE_RULES = `
 - 頁面沒寫、wiki 也查無的內容用一般知識補，要標「[⚠️ 非資料庫：一般知識]」。`;
 
 const TOOLS = [
-  { name: "search_wiki", description: "在 wiki/ 全文搜尋（不分大小寫；多個關鍵字用空白分開，命中越多排越前）。回傳每頁的 product／scope／tier 與命中行號＋片段。不搜 wiki/log.md。",
+  { name: "search_wiki", description: "在 wiki/ 全文搜尋（不分大小寫；多個關鍵字用空白分開，命中越多排越前）。回傳每頁的 product／scope／tier、正本路徑與命中行號＋片段。不搜 wiki/log.md。",
     input_schema: { type: "object", properties: { query: { type: "string" }, path: { type: "string", description: "限定範圍，例如 wiki/concepts/<產品> 或 wiki/products/<產品>.md；不填＝整個 wiki/" } }, required: ["query"] } },
   { name: "read_page", description: "讀 wiki/ 內一頁，回傳帶行號的內容。大頁請帶 offset／limit 只讀需要的段落。",
     input_schema: { type: "object", properties: { path: { type: "string" }, offset: { type: "integer", description: "起始行（1 起算）" }, limit: { type: "integer", description: "行數，預設 200，最多 400" } }, required: ["path"] } },
@@ -294,6 +294,19 @@ function metaOf(app, f) {
   return m.join("；") || "未標";
 }
 
+/* 頁面 frontmatter sources: 裡 vault 內找得到的檔（同事要的是正本位置，使用者 10-21）；最多 6 筆 */
+function sourcesOf(app, f) {
+  const fm = (app.metadataCache.getFileCache(f) || {}).frontmatter || {};
+  const out = [];
+  for (const s of [].concat(fm.sources || [])) {
+    const p = String(s && typeof s === "object" ? s.path || "" : s).replace(/^\[\[|\]\]$/g, "").split("|")[0].trim();
+    const t = p && (app.vault.getAbstractFileByPath(p) || app.metadataCache.getFirstLinkpathDest(p, f.path));
+    if (t && t.extension && !out.includes(t.path)) out.push(t.path);
+    if (out.length >= 6) break;
+  }
+  return out.length ? `正本：${out.join("；")}` : "";
+}
+
 async function runTool(app, name, input) {
   const files = app.vault.getMarkdownFiles();
   if (name === "search_wiki") {
@@ -313,7 +326,7 @@ async function runTool(app, name, input) {
     if (!hits.length) return `「${input.query}」在 ${base} 查無`;
     hits.sort((a, b) => b.score - a.score);
     return `共 ${hits.length} 頁命中，列前 ${Math.min(15, hits.length)} 頁：\n` + hits.slice(0, 15).map((h) =>
-      `- ${h.f.path}（${metaOf(app, h.f)}）命中 ${h.at.length} 行\n` + h.at.slice(0, 3).map((i) => `    L${i + 1}: ${h.lines[i].trim().slice(0, 160)}`).join("\n")).join("\n");
+      `- ${h.f.path}（${metaOf(app, h.f)}）命中 ${h.at.length} 行\n` + (sourcesOf(app, h.f) ? `    ${sourcesOf(app, h.f)}\n` : "") + h.at.slice(0, 3).map((i) => `    L${i + 1}: ${h.lines[i].trim().slice(0, 160)}`).join("\n")).join("\n");
   }
   if (name === "read_page") {
     let p = wikiPath(input.path);
@@ -323,7 +336,8 @@ async function runTool(app, name, input) {
     const off = Math.max(1, input.offset || 1), lim = Math.min(400, input.limit || 200);
     let out = lines.slice(off - 1, off - 1 + lim).map((l, i) => `${off + i}\t${l}`).join("\n");
     if (out.length > 15000) out = out.slice(0, 15000) + "\n…（超過字數上限截斷，請縮小 limit）";
-    return `${f.path}（共 ${lines.length} 行；${metaOf(app, f)}）\n${out}`;
+    const src = sourcesOf(app, f);
+    return `${f.path}（共 ${lines.length} 行；${metaOf(app, f)}）${src ? "\n" + src : ""}\n${out}`;
   }
   if (name === "list_dir") {
     const d = app.vault.getAbstractFileByPath(wikiPath(input.path));

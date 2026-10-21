@@ -1,7 +1,7 @@
 {
   "id": "pdf-translate",
   "name": "AI 助手（PDF 翻譯）",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "minAppVersion": "1.4.0",
   "description": "右側欄：PDF（含掃描頁）與圖片繁中翻譯（譯文進 git 共享）；選取文字右鍵翻譯／解釋（先查 wiki）／改寫正式中文／改寫正式英文。key 讀 Windows 環境變數 ANTHROPIC_API_KEY",
   "author": "呂冠佑 (Lu Guan-You)",
