@@ -11,6 +11,7 @@
     python addons.py check [--quiet]    # 開場與 doctor 用：已裝要處理的＋還沒決定的新模組
 
 模組結構：addons/<id>/addon.json、obsidian/（→ .obsidian/plugins/<id>/）、scripts/（→ scripts/）。
+addon.json 的 scripts 列到的檔，模組 scripts/ 沒有就取 plugin 的 scripts/（共用正本，例：agenda.py）。
 安裝紀錄：.obsidian/plugins/<id>/.llm-wiki-addon.json（版本＋每個檔安裝當下的 hash），
 用來分辨三件事：plugin 出新版、有人在 vault 裡改了複本、**本機 plugin 比裝進 vault 的那版舊**。
 vault 跟著 git 給所有人，所以只要一個人先升級，其他人開場就會看到「plugin 比較舊」—— 不用連網。
@@ -27,7 +28,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 from _lib.filehash import md5_of  # noqa: E402
 from _lib.vaultpaths import find_vault_root  # noqa: E402
 
-ADDONS = Path(__file__).resolve().parent.parent / "addons"
+CORE = Path(__file__).resolve().parent
+ADDONS = CORE.parent / "addons"
 PLUGIN_JSON = ADDONS.parent / ".claude-plugin" / "plugin.json"
 RECORD = ".llm-wiki-addon.json"
 CHOICES = ".obsidian/llm-wiki-addons.json"
@@ -67,7 +69,9 @@ def targets(mid, meta):
     local = {x.rstrip("/") for x in meta.get("local", [])}  # vault 自己的檔：就算正本誤放了同名檔也不裝
     pairs = [(p, f".obsidian/plugins/{mid}/{p.name}") for p in sorted((src / "obsidian").iterdir())
              if p.is_file() and p.name not in local]
-    pairs += [(src / "scripts" / s, f"scripts/{s}") for s in meta.get("scripts", [])]
+    # 模組自己沒有的腳本取 plugin 的 scripts/（例：agenda.py 開場也要用，只留一份正本）
+    pairs += [(src / "scripts" / s if (src / "scripts" / s).is_file() else CORE / s, f"scripts/{s}")
+              for s in meta.get("scripts", [])]
     return pairs
 
 

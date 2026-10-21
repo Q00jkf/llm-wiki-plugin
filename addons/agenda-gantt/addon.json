@@ -1,14 +1,15 @@
 {
   "id": "agenda-gantt",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "name": "日程甘特圖",
   "description": "把 wiki/agenda.md 畫成甘特圖，可打勾與拖拉改期（一律走 agenda.py）",
   "scripts": [
     "agenda-gantt.py",
-    "agenda_xml.py"
+    "agenda_xml.py",
+    "agenda.py",
+    "agenda_cpm.py"
   ],
   "requires": [
-    "scripts/agenda.py",
     "wiki/agenda.md"
   ]
 }

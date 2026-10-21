@@ -48,11 +48,13 @@ _schema = None
 
 
 def validate(data):
-    """XSD 驗證 bytes；回傳錯誤清單（空＝通過）。沒裝 lxml 回 None（未驗）。"""
+    """XSD 驗證 bytes；回傳錯誤清單（空＝通過）。沒裝 lxml 或 vault 沒放 XSD 副本回 None（未驗）。"""
     global _schema
     try:
         from lxml import etree
     except ImportError:
+        return None
+    if not XSD.is_file():
         return None
     if _schema is None:
         xsd = XSD.read_bytes().replace(NS.encode() + b"/2007", NS.encode())

@@ -15,6 +15,19 @@
 
 # llm-wiki
 
+## 1.12.0 — 2026-10-21
+
+- **改了什麼**：agenda 統一成一份（含排程引擎）
+  - `scripts/agenda.py` 換成完整版：`undone`／`move`／`dur`／`link`／`unlink`／`plan`／`--fmt`／`--json`、專案欄位（工期／代號／接／完成／原定／截止／進度／屬）、寫入鎖、分段排序、changes.md 變更紀錄；保留原有 `--ics`／`--notify`、非 vault 安靜、只有未過濾的執行才寫 `_guard-status`
+  - 新增 `scripts/agenda_cpm.py`（工作天曆、順延、要徑）；辦公日曆路徑改由 agenda.py 傳入，沒有日曆只扣週末
+  - vault 根目錄：檔案在 vault 的 `scripts/` → 上一層；放在 plugin → 從 `CLAUDE_PROJECT_DIR`／cwd 往上找。排程資料夾 `raw/manager/schedule/` 只在 agenda.py 定義一次（`SCHEDULE`）
+  - addon agenda-gantt 0.4.0：`scripts` 改列 `agenda.py`、`agenda_cpm.py`，由 plugin 的 `scripts/` 裝進 vault（`addons.py`：模組 scripts/ 沒有的檔取 plugin scripts/）；`requires` 拿掉 `scripts/agenda.py`；沒有 XSD 副本時 XML 照產、標「未驗」
+  - `wiki-agenda` skill、vault 範本 `agenda-system.md` 改教新指令；改期用 `move`，不再「done 舊行再 add 新行」
+- **為什麼**：甘特圖依賴的完整版 agenda.py 只存在於單一 vault，其他 vault 裝了甘特圖也跑不起來（2026-10-21 在兩個 vault 實測 `ModuleNotFoundError`／`AttributeError: ROOT`）；使用者 10-21 裁示「統一用我們的，之後好管理」
+- **升級注意**：vault 已自備 `scripts/agenda.py`／`agenda_cpm.py` 的，裝 agenda-gantt 0.4.0 會停在「vault 有改動」—— 先確認那兩支沒有 vault 專屬改動，再 `install agenda-gantt --force`
+- **commit**：待補
+- **issue**：無
+
 ## 1.11.0 — 2026-10-20
 
 - **改了什麼**：addon pdf-translate 0.3.0 —— 可改走轉發伺服器

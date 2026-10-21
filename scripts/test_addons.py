@@ -41,6 +41,19 @@ class Modules(unittest.TestCase):
     def st(self):
         return M.status(self.vault, "demo", META)
 
+    def test_script_falls_back_to_plugin_core(self):
+        core = self.tmp / "core"
+        core.mkdir()
+        (core / "shared.py").write_text("print(2)", encoding="utf-8")
+        orig, M.CORE = M.CORE, core
+        try:
+            meta = {**META, "scripts": META["scripts"] + ["shared.py"]}
+            pairs = dict((rel, src) for src, rel in M.targets("demo", meta))
+            self.assertEqual(pairs["scripts/shared.py"], core / "shared.py")
+            self.assertEqual(pairs["scripts/demo.py"], self.mods / "demo" / "scripts" / "demo.py")
+        finally:
+            M.CORE = orig
+
     def test_absent_not_reported(self):
         self.assertEqual(self.st()["state"], M.ABSENT)
         self.assertEqual(M.statuses(self.vault), [])

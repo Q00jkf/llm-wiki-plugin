@@ -44,7 +44,7 @@ import agenda_xml as X  # noqa: E402
 WATCH_PORT = 47561  # watch 單一實例鎖
 
 NS = X.NS
-DATA = agenda.ROOT / "raw" / "manager" / "schedule"  # 資料層：XML／快照／changes.md
+DATA = agenda.SCHEDULE  # 資料層：XML／快照／changes.md（路徑只在 agenda.py 定義一次）
 DEFAULT_XML = DATA / "agenda-gantt.xml"
 PL_EXE = Path(r"C:\Program Files\ProjectLibre\ProjectLibre.exe")
 # ProjectLibre 1.9.8 在 UTC+8 讀日曆例外（國定假日）全部早一天；JVM 改 UTC 就正確，XML 不用改
@@ -317,7 +317,7 @@ def export(out, days, open_it):
     out.write_bytes(data)
     save_snapshot(out, snap)
     print(f"export  : {len(events)} 事件 → {len(rows)} 項，{len(groups)} 組（{'、'.join(groups)}）；"
-          + ("XSD ✅" if errs == [] else "XSD 未驗（沒裝 lxml）"))
+          + ("XSD ✅" if errs == [] else "XSD 未驗（沒裝 lxml 或沒有 ref/mspdi_pj12.xsd）"))
     if bad:
         print(f"⚠️ agenda 壞行 {len(bad)} 未匯出（python scripts/agenda.py --check）")
     print(f"out     : {out}")
