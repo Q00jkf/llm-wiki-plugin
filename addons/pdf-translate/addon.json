@@ -1,6 +1,6 @@
 {
   "id": "pdf-translate",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "name": "AI 助手",
   "description": "PDF／圖片繁中翻譯、選取文字翻譯／解釋／改寫、問 wiki、口述排日程（需 ANTHROPIC_API_KEY）",
   "scripts": [],
