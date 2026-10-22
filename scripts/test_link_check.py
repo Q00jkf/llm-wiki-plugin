@@ -28,7 +28,7 @@ class LinkCheck(unittest.TestCase):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
     def pairs(self):
-        _, found = lc.scan(self.wiki)
+        _, found, _ = lc.scan(self.wiki)
         return {(s, d) for s, d, _ in found}
 
     def test_identifier_mention_without_link_is_reported(self):
@@ -65,6 +65,13 @@ class LinkCheck(unittest.TestCase):
         write(self.wiki / "products/GS-3V.md", "# GS-3V\n")
         write(self.wiki / "notes/a.md", "只提到 GS-3V-NM。\n")
         self.assertEqual(self.pairs(), set())
+
+    def test_typed_ratio_counts_only_frontmatter_links(self):
+        write(self.wiki / "a.md", "---\nsupersedes: [[b]]\n---\n見 [[c]]\n")
+        write(self.wiki / "b.md", "# b\n")
+        write(self.wiki / "c.md", "# c\n")
+        _, _, (typed, edges) = lc.scan(self.wiki)
+        self.assertEqual((typed, edges), (1, 2))
 
 
 if __name__ == "__main__":

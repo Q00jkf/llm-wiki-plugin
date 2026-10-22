@@ -27,6 +27,12 @@
             "command": "python \"${CLAUDE_PLUGIN_ROOT}/scripts/rules_check.py\" --quiet",
             "timeout": 15,
             "statusMessage": "規則層對帳"
+          },
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/scripts/link_check.py\" --quiet",
+            "timeout": 15,
+            "statusMessage": "連結漏連提醒"
           }
         ]
       }

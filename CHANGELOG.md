@@ -15,6 +15,17 @@
 
 # llm-wiki
 
+## 1.14.0 — 2026-10-22
+
+- **改了什麼**：
+  - 新增 `scripts/link_check.py`：列出「頁內文提到別頁的識別碼（含數字或 2 個以上大寫字母的頁名／aliases）卻沒有連結」，並量「有型別連結」（frontmatter 欄位值裡的 `[[X]]`）占全部連結的比例；零 LLM、只列不擋、exit 0
+  - 接進 SessionStart hook（`--quiet`）與 `wiki-doctor` 的守門腳本表
+  - `wiki-ingest` Step 3 加「關係欄位」規則（選填）：`supersedes`／`superseded_by`／`part_of`／`tests`／`derived_from`，值寫 `[[頁名]]`，文件沒講清楚不寫
+- **為什麼**：使用者 10-22 要求比對 Microsoft GraphRAG 後「全部做好」；比對結論見 vault `raw/議題/2026-10-22-GraphRAG比對.md`（AEGIVERSE 實測有型別連結約 14–20%，未連結的產品名提及 78 組）
+- **commit**：待補
+- **issue**：— （大改版期間不開新單，使用者 10-22 裁示先不帶 ISS 編號）
+- **注意**：原本從 `llm-wiki--v1.12.1` 分出（版號 1.12.2），與 `feat/core-001-autocompact` 的 1.13.0 衝突；2026-10-22 rebase 到該分支之上，版號改 1.14.0
+
 ## 1.13.0 — 2026-10-22
 
 - **改了什麼**：addon pdf-translate 0.5.0 —— 問 wiki 可讀正本 PDF（`read_source`），預設關

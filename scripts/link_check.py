@@ -4,6 +4,8 @@
 只比對**識別碼型**的頁名／aliases（含數字，或有 2 個以上大寫字母，例如 GS-3V-NM、HINS、AegiverseCore）。
 一般詞（ingest、status、agenda…）與中文詞（主管）不比：它們是頁名卻也是日常用字，2026-10-22 在
 AEGIVERSE vault 實測，不濾的話 315 筆候選裡大半是這類誤判。
+另外量「有型別的連結」比例：frontmatter 欄位值裡的 [[連結]]（`supersedes: [[X]]`）有欄位名＝關係名，
+內文的 [[連結]] 只表示「有關」。比例低，代表圖只能答「相關」、答不了「取代／屬於／驗證」。
 不呼叫 LLM、不改任何檔；exit 一律 0，只列候選不擋 git。
 
 用法：link_check.py [path] [--quiet] [--all] [--scope wiki]
@@ -72,17 +74,25 @@ def scan(root):
     for path, n in notes.items():
         by_stem[n["stem"].lower()].append(path)
 
+    def resolve(t):
+        t = t.strip().replace("\\", "/")
+        stem = t[:-3] if t.lower().endswith(".md") else t
+        return by_stem.get(stem.rsplit("/", 1)[-1].lower(), [])
+
     linked = defaultdict(set)   # 無向：任一方向有連就算連
+    edges, typed = set(), set()
     for src, n in notes.items():
         text = CODEBLOCK.sub(" ", n["fm"] + "\n" + n["body"])
-        targets = WIKILINK.findall(text) + MDLINK.findall(text)
-        for t in targets:
-            t = t.strip().replace("\\", "/")
-            stem = t[:-3] if t.lower().endswith(".md") else t
-            for dst in by_stem.get(stem.rsplit("/", 1)[-1].lower(), []):
+        for t in WIKILINK.findall(text) + MDLINK.findall(text):
+            for dst in resolve(t):
                 if dst != src:
                     linked[src].add(dst)
                     linked[dst].add(src)
+                    edges.add((src, dst))
+        for t in WIKILINK.findall(n["fm"]):
+            for dst in resolve(t):
+                if dst != src:
+                    typed.add((src, dst))
 
     owners = defaultdict(set)
     for path, n in notes.items():
@@ -104,7 +114,7 @@ def scan(root):
             if re.search(r"(?<![\w-])" + re.escape(term) + r"(?![\w-])", low):
                 seen.add(dst)
                 found.append((src, dst, term))
-    return notes, found
+    return notes, found, (len(typed & edges), len(edges))
 
 
 def main(argv):
@@ -121,15 +131,17 @@ def main(argv):
         print("link_check: 找不到 vault 或 %s/ 目錄" % scope)
         return 0
 
-    notes, found = scan(root / scope)
+    notes, found, (n_typed, n_edges) = scan(root / scope)
     by_dst = Counter(d for _, d, _ in found)
     if quiet:
-        print("link_check: %d 組「提到了沒連」（%d 篇來源，%d 頁被漏連）" %
-              (len(found), len({s for s, _, _ in found}), len(by_dst)))
+        print("link_check: %d 組「提到了沒連」（%d 篇來源，%d 頁被漏連）；有型別連結 %d/%d" %
+              (len(found), len({s for s, _, _ in found}), len(by_dst), n_typed, n_edges))
         return 0
 
     print("掃 %s/（%d 篇）：識別碼被提到但兩頁間沒有連結 = %d 組，來源 %d 篇" %
           (scope, len(notes), len(found), len({s for s, _, _ in found})))
+    print("有型別的連結（frontmatter 欄位）：%d / %d（%s）" %
+          (n_typed, n_edges, "%.1f%%" % (100.0 * n_typed / n_edges) if n_edges else "-"))
     print("\n被漏連最多的頁面：\n| 頁面 | 漏連篇數 |\n|---|---|")
     for dst, c in by_dst.most_common(None if show_all else TOP):
         print("| %s | %d |" % (dst, c))
