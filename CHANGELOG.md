@@ -15,6 +15,15 @@
 
 # llm-wiki
 
+## 1.13.0 — 2026-10-22
+
+- **改了什麼**：addon pdf-translate 0.5.0 —— 問 wiki 可讀正本 PDF（`read_source`），預設關
+  - vault 的 `local-rules.json` 設 `"readSources": true` 才開；只能讀 wiki/ 任一頁 frontmatter `sources:` 列過的 PDF（白名單由卡片決定）
+  - 單檔 ≤10 MB、一次 ≤10 頁；有文字層送文字，掃描頁送圖；引用 `[[路徑#page=N]]`
+- **為什麼**：使用者 10-22「要不要讓他可以讀 PDF 呢 這樣說出來的結果也比較正確」；公司手冊 AI 只能答「看第幾頁」
+- **commit**：待補
+- **issue**：—
+
 ## 1.12.1 — 2026-10-22
 
 - **改了什麼**：addon pdf-translate 0.4.1 —— 「解釋」查同仁時，通訊錄依序讀 `wiki/meta/通訊錄.md`、`wiki/meta/email-roster.md`（第一份存在的；第 3 欄起忽略）

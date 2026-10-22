@@ -5,7 +5,7 @@
  * 快取 cache/<PDF 內容 sha1 前 16 碼>/<頁>.md：搬檔改名照樣命中；一頁一檔，兩人同翻一份不會 git 衝突。
  * 頁碼與 pdf.js 物件走 Obsidian 未公開結構（view.viewer.child.pdfViewer.pdfViewer），Obsidian 改版可能失效。
  */
-const { Plugin, ItemView, MarkdownRenderer, Modal, Setting, Notice } = require("obsidian");
+const { Plugin, ItemView, MarkdownRenderer, Modal, Setting, Notice, loadPdfJs } = require("obsidian");
 const { execFileSync, execFile } = require("child_process");
 const fs = require("fs"), nodePath = require("path"), crypto = require("crypto");
 
@@ -295,19 +295,70 @@ function metaOf(app, f) {
 }
 
 /* 頁面 frontmatter sources: 裡 vault 內找得到的檔（同事要的是正本位置，使用者 10-21）；最多 6 筆 */
-function sourcesOf(app, f) {
+function sourcePaths(app, f, max = Infinity) {
   const fm = (app.metadataCache.getFileCache(f) || {}).frontmatter || {};
   const out = [];
   for (const s of [].concat(fm.sources || [])) {
     const p = String(s && typeof s === "object" ? s.path || "" : s).replace(/^\[\[|\]\]$/g, "").split("|")[0].trim();
     const t = p && (app.vault.getAbstractFileByPath(p) || app.metadataCache.getFirstLinkpathDest(p, f.path));
     if (t && t.extension && !out.includes(t.path)) out.push(t.path);
-    if (out.length >= 6) break;
+    if (out.length >= max) break;
   }
+  return out;
+}
+function sourcesOf(app, f) {
+  const out = sourcePaths(app, f, 6);
   return out.length ? `正本：${out.join("；")}` : "";
 }
 
+/* 讀正本（使用者 10-22「讓他可以讀 PDF，說出來的結果比較正確」）：vault 的 local-rules.json 設 readSources:true 才開；
+ * 白名單＝wiki/ 任一頁 frontmatter sources: 列過的 PDF —— 讀哪些檔由卡片決定，不讓模型自己挑 raw/ */
+const SOURCE_MAX_BYTES = 10 * 1024 * 1024, SOURCE_MAX_PAGES = 10;
+const READ_SOURCE_TOOL = { name: "read_source", description: "讀正本 PDF 的指定頁（只限 wiki 頁 sources: 列過的 PDF，也就是 search_wiki／read_page 回傳「正本：」那些）。回傳逐頁文字，掃描頁回傳圖片。一次最多 10 頁，先用卡上的頁碼定位。",
+  input_schema: { type: "object", properties: { path: { type: "string", description: "正本路徑，例如 raw/…/x.pdf" }, pages: { type: "string", description: "頁碼，例如 2、1-3、2,5；不填＝前 3 頁" } }, required: ["path"] } };
+const READ_SOURCE_RULES = `\n\n## 讀正本（本 vault 已開）\n- 卡上沒有、或要確認的數字、條文 → read_source 讀卡上「正本：」那份 PDF 的對應頁；原檔與卡不一致以原檔為準並說明。\n- 引用寫 [[正本路徑#page=N]]。docx／xlsx 讀不了，照卡回答。`;
+
+function pageList(spec, total) {
+  if (!spec) return [...Array(Math.min(3, total)).keys()].map((i) => i + 1);
+  const out = [];
+  for (const part of String(spec).split(/[,，、]/)) {
+    const m = part.trim().match(/^(\d+)(?:\s*[-–~～]\s*(\d+))?$/);
+    if (!m) continue;
+    for (let i = +m[1]; i <= Math.min(+(m[2] || m[1]), total) && out.length < SOURCE_MAX_PAGES; i++) if (i >= 1 && !out.includes(i)) out.push(i);
+  }
+  return out;
+}
+
+async function readSource(app, input) {
+  const p = String(input.path || "").replace(/\\/g, "/").replace(/^\[\[|\]\]$/g, "").split(/[|#]/)[0].trim();
+  if (!/\.pdf$/i.test(p)) return "只能讀 PDF；docx／xlsx 請照卡上的說明回答";
+  const listed = new Set();
+  for (const f of app.vault.getMarkdownFiles()) if (f.path.startsWith("wiki/")) sourcePaths(app, f).forEach((x) => listed.add(x));
+  if (!listed.has(p)) return `${p} 沒有列在任何 wiki 頁的 sources:，不能讀`;
+  const f = app.vault.getAbstractFileByPath(p);
+  if (!f || !f.extension) return `${p} 不存在`;
+  if (f.stat.size > SOURCE_MAX_BYTES) return `${p} 超過 10 MB，請同事自己開檔（卡上有頁碼）`;
+  const doc = await (await loadPdfJs()).getDocument({ data: new Uint8Array(await app.vault.readBinary(f)) }).promise;
+  try {
+    const want = pageList(input.pages, doc.numPages);
+    if (!want.length) return `頁碼超出範圍（共 ${doc.numPages} 頁）`;
+    const out = [{ type: "text", text: `${p}（共 ${doc.numPages} 頁；引用寫 [[${p}#page=N]]）` }];
+    for (const n of want) {
+      const page = await doc.getPage(n);
+      const text = (await pageBlocks(page)).blocks.map((b) => b.text).join("\n");
+      if (text.replace(/\s/g, "").length >= MIN_TEXT) { out.push({ type: "text", text: `── 第 ${n} 頁 ──\n${text}` }); continue; }
+      const vp = page.getViewport({ scale: 1.6 }), c = document.createElement("canvas");
+      c.width = vp.width; c.height = vp.height;
+      await page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
+      out.push({ type: "text", text: `── 第 ${n} 頁（掃描頁，附圖）──` },
+        { type: "image", source: { type: "base64", media_type: "image/jpeg", data: c.toDataURL("image/jpeg", 0.85).split(",")[1] } });
+    }
+    return out;
+  } finally { doc.destroy(); }
+}
+
 async function runTool(app, name, input) {
+  if (name === "read_source") return readSource(app, input);
   const files = app.vault.getMarkdownFiles();
   if (name === "search_wiki") {
     const terms = String(input.query || "").toLowerCase().split(/\s+/).filter(Boolean);
@@ -569,7 +620,8 @@ class AgendaModal extends Modal {
 
 const toolLabel = (c) => c.name === "search_wiki" ? `搜尋「${c.input.query}」${c.input.path ? "（" + c.input.path + "）" : ""}`
   : c.name === "read_page" ? `讀 ${c.input.path}${c.input.offset ? " L" + c.input.offset : ""}`
-  : c.name === "list_dir" ? `列出 ${c.input.path}` : `查 log ${JSON.stringify(c.input)}`;
+  : c.name === "list_dir" ? `列出 ${c.input.path}`
+  : c.name === "read_source" ? `讀正本 ${c.input.path}${c.input.pages ? " p." + c.input.pages : ""}` : `查 log ${JSON.stringify(c.input)}`;
 
 /* 筆記所屬產品：frontmatter product: 優先，否則看路徑裡有沒有 wiki/concepts/ 下的產品資料夾名 */
 function productOf(app, f) {
@@ -822,7 +874,8 @@ module.exports = class PdfTranslate extends Plugin {
     const paint = (status, md, done) => { if (this.mode === "assist") v.put(title, status, md, done, path); };
     const pdir = this.app.vault.getAbstractFileByPath("wiki/products");
     const products = pdir && pdir.children ? pdir.children.filter((c) => c.extension === "md").map((c) => c.basename).join("、") : "（讀不到 wiki/products/）";
-    const system = ASK_SYSTEM(products) + (this.local.ask ? "\n" + this.local.ask : "") + (opts.rules || "") + (usePage ? PAGE_RULES : "");
+    const readSrc = this.local.readSources === true, tools = readSrc ? [...TOOLS, READ_SOURCE_TOOL] : TOOLS;
+    const system = ASK_SYSTEM(products) + (readSrc ? READ_SOURCE_RULES : "") + (this.local.ask ? "\n" + this.local.ask : "") + (opts.rules || "") + (usePage ? PAGE_RULES : "");
     const messages = [{ role: "user", content: question }], steps = [];
     let tin = 0, tout = 0, answer = "";
     const t0 = Date.now(), trail = () => steps.map((x) => "- " + x).join("\n");
@@ -833,7 +886,7 @@ module.exports = class PdfTranslate extends Plugin {
       let capped = false;
       for (let round = 1; round <= MAX_ROUNDS; round++) {
         const last = round === MAX_ROUNDS || capped;
-        const r = await chat({ system, tools: TOOLS, tool_choice: last ? { type: "none" } : { type: "auto" }, messages },
+        const r = await chat({ system, tools, tool_choice: last ? { type: "none" } : { type: "auto" }, messages },
           (t) => paint(`第 ${round} 輪…`, (steps.length ? trail() + "\n\n" : "") + t, false));
         tin += r.usage.in; tout += r.usage.out;
         messages.push({ role: "assistant", content: r.blocks });
