@@ -783,8 +783,31 @@ def scope_of_key(key):
 _FM_RE = re.compile(r"\A---\n(.*?)\n---\n", re.S)
 
 
-def ensure_scope(card: Path, scope: str, force=False):
-    """卡片 frontmatter 補 `scope:`。已有且 force=False → 不動，回 False。"""
+def _cross(fm):
+    """跨產品卡：`products:` 兩個以上，或 `sources:` 來自兩個以上 scope。"""
+    scopes = {scope_of_key(s) for s in _fm_list(fm, "sources")} - {None}
+    return len(_fm_list(fm, "products")) > 1 or len(scopes) > 1
+
+
+def _fm_list(fm, field):
+    """frontmatter 列表欄位的項目（行內 [a, b] 或區塊 - a）。"""
+    m = re.search(rf"(?m)^{field}:[ \t]*(.*)$", fm)
+    if not m:
+        return []
+    inline = m.group(1).strip()
+    if inline:
+        return [x.strip().strip("'\"") for x in inline.strip("[]").split(",") if x.strip()]
+    block = re.match(r"(?:\n[ \t]*-.*)*", fm[m.end():]).group(0)
+    return re.findall(r"(?m)^[ \t]*-[ \t]*(\S.*?)[ \t]*$", block)
+
+
+# 🔴 跨產品卡（products: 或 sources: 跨兩個以上）不能從單一 source key 推 scope：
+# 推出來只會是其中一個產品，卡就被誤標成單一產品（2026-10-17 手動還原兩卡）。
+MULTI = "multi"
+
+
+def ensure_scope(card: Path, scope: str, force=False, explicit=False):
+    """卡片 frontmatter 補 `scope:`。已有且 force=False → 不動，回 False；跨產品卡且非人指定 → 不動，回 MULTI。"""
     text = card.read_text(encoding="utf-8", errors="replace")
     m = _FM_RE.match(text)
     if not m:
@@ -793,6 +816,8 @@ def ensure_scope(card: Path, scope: str, force=False):
     has = re.search(r"(?m)^scope:", fm)
     if has and not force:
         return False
+    if not (force or explicit) and _cross(fm):
+        return MULTI
     line = f"scope: {scope}"
     fm2 = re.sub(r"(?m)^scope:.*$", line, fm) if has else fm + "\n" + line
     card.write_text(text[:m.start(1)] + fm2 + text[m.end(1):], encoding="utf-8", newline="\n")
@@ -888,15 +913,20 @@ def cmd_scope(root, args):
             continue
         if args.dry_run:
             text = card.read_text(encoding="utf-8", errors="replace")
+            fm = _FM_RE.match(text)
+            if not (args.scope or re.search(r"(?m)^scope:", text[:2000])) and fm and _cross(fm.group(1)):
+                unknown.append(cp)
+                continue
             (skipped if re.search(r"(?m)^scope:", text[:2000]) else done).append(f"{cp} ← {sc}")
             continue
-        (done if ensure_scope(card, sc, force=args.force) else skipped).append(f"{cp} ← {sc}")
+        r = ensure_scope(card, sc, force=args.force, explicit=bool(args.scope))
+        (unknown if r == MULTI else done if r else skipped).append(cp if r == MULTI else f"{cp} ← {sc}")
     tag = "會補" if args.dry_run else "已補"
     print(f"{tag} {len(done)} 張；已有 scope 跳過 {len(skipped)} 張；推不出 scope {len(unknown)} 張")
     for d in done:
         print(f"  + {d}")
     for u in unknown:
-        print(f"  ? {u}（key 不在 raw/<夾>/ 底下，用 --scope 指定）")
+        print(f"  ? {u}（推不出：key 不在 raw/<夾>/ 底下或卡片跨產品，手填或用 --scope 指定）")
     if done and not args.dry_run:
         print("已寫入：" + "、".join(d.split(" ← ")[0] for d in done))
     return 0
@@ -938,7 +968,8 @@ def cmd_link(root, args):
     sc = args.scope or scope_of_key(key)
     sc_note = ""
     if sc:
-        sc_note = "（frontmatter 已補）" if ensure_scope(card, sc) else "（frontmatter 已有）"
+        r = ensure_scope(card, sc, explicit=bool(args.scope))
+        sc_note = {MULTI: "（⚠️ 卡片跨產品，沒寫 scope：請手填或用 --scope 指定）", True: "（frontmatter 已補）"}.get(r, "（frontmatter 已有）")
     print(f"✅ {'更新' if was else '登記'}：{key}")
     print(f"   卡片：{rel_card}")
     print(f"   hash：{h}　tier：{args.tier}　scope：{sc or '⚠️ 推不出，請在卡上手填'}{sc_note}")

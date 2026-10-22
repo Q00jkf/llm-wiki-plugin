@@ -15,6 +15,13 @@
 
 # llm-wiki
 
+## 1.13.1 — 2026-10-22
+
+- **改了什麼**：`repo.py link`／`scope` 遇到跨產品卡（`products:` 兩個以上，或 `sources:` 來自兩個以上 scope）不再自動寫單一 `scope:`，改提示手填；人用 `--scope` 指定才寫，已有的 `scope:` 照舊不動
+- **為什麼**：自動推導只取 source key 的資料夾，跨產品卡會被誤標成單一產品（10-17 手動還原 troubleshooting 等兩卡）；使用者 10-22 核准出 patch
+- **commit**：見本版 bump commit
+- **issue**：—
+
 ## 1.13.0 — 2026-10-22
 
 - **改了什麼**：addon pdf-translate 0.5.0 —— 問 wiki 可讀正本 PDF（`read_source`），預設關
