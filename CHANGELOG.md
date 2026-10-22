@@ -15,6 +15,13 @@
 
 # llm-wiki
 
+## 1.12.1 — 2026-10-22
+
+- **改了什麼**：addon pdf-translate 0.4.1 —— 「解釋」查同仁時，通訊錄依序讀 `wiki/meta/通訊錄.md`、`wiki/meta/email-roster.md`（第一份存在的；第 3 欄起忽略）
+- **為什麼**：公司手冊 vault 的通訊錄叫 `通訊錄.md`，原本寫死 `email-roster.md` 會查不到；使用者 10-22「這邊詢問 EMAIL 的情況也會回復」
+- **commit**：待補
+- **issue**：—
+
 ## 1.12.0 — 2026-10-21
 
 - **改了什麼**：addon pdf-translate 0.4.0 —— 問 wiki 的出處改成正本優先

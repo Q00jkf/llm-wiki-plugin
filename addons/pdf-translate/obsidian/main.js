@@ -582,13 +582,16 @@ function productOf(app, f) {
   return f.path.split("/").find((seg) => names.includes(seg)) || "";
 }
 
-/* 解釋用：選取文字含公司同仁姓名 → 通訊錄（email-roster.md「姓名｜信箱」表）＋角色（people.md 以 email 對應）
+/* 解釋用：選取文字含公司同仁姓名 → 通訊錄（ROSTERS 第一份存在的「姓名｜信箱」表）＋角色（people.md 以 email 對應）
  * 10-19 實踩：選了使用者自己的名字，AI 查無資料就猜「可能是同事」 */
+const ROSTERS = ["wiki/meta/通訊錄.md", "wiki/meta/email-roster.md"]; // 公司手冊用 通訊錄.md（第 3 欄起忽略）
 async function personContext(app) {
   const read = async (p) => { const f = app.vault.getAbstractFileByPath(p); return f ? app.vault.cachedRead(f) : ""; };
   const rows = (s) => s.split("\n").filter((l) => l.startsWith("|")).map((l) => l.split("|").slice(1, -1).map((c) => c.trim()));
   const roles = new Map(rows(await read("wiki/meta/people.md")).filter((r) => r[0].includes("@")).map((r) => [r[0].replace(/`/g, ""), r[1]]));
-  return rows(await read("wiki/meta/email-roster.md")).filter((r) => r[1] && r[1].includes("@")).map(([name, email]) => ({ name, email, role: roles.get(email) || "" }));
+  let src = "";
+  for (const p of ROSTERS) if ((src = await read(p))) break;
+  return rows(src).filter((r) => r[1] && r[1].includes("@")).map(([name, email]) => ({ name, email, role: roles.get(email) || "" }));
 }
 
 /* 快取：PDF 換版（內容變）自動失效；source.txt 記最後一次的 vault 路徑，給人看是哪份 */
@@ -745,7 +748,7 @@ module.exports = class PdfTranslate extends Plugin {
     this.mode = "assist";
     if (a.ask) {
       const people = (await personContext(this.app)).filter((p) => p.name && text.includes(p.name));
-      const dir = people.length ? `\n\n通訊錄（wiki/meta/email-roster.md）查到這些同仁：\n${people.map((p) => `- ${p.name}｜${p.email}${p.role ? "｜角色：" + p.role : ""}`).join("\n")}` : "";
+      const dir = people.length ? `\n\n通訊錄查到這些同仁：\n${people.map((p) => `- ${p.name}｜${p.email}${p.role ? "｜角色：" + p.role : ""}`).join("\n")}` : "";
       return this.ask(`請解釋「${text}」：先一句話講它是什麼，再講在我們產品裡的意義或用途，需要時舉例。` +
         `\n目前筆記：${src ? src.path : "（無）"}；目標產品＝目前筆記的產品：${product || "未標（不限產品，命中哪個產品要講明）"}。${dir}`,
         { title: `解釋：${text.length > 30 ? text.slice(0, 30) + "…" : text}`, path: src ? src.path : "",
