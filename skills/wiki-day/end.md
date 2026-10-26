@@ -4,7 +4,7 @@ vault 自訂的收尾項目在 **`wiki/ops/end.md`**（每個 vault 自己寫，
 
 ## 0. 先判斷走哪一段
 
-讀 `wiki/meta/coordination.md` 的「目前主管」，再 `ListAgents` 看他在不在線。
+讀 `wiki/meta/coordination.md` 的「主管名單」（舊 vault 是「目前主管」）找出所屬主管（`coordination.md`「主管名單」裡 peer 欄有你、或範圍涵蓋你工作的那位；判斷不出就報給名單第一列，並在報到訊息寫「不確定歸屬，請轉」），再 `ListAgents` 看他在不在線。
 
 | 情況 | 走 |
 |---|---|

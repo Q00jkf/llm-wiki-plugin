@@ -94,5 +94,50 @@ class RoleCards(unittest.TestCase):
         self.assertEqual(o.strip(), "", "--quiet 給 hook 用，只有樣板 README 時要完全安靜" + NL + repr(o))
 
 
+class Managers(unittest.TestCase):
+    """1.14.0：「目前主管」→「主管名單」（多主管）；舊標題照讀。"""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="managers-"))
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def coord(self, section: str):
+        write(self.tmp / rc.COORD_REL, "# 主管名單" + NL + "<!-- 一列一位主管 -->" + NL + "| 主管（ListAgents 名稱） | 範圍 | peer | 上線 |" + NL + "|---|---|---|---|" + NL + section + NL + "# Session 狀態" + NL + "| a-1 | x |" + NL)
+
+    def test_old_heading_still_reads(self):
+        write(self.tmp / rc.COORD_REL, "# 目前主管" + NL + "user-30（上線於 10-12；派工）" + NL + "# Session 狀態" + NL + "| a-1 | x |" + NL)
+        self.assertEqual(rc.current_manager(self.tmp, "w-9"), "user-30", "舊 vault 的 coordination.md 推不到新樣板，舊標題要照讀")
+
+    def test_peer_column_wins(self):
+        self.coord("| boss-a | raw/QMS/ | w-1、w-2 | 10-26 |" + NL + "| boss-b | raw/3V/ | w-3 | 10-26 |")
+        self.assertEqual(rc.current_manager(self.tmp, "w-3"), "boss-b")
+        self.assertEqual(rc.current_manager(self.tmp, "w-1", "boss-b"), "boss-a", "peer 欄比卡上 office_team 新")
+
+    def test_peer_match_is_whole_name(self):
+        self.coord("| boss-a | raw/QMS/ | w-10 | 10-26 |" + NL + "| boss-b | raw/3V/ | w-1 | 10-26 |")
+        self.assertEqual(rc.current_manager(self.tmp, "w-1"), "boss-b", "w-1 不可因為 w-10 含它就配到 boss-a")
+
+    def test_card_team_then_single(self):
+        self.coord("| boss-a | raw/QMS/ | | 10-26 |" + NL + "| boss-b | raw/3V/ | | 10-26 |")
+        self.assertEqual(rc.current_manager(self.tmp, "w-9", "boss-b"), "boss-b")
+        self.assertIsNone(rc.current_manager(self.tmp, "w-9"), "兩位都有範圍、peer 欄沒有你 → 判斷不出，不要猜")
+
+    def test_empty_scope_means_whole_vault(self):
+        self.coord("| boss-a |  | | 10-26 |")
+        self.assertEqual(rc.current_manager(self.tmp, "w-9"), "boss-a", "單主管、範圍空白＝舊用法，行為不變")
+        self.coord("| boss-a | raw/QMS/ | | 10-26 |" + NL + "| boss-b |  | | 10-26 |")
+        self.assertEqual(rc.current_manager(self.tmp, "w-9"), "boss-b", "範圍空白的主管涵蓋全 vault，接得住沒歸屬的人")
+
+    def test_template_header_is_not_a_manager(self):
+        self.coord("")
+        self.assertIsNone(rc.current_manager(self.tmp, "w-9"))
+        self.assertEqual(rc.managers(self.tmp), [])
+
+    def test_no_coordination_file(self):
+        self.assertIsNone(rc.current_manager(self.tmp, "w-9"))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

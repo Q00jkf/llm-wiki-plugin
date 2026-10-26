@@ -15,6 +15,17 @@
 
 # llm-wiki
 
+## 1.14.0 — 2026-10-26
+
+- **改了什麼**：多主管 —— coordination 的「目前主管」改成「主管名單」表格（主管、範圍、peer、上線）
+  - `collab.md`：上線時範圍重疊的主管仍在線先問使用者，不重疊就新增一列；佔用申請與衝突先看「檔案在誰的範圍誰裁」，跨範圍交使用者
+  - `02-派工.md`：只派自己範圍內的工作；`06-coordination格式.md`：範圍空白＝全 vault、跟任何人都算重疊（單主管舊用法不變）
+  - `role.md`、`wiki-day` start／end：向所屬主管報到（peer 欄有你或範圍涵蓋你的那位）；判斷不出報第一列並寫「不確定歸屬，請轉」
+  - `role_cards.py`：`current_manager` 讀新表（peer 欄 → 卡上 office_team → 只有一位 → 唯一範圍空白的），舊標題「# 目前主管」照讀；樣板 `coordination.md`、`角色卡模板.md` 同步
+- **為什麼**：控制塔設計稿第 0 期（jacky 2026-10-26 加入多主管）；細節與第 2、7 點補充是主管 office 2026-10-26 裁示。`coordination.md` 在 `.skeleton-policy` 排除清單，樣板改了推不到舊 vault，所以舊標題要繼續相容
+- **commit**：待補
+- **issue**：無
+
 ## 1.13.0 — 2026-10-21
 
 - **改了什麼**：addon pdf-translate 0.4.0 —— 問 wiki 的出處改成正本優先

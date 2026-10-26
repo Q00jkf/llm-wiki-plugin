@@ -50,36 +50,66 @@ def split_frontmatter(text: str):
 WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:#([^\]|]+))?(?:\|[^\]]*)?\]\]")
 
 COORD_REL = Path("wiki/meta/coordination.md")
-MANAGER_SECTION = re.compile(r"^#\s*目前主管\s*$")
+# 「# 主管名單」（1.14.0 起，多主管表格）；舊 vault 的「# 目前主管」照讀 —— coordination.md 被 .skeleton-policy 排除，樣板改了推不到舊 vault
+MANAGER_SECTION = re.compile(r"^#\s*(?:主管名單|目前主管)\s*$")
 NEXT_HEADING = re.compile(r"^#\s+")
 # ListAgents 名稱形狀：至少含一個連字號。**不列舉 `llm-wiki-aegiverse-` 這類前綴** ——
 # 前綴追不完，各 vault 命名不同（同 vault 版 occupancy-check.py 的 NAME 正則）。
 AGENT_NAME = re.compile(r"\b([A-Za-z][A-Za-z0-9_.]*(?:-[A-Za-z0-9_.]+)+)")
 
 
-def current_manager(root: Path):
-    """coordination.md「# 目前主管」段裡第一個 ListAgents 形狀的名稱，查不到回 None。
+def managers(root: Path):
+    """coordination.md 主管段的每位主管：[(名稱, 範圍, peer 欄)]。
 
-    卡上 `office_team: 主管` 是佔位語意，辦公室要的是主管的 ListAgents 名稱 ——
-    手寫會在下次換主管時過期，所以由此推導（2026-10-12 #144 選丙）。
-    檔不存在／沒這段／抓不到名稱都回 None，不拋例外：其他 vault 不一定有 coordination.md。
+    新格式是表格 `| 主管 | 範圍 | peer | 上線 |`；舊格式「# 目前主管」是一行字，取第一個名稱、範圍空白。
+    檔不存在／沒這段都回 []，不拋例外：其他 vault 不一定有 coordination.md。
     """
     try:
         text = (root / COORD_REL).read_text(encoding="utf-8", errors="replace")
     except OSError:
-        return None
-    inside = False
-    for ln in text.splitlines():
+        return []
+    out, inside = [], False
+    for ln in strip_comments(text).splitlines():
         if MANAGER_SECTION.match(ln):
             inside = True
             continue
-        if inside:
-            if NEXT_HEADING.match(ln):
-                break
+        if not inside:
+            continue
+        if NEXT_HEADING.match(ln):
+            break
+        if ln.strip().startswith("|"):
+            cells = [c.strip() for c in ln.strip().strip("|").split("|")]
+            m = AGENT_NAME.search(cells[0]) if cells else None
+            if m:  # 表頭「主管（ListAgents 名稱）」與分隔列抓不到名稱，自然略過
+                out.append((m.group(1), cells[1] if len(cells) > 1 else "", cells[2] if len(cells) > 2 else ""))
+        elif not out:
             m = AGENT_NAME.search(ln)
             if m:
-                return m.group(1)
-    return None
+                out.append((m.group(1), "", ""))
+                break  # 舊格式只有一位
+    return out
+
+
+def current_manager(root: Path, agent: str = "", card_team: str = ""):
+    """這個 agent 該掛在哪位主管底下（辦公室 team 要的 ListAgents 名稱），判斷不出回 None。
+
+    卡上 `office_team: 主管` 是佔位語意，手寫會在下次換主管時過期，所以由 coordination.md 推導（2026-10-12 #144 選丙）。
+    多主管時依序：peer 欄有這個 agent → 卡上 office_team 對得到的那位 → 只有一位 →
+    唯一一位範圍空白（＝全 vault，主管 office 2026-10-26 裁示）的 → 否則 None。
+    """
+    ms = managers(root)
+    if not ms:
+        return None
+    for name, _, peers in ms:
+        if agent and re.search(rf"(?<![\w-]){re.escape(agent)}(?![\w-])", peers):
+            return name
+    for name, _, _ in ms:
+        if card_team and card_team == name:
+            return name
+    if len(ms) == 1:
+        return ms[0][0]
+    whole = [name for name, scope, _ in ms if not scope or scope in ("—", "-")]
+    return whole[0] if len(whole) == 1 else None
 
 
 
@@ -318,12 +348,12 @@ def cmd_claim(root: Path, role: str, agent: str) -> int:
     p.write_text("---\n" + "\n".join(new_lines) + "\n---\n" + body, encoding="utf-8")
     print(f"已登記：{role} ← {agent}（{now}）" + (f"；前一位持有者 {prev}" if prev and prev != agent else ""))
     # 辦公室那行直接印成可複製的樣子 —— team 要的是主管的 ListAgents 名稱，不是卡上的佔位值
-    mgr = current_manager(root)
+    mgr = current_manager(root, agent, fields.get("office_team", ""))
     team = mgr or fields.get("office_team") or "off"
     print("辦公室登記（有 pixel-office 才跑）：")
     print(f"  office_profile(agent={agent}, name={fields.get('office_name') or role}, "
           f"title={fields.get('office_title') or role}, team={team})"
-          + ("" if mgr else "   ← team 是卡上原值，coordination.md 找不到目前主管"))
+          + ("" if mgr else "   ← team 是卡上原值，coordination.md 主管名單判斷不出你屬於哪位主管"))
     return 0
 
 

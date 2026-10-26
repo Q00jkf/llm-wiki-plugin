@@ -47,8 +47,8 @@
 5. **跑守門腳本**（卡上有寫才跑），結果記下。
 6. **登記持有者**：`role_cards.py claim <角色> <你的 ListAgents 名稱>`（名稱取自 `ListAgents` 的「This session is X」）。
 7. **辦公室（選裝）**：有 `mcp__pixel-office__office_profile`（沒看到就 `ToolSearch("select:mcp__pixel-office__office_profile")` 確認一次；查無＝沒裝，跳過）→
-   **照上一步 `claim` 印出的那行跑**（它已經把 team 解析好）。卡上的 `office_team` 只是佔位語意，實際主管以 `wiki/meta/coordination.md`「目前主管」為準；`claim` 解析不到時會在行尾註明用的是卡上原值。
-8. **向主管報到**（協作模式且主管在線；主管是誰見 `wiki/meta/coordination.md`）：
+   **照上一步 `claim` 印出的那行跑**（它已經把 team 解析好）。卡上的 `office_team` 只是佔位語意，實際主管以 `wiki/meta/coordination.md`「主管名單」為準（peer 欄有你的那位 → 卡上 `office_team` 對得到的那位 → 只有一位 → 唯一範圍空白的那位）；`claim` 判斷不出時會在行尾註明用的是卡上原值。
+8. **向主管報到**（協作模式且主管在線）：報給範圍涵蓋這個角色的主管（`wiki/meta/coordination.md`「主管名單」；只有一位就報那位；判斷不出就報第一列，訊息寫「不確定歸屬，請轉」）：
    ```
    接手：<角色>（ListAgents=<你的名稱>，前一位 <舊 agent 或 無>）
    進行中：<進行中事項前 3 行>
