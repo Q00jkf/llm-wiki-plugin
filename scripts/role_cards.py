@@ -53,22 +53,31 @@ COORD_REL = Path("wiki/meta/coordination.md")
 # 「# 主管名單」（1.14.0 起，多主管表格）；舊 vault 的「# 目前主管」照讀 —— coordination.md 被 .skeleton-policy 排除，樣板改了推不到舊 vault
 MANAGER_SECTION = re.compile(r"^#\s*(?:主管名單|目前主管)\s*$")
 NEXT_HEADING = re.compile(r"^#\s+")
-# ListAgents 名稱形狀：至少含一個連字號。**不列舉 `llm-wiki-aegiverse-` 這類前綴** ——
-# 前綴追不完，各 vault 命名不同（同 vault 版 occupancy-check.py 的 NAME 正則）。
-AGENT_NAME = re.compile(r"\b([A-Za-z][A-Za-z0-9_.]*(?:-[A-Za-z0-9_.]+)+)")
+SEPARATOR_ROW = re.compile(r"^\|?\s*:?-{2,}")
 
 
-def managers(root: Path):
-    """coordination.md 主管段的每位主管：[(名稱, 範圍, peer 欄)]。
+def manager_name(cell: str) -> str:
+    """主管欄或舊格式那一行 → 名稱：去 **、`、[ref]，切在第一個空白或全形註記前。
 
-    新格式是表格 `| 主管 | 範圍 | peer | 上線 |`；舊格式「# 目前主管」是一行字，取第一個名稱、範圍空白。
-    檔不存在／沒這段都回 []，不拋例外：其他 vault 不一定有 coordination.md。
+    不套「至少一個連字號」的名稱正則：這台的 ListAgents 名稱常是中文（willy主管辦公室）或沒有連字號（office），
+    套了會整列丟掉、再被「只有一位」退路判給別人（B 期驗收 B1，主管 office 2026-10-26 裁示）。
+    """
+    t = re.sub(r"\[[^\]]*\]", " ", cell.replace("**", "").replace("`", "")).strip()
+    return re.split(r"[\s（(，,、]", t, maxsplit=1)[0] if t else ""
+
+
+def manager_rows(root: Path):
+    """coordination.md 主管段：([(名稱, 範圍, peer 欄)], 有沒有解析不出名稱的列)。
+
+    新格式是表格 `| 主管 | 範圍 | peer | 上線 |`，第一列是表頭；舊格式「# 目前主管」只看標題下第一個非空、非註解行，
+    取第一個 token，抓不到就是抓不到，不往下找（B2：往下找會抓到說明裡的 `llm-wiki:wiki-collabteam`）。
+    檔不存在／沒這段都回 ([], False)，不拋例外：其他 vault 不一定有 coordination.md。
     """
     try:
         text = (root / COORD_REL).read_text(encoding="utf-8", errors="replace")
     except OSError:
-        return []
-    out, inside = [], False
+        return [], False
+    out, bad, inside, header_seen, first_line = [], False, False, False, True
     for ln in strip_comments(text).splitlines():
         if MANAGER_SECTION.match(ln):
             inside = True
@@ -77,17 +86,34 @@ def managers(root: Path):
             continue
         if NEXT_HEADING.match(ln):
             break
-        if ln.strip().startswith("|"):
-            cells = [c.strip() for c in ln.strip().strip("|").split("|")]
-            m = AGENT_NAME.search(cells[0]) if cells else None
-            if m:  # 表頭「主管（ListAgents 名稱）」與分隔列抓不到名稱，自然略過
-                out.append((m.group(1), cells[1] if len(cells) > 1 else "", cells[2] if len(cells) > 2 else ""))
-        elif not out:
-            m = AGENT_NAME.search(ln)
-            if m:
-                out.append((m.group(1), "", ""))
-                break  # 舊格式只有一位
-    return out
+        st = ln.strip()
+        if not st:
+            continue
+        if st.startswith("|"):
+            first_line = False
+            if not header_seen:
+                header_seen = True
+                continue
+            if SEPARATOR_ROW.match(st):
+                continue
+            cells = [c.strip() for c in st.strip("|").split("|")]
+            name = manager_name(cells[0]) if cells else ""
+            if name:
+                out.append((name, cells[1] if len(cells) > 1 else "", cells[2] if len(cells) > 2 else ""))
+            else:
+                bad = True
+        elif first_line:
+            first_line = False
+            name = manager_name(st)
+            if name:
+                out.append((name, "", ""))
+            break  # 舊格式只有一位
+    return out, bad
+
+
+def managers(root: Path):
+    """coordination.md 主管段的每位主管：[(名稱, 範圍, peer 欄)]。"""
+    return manager_rows(root)[0]
 
 
 def current_manager(root: Path, agent: str = "", card_team: str = ""):
@@ -95,9 +121,10 @@ def current_manager(root: Path, agent: str = "", card_team: str = ""):
 
     卡上 `office_team: 主管` 是佔位語意，手寫會在下次換主管時過期，所以由 coordination.md 推導（2026-10-12 #144 選丙）。
     多主管時依序：peer 欄有這個 agent → 卡上 office_team 對得到的那位 → 只有一位 →
-    唯一一位範圍空白（＝全 vault，主管 office 2026-10-26 裁示）的 → 否則 None。
+    唯一一位範圍空白（並存時＝沒被別人範圍涵蓋的其餘，主管 office 2026-10-26 裁示）的 → 否則 None。
+    有任何列解析不出主管名時不走後兩個退路：少算了一位，「只有一位」「唯一空白」都可能是錯的。
     """
-    ms = managers(root)
+    ms, bad = manager_rows(root)
     if not ms:
         return None
     for name, _, peers in ms:
@@ -106,11 +133,12 @@ def current_manager(root: Path, agent: str = "", card_team: str = ""):
     for name, _, _ in ms:
         if card_team and card_team == name:
             return name
+    if bad:
+        return None
     if len(ms) == 1:
         return ms[0][0]
     whole = [name for name, scope, _ in ms if not scope or scope in ("—", "-")]
     return whole[0] if len(whole) == 1 else None
-
 
 
 def strip_comments(text: str) -> str:

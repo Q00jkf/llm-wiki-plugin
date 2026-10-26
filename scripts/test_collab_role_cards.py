@@ -135,6 +135,24 @@ class Managers(unittest.TestCase):
         self.assertIsNone(rc.current_manager(self.tmp, "w-9"))
         self.assertEqual(rc.managers(self.tmp), [])
 
+    def test_chinese_manager_name_is_kept(self):
+        self.coord("| willy主管辦公室 |  | w-1 | 10-26 |" + NL + "| boss-b | raw/3V/ | w-3 | 10-26 |")
+        self.assertEqual([m[0] for m in rc.managers(self.tmp)], ["willy主管辦公室", "boss-b"])
+        self.assertEqual(rc.current_manager(self.tmp, "w-1"), "willy主管辦公室", "B1：中文名主管被丟掉時 w-1 會被判給 boss-b")
+        self.coord("| **office [ab12cd]** | | | 10-26 |")
+        self.assertEqual(rc.current_manager(self.tmp, "w-9"), "office", "沒有連字號也是名稱；去粗體、去 [ref]")
+
+    def test_unreadable_row_disables_fallbacks(self):
+        self.coord("| ** ** |  | | 10-26 |" + NL + "| boss-b |  | w-3 | 10-26 |")
+        self.assertEqual(rc.current_manager(self.tmp, "w-3"), "boss-b", "peer 欄照樣認")
+        self.assertIsNone(rc.current_manager(self.tmp, "w-9"), "有一列讀不出名稱：不走「只有一位」「唯一空白」退路")
+
+    def test_old_heading_reads_first_line_only(self):
+        write(self.tmp / rc.COORD_REL, "# 目前主管" + NL + "**GUANGUAN [a1fe38]**（名牌 GUANGUAN；2026-10-13 使用者當面指派）" + NL + "> 規則：plugin `llm-wiki:wiki-collabteam`" + NL + "# Session 狀態" + NL)
+        self.assertEqual(rc.current_manager(self.tmp, "w-9"), "GUANGUAN", "B2：AEGIVERSE 那種寫法")
+        write(self.tmp / rc.COORD_REL, "# 目前主管" + NL + "<!-- 上線時填 -->" + NL + NL + "（無）" + NL + "> 規則：plugin `llm-wiki:wiki-collabteam`" + NL + "# Session 狀態" + NL)
+        self.assertIsNone(rc.current_manager(self.tmp, "w-9"), "第一行抓不到就回 None，不往下抓到 llm-wiki")
+
     def test_no_coordination_file(self):
         self.assertIsNone(rc.current_manager(self.tmp, "w-9"))
 

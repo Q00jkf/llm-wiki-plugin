@@ -4,12 +4,13 @@ vault 自訂的收尾項目在 **`wiki/ops/end.md`**（每個 vault 自己寫，
 
 ## 0. 先判斷走哪一段
 
-讀 `wiki/meta/coordination.md` 的「主管名單」（舊 vault 是「目前主管」）找出所屬主管（`coordination.md`「主管名單」裡 peer 欄有你、或範圍涵蓋你工作的那位；判斷不出就報給名單第一列，並在報到訊息寫「不確定歸屬，請轉」），再 `ListAgents` 看他在不在線。
+讀 `wiki/meta/coordination.md` 的「主管名單」（舊 vault 是「目前主管」），所屬主管照 `wiki-collabteam` 的 `06-coordination格式.md`「誰是我的主管」判斷（判斷不出報名單第一列，訊息寫「不確定歸屬，請轉」），再 `ListAgents` 看誰在線。
 
 | 情況 | 走 |
 |---|---|
-| 沒有主管，或主管不在線 | **A. 單一 session** |
-| 主管在線，我不是主管 | **B. peer** |
+| 名單上沒有任何主管在線 | **A. 單一 session** |
+| 所屬主管在線，我不是主管 | **B. peer** |
+| 所屬主管離線、另有主管在線 | **B. peer**，向在線那位報收工，訊息寫「不確定歸屬，請轉」 |
 | 我就是主管 | **C. 主管** → `end-manager.md` |
 
 ## 收工前先問自己一句（MUST，三條路都要）

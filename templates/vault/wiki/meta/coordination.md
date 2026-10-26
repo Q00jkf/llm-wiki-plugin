@@ -10,8 +10,8 @@ updated: {{today}}
 > 編號沿用不重編。格式與維護規則見 plugin `wiki-collabteam` skill（`06-coordination格式.md`）。
 
 # 主管名單
-<!-- 一列一位主管；離線即刪。範圍＝使用者指派的資料夾或工作，空白＝全 vault；檔案歸誰由此判定，跨範圍交使用者。peer 寫 ListAgents 名稱。範圍重疊的主管仍在線就先問使用者 -->
-| 主管（ListAgents 名稱） | 範圍 | peer | 上線 |
+<!-- 一列一位主管；離線即刪。範圍＝使用者指派的資料夾或工作，空白＝全 vault（並存時＝其餘）；檔案歸誰由此判定，跨範圍交使用者。peer 寫 ListAgents 名稱。範圍重疊或兩位都空白就先問使用者；每位主管只改自己那列與自己 peer 的列 -->
+| 主管（ListAgents 名稱，沒有就寫 uds 位址） | 範圍 | peer | 上線 |
 |---|---|---|---|
 
 # Session 狀態

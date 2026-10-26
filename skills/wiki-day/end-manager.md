@@ -22,7 +22,7 @@
 
 | 檔 | 刪什麼 |
 |---|---|
-| `wiki/meta/coordination.md` | ① 退休／離線的 session 列（含卸任前主管）② 已釋放的佔用列 ③ 已裁示／不做／已消解的待辦列 ④ **展開成多行的列**：原文搬進當天 log（`<details>` 包）、本頁縮成一行指向 log（見 `wiki-collabteam` 的 `06-coordination格式.md`）；本頁超過約 8 KB 時逐列檢查 |
+| `wiki/meta/coordination.md` | ① 退休／離線的 session 列（含卸任前主管；多主管時只清自己 peer 的）② 已釋放的佔用列（多主管時只清自己範圍的） ③ 已裁示／不做／已消解的待辦列 ④ **展開成多行的列**：原文搬進當天 log（`<details>` 包）、本頁縮成一行指向 log（見 `wiki-collabteam` 的 `06-coordination格式.md`）；本頁超過約 8 KB 時逐列檢查 |
 | 當天用過的 `_README.md` | ① 已完成的缺口列與工作順序列 ② 已被裁示不做的列 ③ 與現況矛盾的過期敘述 |
 | `wiki/hot.md` | 依檔頭輪替規則修剪（≤150 行；標「里程碑保留」者不刪） |
 
@@ -42,7 +42,7 @@
 |---|---|---|
 | `wiki/meta/coordination.md` | 當前狀態快照 | 工作歷程 |
 | `wiki/log.md` | **當日歷程**：發現路徑、誰踩到什麼坑、裁示理由 | 規則本身 |
-| `wiki/hot.md` | **主管寫一塊今日結論**（格式見 `SKILL.md`），peer 不寫 | 完整清單 |
+| `wiki/hot.md` | **主管寫一塊今日結論**（格式見 `SKILL.md`），peer 不寫；多主管時各寫一塊、開頭標自己名稱（分工見 `wiki-collabteam` 的 `06-coordination格式.md`「多主管分工」） | 完整清單 |
 | 各 `_README.md` | 由主管維護（見 01） | |
 | `wiki/meta/roles/*.md` | **不改**：各卡進行中事項由持有者收工時寫；主管只讀來彙整（`role_cards.py list` 看進行中行數，持有者已離線而卡沒更新的，在 hot.md 標出來） | 別人的卡 |
 
