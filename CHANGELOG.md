@@ -172,7 +172,18 @@
 
 # pixel-office
 
-## 未發版（0.10.5 之後）
+## 0.11.0 — 2026-10-26
+
+- **改了什麼**：控制塔 A 期 —— 名單（`office_roster`、`/office who`）資訊細分
+  - 「目前」欄：「🟡 等核准 N 秒」與「等輸入（N 分）」分開（狀態檔新增 `since`）；出錯時存錯誤第一行（最多 80 字，`lastError`），名單顯示，之後 10 分鐘內標「上次出錯 N 分前」
+  - 職稱自動帶：沒職稱時，使用者自己打的指令（composer／bridge，不含 slash 指令與 peer 訊息）以 classic hook 的 `session_title`（有的話）或指令前 16 字帶入，名單標「(自動)」；自動帶的放超過 30 分鐘再來新指令才換。手動設的永遠不蓋，但超過 30 分鐘沒更新又來新指令時標「（N 分前設）」並在「目前」欄附最新指令
+  - 回信位址：每個 session 發布自己的 `uds:<CLAUDE_CODE_MESSAGING_SOCKET>`（`addr`）；沒有 ListAgents 名稱時名單顯示「SendMessage 用 to=uds:…」；寄到位址也畫得出紙飛機
+  - 系統提示 (2) 加一句「名單顯示你的職稱過期時，請更新 title」
+- **為什麼**：控制塔設計稿（`plugins/pixel-office/docs/designs/control-tower.md`）A 期；手動 title 不蓋、改為過期標示是主管 office 2026-10-26 裁示
+- **commit**：待補
+- **issue**：無
+
+## 未發版（0.10.5 之後，併入 0.11.0）
 
 - **改了什麼**：山雀加一支渲染層測試（連續 8 格白色像素數必須相同）
 - **為什麼**：使用者截圖回報跳起來頭還是被切掉。實測程式正確，使用者看到的是 1–2 天前開的 session 載入的舊版 —— plugin 在 session 啟動時載入記憶體，在跑的視窗不會重讀
