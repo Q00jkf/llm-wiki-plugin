@@ -195,6 +195,18 @@
 
 # pixel-office
 
+## 0.13.3 — 2026-10-26
+
+- **改了什麼**：辦公室核准保留、預設關閉
+  - 審核端開關 `/office approve on｜off`（存 `$.store`，重開記得；預設 off）；狀態檔多一欄 `approve`（開著面板且核准開啟才為 true）。請求端只在有人 `office && approve` 時送單，否則 PermissionRequest 直接 `next(e)`
+  - 關著時面板不顯示「審」與 Allow／Deny；開著時面板頂端常駐「核准已開啟（/office approve off 關閉）」
+  - 排隊走去櫃台改看 `mode === 'waiting'`（依 since 排序），不再靠核准單 —— 核准關著也照常排隊
+  - Allow 按鈕冷卻中「Allow（等一秒）」、可按「Allow（可以按）」同寬，Deny 不再左移（oftest 回報）
+  - README 指令表與「點人核准」節更新；`/office` 說明加 `approve on|off`
+- **為什麼**：jacky 2026-10-26 最終裁示 B（保留辦公室核准、預設關閉），細節是主管 office 轉達
+- **commit**：待補
+- **issue**：無
+
 ## 0.13.2 — 2026-10-26
 
 - **改了什麼**：點人核准的等待放進 hook 的 10 秒預算內
@@ -203,7 +215,7 @@
   - 面板：核准區移到最上方，展開時顯示「剩 N 秒」、每秒重畫；過了 deadline 就收起、不給按（到點自動重畫，不等下一輪 refresh）；`decide()` 寫決定前再檢查 deadline；`parseApproval` 以 deadline 判斷過期（沒有 deadline 的舊單當不存在）
   - `/office who` 第一行：「🟡🟡 等你核准…：<名牌>（工具，剩 N 秒）」
 - **為什麼**：oftest 2026-10-26 實測 `classic.PermissionRequest` 的 hook 預算固定 10 秒（`HookBudget.ms`），超過就改由終端機問但 hook 還在背景跑 → 單一直顯示 waiting，使用者按 Allow 寫得出決定卻不會被採用（以為放行了其實沒有）。修法是主管 office 裁示
-- **commit**：待補
+- **commit**：9fe6804
 - **issue**：無
 
 ## 0.13.1 — 2026-10-26
