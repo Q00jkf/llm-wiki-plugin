@@ -24,7 +24,7 @@
   - `role.md` 第 7、8 步、`wiki-day` start／end 改指向「誰是我的主管」；`end.md` 加「所屬主管離線、另有主管在線 → 向在線那位報收工」；`end-manager.md` 清理與 hot.md 指向分工；`collab.md` 路徑 1 同步範圍規則
   - 表頭改「主管（ListAgents 名稱，沒有就寫 uds 位址）」（06 與樣板）
 - **為什麼**：oftest B 期驗收報告 `.team/reports/B-test.md`；修法是主管 office 2026-10-26 裁示
-- **commit**：待補
+- **commit**：e8c47be
 - **issue**：無
 
 ## 1.14.0 — 2026-10-26
@@ -195,6 +195,19 @@
 
 # pixel-office
 
+## 0.13.0 — 2026-10-26
+
+- **改了什麼**：控制塔第 1 期「點人核准」—— 開著辦公室面板的視窗可以替別的 session 按 Allow／Deny
+  - 請求端：`tool.check` 判 ask 時記下 toolUseId；`classic.PermissionRequest`（沒有 tool_use_id）用 2 秒內 tool＋input 完全相同、剛好一筆的 ask 配對，配不上就不接手。auto、bypass 類模式、subagent、host 代答、沒有人開辦公室 → 直接交回終端機
+  - 送單 `~/.claude/pixel-office/approvals/<session>.json`（含隨機 nonce），每 300 ms 讀 `decisions/<session>.json`；session＋toolUseId＋nonce 全對才採用，不符丟棄並記一行 log；壞檔、逾時 120 秒、終端機先按（PostToolUse／PostToolUseFailure／PermissionDenied／tool.call 結束）→ 不回答。只回 allow／deny，從不送 updatedPermissions
+  - 處理完兩個檔都覆寫成墓碑 `{"state":"done"}`（`$.fs` 不能刪檔）；開機先清自己的殘檔；逾時的一律當不存在
+  - 面板：「🟡 等你核准：審 <名牌>」按鈕 → 展開全文＋Allow／Deny／收起。Allow 展開後 1 秒才按得下去，單被換成新的一筆就重新展開、冷卻重算；全文超過 1500 字或 20 行只給 Deny 與「回終端機按」；Allow／Deny 不給 hotkey。決定檔只有面板按鈕會寫，沒有任何模型工具能寫
+  - 畫面：等核准的人拿著紙走到櫃台排隊（窄面板排大門口），結案後走回座位；名單標「辦公室面板可審」
+  - 分區：最左一欄只在有人分不到區時才保留（主管 office 裁示），60～80 欄兩位主管各帶 peer 時有兩區
+- **為什麼**：控制塔設計稿第 1 期；安全底線 8 條與冷卻、2 秒、不給 hotkey 是主管 office 2026-10-26 裁示
+- **commit**：待補
+- **issue**：無
+
 ## 0.12.1 — 2026-10-26
 
 - **改了什麼**：多主管畫面在實機寬度（50～80 欄）看得到
@@ -202,7 +215,7 @@
   - peer 分區不再依賴有沒有桌子：坐不下的主管排在有桌的後面，他的 peer 照樣有一區與 TEAM 牌（分區數仍受欄數限制：最左一欄留給沒有 team 的人）
   - 櫃台貼下牆、矮一格（4 列）：走底部走廊去影印機／檔案櫃／郵筒的人不再壓到櫃台
 - **為什麼**：oftest B 期驗收（實機面板 50～80 欄看不到第 2 張桌；跑腿的人壓到櫃台上緣），修法是主管 office 2026-10-26 裁示
-- **commit**：待補
+- **commit**：e8c47be
 - **issue**：無
 
 ## 0.12.0 — 2026-10-26
