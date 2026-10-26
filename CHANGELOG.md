@@ -195,6 +195,17 @@
 
 # pixel-office
 
+## 0.13.2 — 2026-10-26
+
+- **改了什麼**：點人核准的等待放進 hook 的 10 秒預算內
+  - 等待上限改成 `next.budget.remainingMs − 1500 ms`（`approvalWindow`；剩不到 2 秒就不送單，沒有計時時上限 120 秒），單與狀態檔都帶 `deadline`（絕對時間），到期自己清成墓碑、回 `next(e)`
+  - 聽 `next.signal`：中止時睡眠立刻醒、清單、結束迴圈
+  - 面板：核准區移到最上方，展開時顯示「剩 N 秒」、每秒重畫；過了 deadline 就收起、不給按（到點自動重畫，不等下一輪 refresh）；`decide()` 寫決定前再檢查 deadline；`parseApproval` 以 deadline 判斷過期（沒有 deadline 的舊單當不存在）
+  - `/office who` 第一行：「🟡🟡 等你核准…：<名牌>（工具，剩 N 秒）」
+- **為什麼**：oftest 2026-10-26 實測 `classic.PermissionRequest` 的 hook 預算固定 10 秒（`HookBudget.ms`），超過就改由終端機問但 hook 還在背景跑 → 單一直顯示 waiting，使用者按 Allow 寫得出決定卻不會被採用（以為放行了其實沒有）。修法是主管 office 裁示
+- **commit**：待補
+- **issue**：無
+
 ## 0.13.1 — 2026-10-26
 
 - **改了什麼**：核准決定綁指令內容
@@ -202,7 +213,7 @@
   - 面板按下時重讀單，全文跟展開時不同就不送；單上的 text 變了也重新展開
   - README 新增「點人核准」節，寫明限制：決定檔是本機共用檔，防誤按與配錯，不防本機惡意程式；同時更新桌數門檻與分區規則的舊說明
 - **為什麼**：主管 office 2026-10-26 審 dbc5c81：approvals 檔任何本機程式都能改，同一張單（toolUseId＋nonce 不變）的 text 被換成無害字樣時，使用者看到的跟實際放行的會不同
-- **commit**：待補
+- **commit**：77933aa
 - **issue**：無
 
 ## 0.13.0 — 2026-10-26
