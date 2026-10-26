@@ -195,6 +195,20 @@
 
 # pixel-office
 
+## 0.14.0 — 2026-10-26
+
+- **改了什麼**：Desktop 辦公室改畫向量（設計稿第 2 期）
+  - 新 `hooks/vector.ts`：吃跟 `drawScene` 同一份 crew、座位、SceneOptions，輸出形狀清單（圓角矩形、圓、橢圓、路徑、文字），純資料不依賴 `$`；`vectorSvg` 轉成 SVG（磁磚用 `<pattern>`，夜間蓋暗幕、螢幕與問號畫在暗幕上）
+  - 人物：圓頭＋兩眼，依 mode 換表情 —— thinking 眼睛往上＋泡泡、error 冒汗發抖、done 跳一下＋閃光、waiting 頭上問號、idle 8 格眨一次眼、typing 手動、reading 拿紙、blocked 紅牌
+  - 名牌、門牌（會議室／主管室）、TEAM 牌可中文，依顯示寬度截字（全形算 2）
+  - Desktop（Svg）改用向量；終端機（Raster）的 `drawScene`＋`encode` 不動，新測試用 40 個情境的 hash 鎖住跟 0.13.2 逐位元相同
+  - SVG 大小（2026-10-26 實測）：最大情境 112×80、30 人＋貓＋紙飛機＋開會＋排隊約 4.6 萬字元（點陣版 8.0 萬），上限 131072
+  - 新 `hooks/scenarios.ts`（測試與截圖共用的情境）；`scene.ts` 只多 export 常數與配色
+  - 沒做：支援圖片的終端機（`Image` 元素）、眼睛看向游標 —— 設計稿列為之後
+- **為什麼**：設計稿第 2 期；點陣在 Desktop 放大後糊、名牌不能寫中文
+- **commit**：待補
+- **issue**：無
+
 ## 0.13.3 — 2026-10-26
 
 - **改了什麼**：辦公室核准保留、預設關閉
@@ -204,7 +218,7 @@
   - Allow 按鈕冷卻中「Allow（等一秒）」、可按「Allow（可以按）」同寬，Deny 不再左移（oftest 回報）
   - README 指令表與「點人核准」節更新；`/office` 說明加 `approve on|off`
 - **為什麼**：jacky 2026-10-26 最終裁示 B（保留辦公室核准、預設關閉），細節是主管 office 轉達
-- **commit**：待補
+- **commit**：c1ec1ca
 - **issue**：無
 
 ## 0.13.2 — 2026-10-26
