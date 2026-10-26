@@ -29,6 +29,7 @@
 |---|---|
 | hook、MCP 工具（`office_profile`／`office_roster`／`office_meeting`）、`/office` 指令、名單輸出 | `hooks/register.tsx` —— **全部邏輯都在這一支**（約 900 行） |
 | 像素畫、座位配置、走路路徑、貓 | `hooks/scene.ts` |
+| Desktop 畫面長相（素材圖、名牌、泡泡） | `hooks/vector.ts`；素材表由 `assets/build_sheet.py` 產生 `assets/office-sheet.png`＋`hooks/sheet.ts`（不要手改 sheet.ts） |
 | `Coworker` 等型別 | `types/index.d.ts` ← **不在 `hooks/` 裡**；2026-10-08 在這裡繞了 5 次 grep |
 | 測試 | `hooks/office.test.tsx` |
 
