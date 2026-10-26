@@ -19,6 +19,7 @@ updated: {YYYY-MM-DD HH:mm 一句話說改了什麼}
 
 # 主管名單
 | 主管（ListAgents 名稱） | 範圍 | peer | 上線 |
+|---|---|---|---|
 （一列一位主管；範圍寫使用者指派的原話，空白＝全 vault；peer 寫 ListAgents 名稱）
 
 # Session 狀態
