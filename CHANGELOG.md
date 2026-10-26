@@ -172,6 +172,13 @@
 
 # pixel-office
 
+## 0.11.1 — 2026-10-26
+
+- **改了什麼**：名單「等輸入／剛完成」也附「上次出錯 N 分前」；沒名稱者的位址改用 code 格式 `to=uds:…`，系統提示 (3) 提醒照抄（兩個反斜線）；`plugins/*/tsconfig.json`（引擎載入 inline mod 時產生）加進 .gitignore
+- **為什麼**：oftest A 期驗收（`.team/reports/A-test.md`）：idle／done 提早 return，出錯後停下來等人時看不到錯誤；模型抄位址掉一個反斜線 → ENOINBOX no-key
+- **commit**：待補
+- **issue**：無
+
 ## 0.11.0 — 2026-10-26
 
 - **改了什麼**：控制塔 A 期 —— 名單（`office_roster`、`/office who`）資訊細分

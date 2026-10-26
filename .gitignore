@@ -4,3 +4,4 @@ __pycache__/
 
 # Claude Code 載入 function-hooks plugin 時自動產生的型別檔
 plugins/*/.claude-plugin/types/
+plugins/*/tsconfig.json
