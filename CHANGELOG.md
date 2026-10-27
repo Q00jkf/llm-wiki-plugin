@@ -203,7 +203,7 @@
   - 分組 `oneshotGroups`：`--name` 第一個 `-` 之前；沒帶的歸「一次性」
   - 互動 session 帶 `--name` 的，預設名牌改用它（`launchPlate`：去掉非 ASCII、截 12 字、至少 2 字）；手動設過的不動
   - **修 `sessions/me.json` 垃圾檔**：classic `SessionStart` 比 `session.start` 先跑，那時 session 編號還是預設的 `me`，`session_title` 觸發的 publish 寫出 `me.json`（left:false，會被當成在線的人），真正的狀態檔反而拿不到標題。改成編號還沒拿到時只記下、session.start 拿到編號後再套用
-  - 測試 158 → 165：分組與徽章文字、`launchPlate`、名單排除與計數、別的視窗的一次性對話不進 Raster／Svg 員工區且畫出徽章、`-p` 啟動不留 `me.json` 且寫 `oneshot`＋`label`、互動 `--name` 當名牌
+  - 測試 159 → 165：分組與徽章文字、`launchPlate`、名單排除與計數、別的視窗的一次性對話不進 Raster／Svg 員工區且畫出徽章、`-p` 啟動不留 `me.json` 且寫 `oneshot`＋`label`、互動 `--name` 當名牌
 - **為什麼**：willy主管辦公室 2026-10-27 需求（`.team/to-office/impl-fwd-willy-105826.md`），jacky 核准；主管 office 信件 office-G4、裁示名牌照 (A)
 - **commit**：待補
 - **issue**：無
