@@ -195,6 +195,13 @@
 
 # pixel-office
 
+## 0.23.2 — 2026-10-27
+
+- **改了什麼**：manifest 的 `<link>` 加 `crossorigin="use-credentials"`，Chrome 抓 manifest 與圖示時帶 Cloudflare Access 的登入 cookie
+- **為什麼**：jacky 2026-10-27：換成 PNG 後主畫面還是「J」。Chrome 預設不帶 cookie 抓 manifest，被 Access 302 到登入頁，拿不到圖示；照 finance 看盤台（dash.jkmoney.uk）已用的做法
+- **commit**：（本版）
+- **issue**：無
+
 ## 0.23.1 — 2026-10-27
 
 - **改了什麼**：手機主畫面圖示改成 PNG（192／512／maskable），圖案是辦公室素材拼的「打電腦的人」，`remote/build_icon.py` 產生；manifest 與頁面改指這些 PNG
