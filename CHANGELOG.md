@@ -195,6 +195,13 @@
 
 # pixel-office
 
+## 0.21.0 — 2026-10-27
+
+- **改了什麼**：只有 2 欄、又不只一排時（手機直立、窄面板）團隊分區改成一隊一組桌（`zoneUnits`，由上往下、每排從右往左），3 欄以上照舊一隊一欄；同名的人名牌後加 ①②，截字時保住編號（`sameNameNumbers`，Desktop 與手機都有）；手機頁點人跳出卡片（職稱、狀態、工具、等核准的工具、隊伍、ListAgents 名稱、最近錯誤），`/state.json` 多回每個人在圖上的位置
+- **為什麼**：jacky 2026-10-27 手機截圖：兩隊只畫出「TEAM office」一框，willy 隊的 r2、test 被擠進去（2 欄扣掉沒 team 的人那欄只剩 1 欄可分）；兩個 `LLM-Wiki-` 分不出來；點不到人
+- **commit**：（本版）
+- **issue**：無
+
 ## 0.20.0 — 2026-10-27
 
 - **改了什麼**：第 3 期手機版第一步（只看）。新增 `remote/server.ts`＋`remote/page.html`：本機 bun 伺服器讀共用資料夾、用同一套 `scene.ts`／`vector.ts` 畫直立辦公室（寬 64 單位、高照螢幕比例），手機頁每秒更新、可加到主畫面（manifest）。經 Cloudflare 的要求要帶 Access 驗過的 owner email，否則 403。session 狀態解析抽成 `hooks/status.ts`（面板與伺服器共用）。伺服器測試 `remote/server.spec.ts` 2 個
