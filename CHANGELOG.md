@@ -195,6 +195,13 @@
 
 # pixel-office
 
+## 0.24.0 — 2026-10-27
+
+- **改了什麼**：外掛自己跑 ListAgents 登記 ListAgents 名稱（`selfRegister`：`$.tool.check` 是 allow 才 `$.tool.call`，不經模型、不花 tokens）：session 開始 3 秒後一次、每次 `/office` 一次。`/office` 回報結果：登記到的名稱；沒名字的 session（ListAgents 不印「This session is」）提示用 `/rename` 取名；要權限則提示手動登記
+- **為什麼**：jacky 2026-10-27：finance（Claude Desktop）沒登記，別的 session 傳訊息找不到它；問 `/office` 能不能自動登記
+- **commit**：（本版）
+- **issue**：無
+
 ## 0.23.2 — 2026-10-27
 
 - **改了什麼**：manifest 的 `<link>` 加 `crossorigin="use-credentials"`，Chrome 抓 manifest 與圖示時帶 Cloudflare Access 的登入 cookie
