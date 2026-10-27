@@ -195,6 +195,13 @@
 
 # pixel-office
 
+## 0.19.3 — 2026-10-27
+
+- **改了什麼**：`/office` 回報面板有沒有畫出來（`$.ui.open` 的 `isPlaced`／`reason`）與接著哪些畫面（`$.session.surfaces()`），並寫一份 `~/.claude/pixel-office/debug-open.json`
+- **為什麼**：jacky 2026-10-27 在手機（Claude App＋Remote Control）打 `/office`，回「已開啟」卻沒有畫面；原本不看 `$.ui.open` 的結果，查不出原因
+- **commit**：（本版）
+- **issue**：無
+
 ## 0.19.2 — 2026-10-27
 
 - **改了什麼**：Claude Desktop 的 session 不再被當成一次性對話。`session.attach`（非 terminal）或面板在 Desktop／手機畫出來時清掉 `oneshot`／`label` 並重寫狀態檔；`session.start` 當下已有非 terminal 的 surface 也不標。測試 166 → 167
