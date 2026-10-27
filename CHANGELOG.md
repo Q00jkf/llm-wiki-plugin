@@ -195,6 +195,19 @@
 
 # pixel-office
 
+## 0.17.0 — 2026-10-27
+
+- **改了什麼**：G2 —— Desktop 整個面板都是辦公室、家具選單看得清楚且位置固定；終端機 Raster 不變（40 個雜湊照過）
+  - 場景高度撐滿面板：`scene.ts` `desktopRows`＝bodyRows×1.25／k（Desktop 一列＝2.5／k 單位），拿掉 80 列上限，只扣核准列；`setSpread` 只在畫 Desktop 時開，多出來的高度平均分到座位群之間與上方，不全堆在走廊（終端機版面照舊）
+  - Desktop 拿掉「個人按鈕：…」提示與「夜間模式」按鈕：點牆上任何一扇窗切換（`Hit` 新增 `window`，第一扇 key 沿用 `night`）；舊格式個人按鈕疊在員工區上緣左邊
+  - 家具選單：Desktop 改深色不透明底（`#1a1c2c`）＋金色圓角框＋標題列（家具名），選項字指定白色；`menuSize` 把框與標題算進大小
+  - 選單位置固定：`menuPlace` 的 others 改成 `menuOthers`（其他可點的家具／窗／柯基＋`VectorScene.fixed` 櫃台與 YOU 牌），不再看走動、排隊的人與寵物
+  - 30 人 SVG：面板 ~900px 高（77 列）63,761 字元；112×200 列 112,638 字元，仍在 131072 內
+  - 測試 148 → 155：desktopRows 換算、Desktop 只剩場景（無提示、無按鈕列）、點窗切夜間、拉高時座位群分散且終端機版面不變、選單深色有框、選單在任何走動／排隊／寵物位置下都不動、選單不蓋櫃台、112×200 SVG 上限
+- **為什麼**：jacky 2026-10-27 Desktop 截圖（`.team/reports/G2-jacky-desktop.png`）；主管 office 信件 office-G2、office-G2b（名牌不改；選單要明顯、位置固定）
+- **commit**：待補
+- **issue**：無
+
 ## 0.16.1 — 2026-10-27
 
 - **改了什麼**：oftest F 期驗收（`.team/reports/F-test.md`）小修；終端機 Raster 不變
