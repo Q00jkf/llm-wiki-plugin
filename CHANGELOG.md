@@ -195,6 +195,19 @@
 
 # pixel-office
 
+## 0.19.0 — 2026-10-27
+
+- **改了什麼**：G4 —— `claude -p` 一次性對話不畫成員工
+  - 認得出非互動：`session.start` 的 `isInteractive`＝false → 狀態檔加 `oneshot: true`，`label`＝啟動時的 `--name`（classic `SessionStart`、`source`＝startup 的 `session_title`；2026-10-27 實測 `claude -p --name API-probe-01-1` 拿到原字串）
+  - 讀名單時一次性對話不進 `others`：不排座位、不畫、不列入 `/office who`／`office_roster`（最後一行計數）；Desktop 在櫃台右邊（窄面板在檔案櫃右上）畫「⚙ <前綴> ×N」徽章，終端機在按鈕列右邊留一行（Raster 不變）
+  - 分組 `oneshotGroups`：`--name` 第一個 `-` 之前；沒帶的歸「一次性」
+  - 互動 session 帶 `--name` 的，預設名牌改用它（`launchPlate`：去掉非 ASCII、截 12 字、至少 2 字）；手動設過的不動
+  - **修 `sessions/me.json` 垃圾檔**：classic `SessionStart` 比 `session.start` 先跑，那時 session 編號還是預設的 `me`，`session_title` 觸發的 publish 寫出 `me.json`（left:false，會被當成在線的人），真正的狀態檔反而拿不到標題。改成編號還沒拿到時只記下、session.start 拿到編號後再套用
+  - 測試 158 → 165：分組與徽章文字、`launchPlate`、名單排除與計數、別的視窗的一次性對話不進 Raster／Svg 員工區且畫出徽章、`-p` 啟動不留 `me.json` 且寫 `oneshot`＋`label`、互動 `--name` 當名牌
+- **為什麼**：willy主管辦公室 2026-10-27 需求（`.team/to-office/impl-fwd-willy-105826.md`），jacky 核准；主管 office 信件 office-G4、裁示名牌照 (A)
+- **commit**：待補
+- **issue**：無
+
 ## 0.17.0 — 2026-10-27
 
 - **改了什麼**：G2 —— Desktop 整個面板都是辦公室、家具選單看得清楚且位置固定；終端機 Raster 不變（40 個雜湊照過）
