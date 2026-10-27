@@ -195,6 +195,13 @@
 
 # pixel-office
 
+## 0.20.0 — 2026-10-27
+
+- **改了什麼**：第 3 期手機版第一步（只看）。新增 `remote/server.ts`＋`remote/page.html`：本機 bun 伺服器讀共用資料夾、用同一套 `scene.ts`／`vector.ts` 畫直立辦公室（寬 64 單位、高照螢幕比例），手機頁每秒更新、可加到主畫面（manifest）。經 Cloudflare 的要求要帶 Access 驗過的 owner email，否則 403。session 狀態解析抽成 `hooks/status.ts`（面板與伺服器共用）。伺服器測試 `remote/server.spec.ts` 2 個
+- **為什麼**：jacky 2026-10-27 選方案 A（自建 App）。手機 Claude App 實測不會以 `mobile` 畫面接上外掛（`debug-open.json` 只有 terminal／desktop），所以 B 走不通。對外改用 finance 已有的 Cloudflare Tunnel＋Access，不另做 Worker 與密碼
+- **commit**：（本版）
+- **issue**：無
+
 ## 0.19.3 — 2026-10-27
 
 - **改了什麼**：`/office` 回報面板有沒有畫出來（`$.ui.open` 的 `isPlaced`／`reason`）與接著哪些畫面（`$.session.surfaces()`），並寫一份 `~/.claude/pixel-office/debug-open.json`
