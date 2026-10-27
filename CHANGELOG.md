@@ -195,6 +195,13 @@
 
 # pixel-office
 
+## 0.19.2 — 2026-10-27
+
+- **改了什麼**：Claude Desktop 的 session 不再被當成一次性對話。`session.attach`（非 terminal）或面板在 Desktop／手機畫出來時清掉 `oneshot`／`label` 並重寫狀態檔；`session.start` 當下已有非 terminal 的 surface 也不標。測試 166 → 167
+- **為什麼**：jacky 2026-10-27 回報 0.19.0 後 Desktop 的員工都消失。根因：0.19.0 只看 `isInteractive`＝false，但 Desktop 的 session 也走 SDK，一樣是 false（實測三個 Desktop session 的狀態檔都是 `oneshot: true`）；G4 只用 `claude -p` 驗過
+- **commit**：（本版）
+- **issue**：無
+
 ## 0.19.1 — 2026-10-27
 
 - **改了什麼**：走路走到一半換路線不再瞬移。新增 `rejoin`：新路線回到舊起點就原地掉頭；從舊起點出發就先掉頭回座位再走；從舊終點出發就先走完舊路線。`trackMoves`、等核准排隊兩處都改用 `walkTo`。測試 165 → 166（換路線時每格位移不超過 `WALK_SPEED`、核准時掉頭只走回已走的路）
