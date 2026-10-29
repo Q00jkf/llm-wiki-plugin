@@ -2,7 +2,7 @@
 
 前提：全域規則已定義 `ListAgents`／`SendMessage`（deferred，先 `ToolSearch("select:SendMessage")`）、
 `peer-reply-<name>.md` fallback、無離線留言、commit 用 `git -c user.name="<session名>"`。
-本 skill 在其上加一個**主動彙整與仲裁**的角色；沒有主管在線時，peer 仍照舊規則自己判斷。
+本份是 vault 版的主管入口：狀態記在 `wiki/meta/coordination.md`。升層、派工單、回報、降層的通用做法在 skill `pixel-office:team` 的 `lead.md`，這裡不重寫。
 
 ---
 
@@ -37,7 +37,7 @@
 
 ---
 
-要讓幾個 session **自己討論出一個方案**（主管只出題、不居中傳話）→ 用 `wiki-meet`，不在這裡派工。
+要讓幾個 session **自己討論出一個方案** → `pixel-office:team` 的 `meet.md`。
 
 ## 三種進入路徑
 
@@ -46,7 +46,7 @@
    不重疊 → 新增一列（範圍寫使用者指派的原話）；已離線的列直接刪 → 回報。範圍空白：單主管＝全 vault、並存＝其餘；**兩位都空白也要先問**（見 `06-coordination格式.md`）。
 2. **來訊**：收到 `cross-session-message` → 依下表分類 → 更新 `coordination.md` → **先回報使用者，再回覆對方**。
 3. **查詢**：使用者問狀態 → 讀 `coordination.md` ＋ `ListAgents` 核對（不在名單的標「離線」）→ 輸出彙整表。
-   有裝像素辦公室時一併查名單（見下節）。
+   一併看 `office_roster`。
 
 | 來訊 | 動作 |
 |---|---|
@@ -59,22 +59,7 @@
 
 ---
 
-## 選用：像素辦公室名單（有裝才用）
-
-pixel-office 是**選裝** plugin，llm-wiki 不依賴它。**先判斷有沒有裝，沒裝就照原本做法，不要提示使用者安裝。**
-
-| 判斷 | 做法 |
-|---|---|
-| 工具清單裡有 `mcp__pixel-office__office_roster` | 有裝 → 用它 |
-| 清單裡沒看到 | `ToolSearch("select:mcp__pixel-office__office_roster")` 確認一次；查無＝沒裝 |
-| 沒裝 | 照原本做法：`ListAgents` ＋ `coordination.md` ＋ 直接問 |
-
-有裝時，`office_roster` 一次給出每個在線 session 的**名牌、職稱、主管／員工、ListAgents 名稱（SendMessage 用）、正在做什麼**，
-表頭另列 `🔴 待放行：…`（被 auto 分類器擋下、等使用者在該視窗說放行的人）。用在三處：派工前選人（02 §1）、
-回覆第一行的待放行（03 §2）、確認身分（04）。
-
-⚠️ 名單是**即時畫面，不是權責紀錄**：誰是主管、誰佔用哪個檔仍以 `coordination.md` 為準；
-名單上的職稱是 session 自己填的，和 `coordination.md` 不一致時**問本人**，不要直接改任何一邊。
+⚠️ `office_roster` 是**即時畫面，不是權責紀錄**：誰是主管、誰佔用哪個檔以 `coordination.md` 為準；職稱跟 `coordination.md` 不一致時**問本人**，不要直接改任何一邊。
 
 ---
 
@@ -83,8 +68,9 @@ pixel-office 是**選裝** plugin，llm-wiki 不依賴它。**先判斷有沒有
 | 我要… | 讀 |
 |---|---|
 | 判斷能不能做、新建文件、peer 之間的界線、`_README.md` 歸屬 | `01-邊界與權責.md` |
-| 發派工單、選人、交接包、防撞單、申請人力 | `02-派工.md` |
-| 回報使用者、節奏與篇幅、**跨 session 訊息篇幅**、BLOCKED、裁示落下後怎麼處理 | `03-回報與節奏.md` |
+| 發派工單、選人、交接包、防撞單、申請人力（升層） | `pixel-office:team` 的 `lead.md` §1、§4；有角色卡的 vault 先 `role_cards.py list` 對人 |
+| 回報節奏、BLOCKED、訊息篇幅、裁示不產生待辦 | `pixel-office:team` 的 `lead.md` §5 |
+| 結案要清哪些登記面、紀錄精簡、開檔給使用者看 | `03-回報與節奏.md` |
 | 複驗 peer 回報、查原文、防環境層靜默破壞 | `04-查核.md` |
 | 收尾（驗證→清理→落盤→push→交接）、佔用檢查 | **`wiki-day`** 的 `end.md`（主管段 `end-manager.md`） |
 | 維護 `coordination.md` 本身 | `06-coordination格式.md` |

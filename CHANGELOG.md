@@ -15,6 +15,13 @@
 
 # llm-wiki
 
+## 1.15.0 — 2026-10-29
+
+- **改了什麼**：`wiki-collabteam` 精簡成 vault 補充：通用的派工（`02-派工.md`）、開會（`meet.md`）刪除，改指向 pixel-office skill `team`；`03-回報與節奏.md` 只留 vault 專屬（開檔、紀錄精簡、結案清 hot／coordination／_README、流程強度）；`SKILL.md`、`collab.md` 改成指向 `team`。`coordination.md`、`role.md`／`role_cards.py` 等 vault 機制不動，等舊 vault 角色卡搬到 `.claude/office/` 時再換
+- **為什麼**：jacky 2026-10-29：協作做法搬進 pixel-office，跟 `wiki-collabteam` 逐步搬、需要精簡
+- **commit**：（本版）
+- **issue**：無
+
 ## 1.14.1 — 2026-10-26
 
 - **改了什麼**：修 1.14.0 多主管的判錯人與文件矛盾（B 期驗收 B1～B6）
@@ -194,6 +201,19 @@
 ---
 
 # pixel-office
+
+## 0.25.0 — 2026-10-29
+
+- **改了什麼**：一人多 session 協作搬進 pixel-office
+  - 新 skill `team`（`skills/team/`：`SKILL.md`、`roles.md`、`lead.md`、`meet.md`）：分層 0／1／2 骨架、升層（session 提議、使用者說好）與降層、專案資料夾 `<主 repo>/.claude/office/`（`collab.md` 狀態只有主管寫、`roles/` 進 git、`checkpoints/` 只往後加；登記主管時才建）、從規則產生角色（提案表＋「為什麼另開 session」三判準、使用者核可才建卡、建卡跟開人分開）、派工單、回報、開會（自 `wiki-collabteam/meet.md` 搬入）
+  - 部門主管（第 2 層）：主管也可以填 `team`，`team` 對到另一位在線主管就是部門主管 —— 不進主管室、坐自己部門那一區第一個位子、那一區的地毯和 TEAM 是他的；底下沒人時坐上一層主管那一區；互相掛不算。`scene.ts` `isDeptLead`、`teamZones`、`seatBosses`、`assignSeats`，手機 `deskRowsNeeded` 同步；名單標「部門主管」
+  - 降層提醒：主管底下沒有在線的人滿 20 分鐘，下一則使用者指令附一段 context 給模型（一段沒人的期間只一次），只提醒不自動改
+  - 升層時 `office_profile` 的回覆提示照 skill 建資料夾；系統提示加 (6) 指向 skill；家具選單「開會」改 `/pixel-office:team 開會`；README「選裝」改成「要多 session 協作就要裝」
+  - 每個 session 都會載入的模型文字（系統提示段、3 個工具說明、降層提醒、skill `team` 描述）改成精簡英文；`主管`／`員工` 值與觸發詞保留中文。估計每 session 約 1,640 → 1,040 tokens（字元數推估；`claude -p` 實量量不出差異）
+  - 實測（office測試 session，用完即丟的 repo＋worktree）後補 skill 文字：新建 `collab.md` 也加自己主管列、骨架帶表格分隔列、降層只清「在線」列、主線角色免填理由、`reports_to`／`source` 寫法、規則指名的決策者不建卡
+- **為什麼**：jacky 2026-10-29 與 office設計 討論定的：外掛只當輔助（畫面、省 token），不寫死 AIMM／gstack，角色由規則產生；資料夾、升降層、部門主管、檢查點、跟 `wiki-collabteam` 逐步搬的做法逐題定案，降層門檻 20 分鐘。設計稿 `plugins/pixel-office/docs/designs/team.md`
+- **commit**：（本版）
+- **issue**：無
 
 ## 0.24.0 — 2026-10-27
 
