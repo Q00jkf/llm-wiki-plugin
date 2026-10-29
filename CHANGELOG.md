@@ -216,6 +216,15 @@
 
 # pixel-office
 
+## 0.30.4 — 2026-10-29
+
+- **改了什麼**：agy 在辦公室跟 Claude session 分得出來
+  - Desktop：名牌右邊加藍紫底白字的 **G** 徽章（`vector.ts` `nameTag`，徽章佔名牌寬度，名字少一字的空間）；上衣固定白衣藍紫邊（`build_sheet.py` 的 `SHIRTS` 在主管西裝前插一種，重產素材表；員工輪替數不變，現有的人不換色）
+  - 終端機：名字後加「 G」、上衣藍紫
+- **為什麼**：jacky 2026-10-29：agy 跟 Claude 長得一樣分不出來；先看預覽，只換上衣不夠清楚，加 G 徽章＋上衣選 C
+- **commit**：（本版）
+- **issue**：無
+
 ## 0.30.3 — 2026-10-29
 
 - **改了什麼**：agy 看守程序（`agy_office.py watch`）續心跳時，把停在「完成」超過 5 秒的 agy 改回「閒置」（`DONE_MS = 5000`，同 `register.tsx` 的 `revertLater`）
