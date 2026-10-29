@@ -216,6 +216,15 @@
 
 # pixel-office
 
+## 0.27.0 — 2026-10-29
+
+- **改了什麼**：Antigravity CLI（agy）的對話也畫進辦公室（只顯示，不能傳訊）
+  - 新增 `agy/agy_office.py`：`install`／`uninstall` 管 `~/.gemini/config/hooks.json` 裡的「pixel-office」一組；`hook` 把 agy 事件轉成 `sessions/agy-<對話>.json`（`kind: "agy"`）；`watch` 背景看守用 presence lock 續心跳
+  - `Coworker.kind`、`parseStatus` 帶出 `kind`；名單 ListAgents 欄顯示「Antigravity（不能傳訊）」
+- **為什麼**：jacky 2026-10-29 測 Antigravity CLI，問能不能在辦公室看到；探測 hook 實測 Windows 可跑、各事件帶 `conversationId`／`workspacePaths`，presence lock 開著時被鎖
+- **commit**：（本版）
+- **issue**：無
+
 ## 0.26.1 — 2026-10-29
 
 - **改了什麼**：小隊的內容集中到 skill `team` 的新檔 `squad.md`（原本散在 `SKILL.md`「小隊」段、`lead.md` §8、`roles.md` §5）；`SKILL.md` 路由表加一列指過去
