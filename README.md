@@ -1,5 +1,18 @@
 # LLM Wiki
 
+> [!IMPORTANT]
+> **2026-10-29 起 llm-wiki 停止更新**，之後由 willy 接續。最後一版是 llm-wiki 1.16.1：已經在用的 vault 可以照常使用，這個 repo 也照常可以安裝，只是不會再出新版。
+>
+> **像素辦公室（pixel-office）會繼續維護**，已經搬到 **[Q00jkf/pixel-office](https://github.com/Q00jkf/pixel-office)**（歷史一起帶過去）。原本從這裡裝的，請換裝：
+>
+> ```
+> /plugin uninstall pixel-office@llm-wiki
+> /plugin marketplace add Q00jkf/pixel-office
+> /plugin install pixel-office@pixel-office
+> ```
+>
+> 辦公室資料夾 `~/.claude/pixel-office/` 不變，名牌、按鈕設定都保留。有接 Antigravity CLI（agy）的，換裝後關掉所有 agy 視窗，重跑一次新路徑下的 `agy/agy_office.py install`。
+
 **讓 Claude 幫你管專案文件，打造自己的 AI 第二大腦，當你和團隊的秘書。**
 
 跑在 Obsidian 上，用 Claude Code 操作。檔案留在原地，不搬、不抄，要用時一句話就找到。
