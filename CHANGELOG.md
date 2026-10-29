@@ -216,6 +216,13 @@
 
 # pixel-office
 
+## 0.30.2 — 2026-10-29
+
+- **改了什麼**：agy skill `office` 加一條：`call_mcp_tool` 回「unknown tool」時等約 10 秒重試一次，不要自己從 shell 啟動 `agy_office.py mcp`
+- **為什麼**：jacky 2026-10-29 實測（agy 換成 Claude Opus 4.6）：視窗剛開就下指令，第一次 `call_mcp_tool` 回 unknown tool，稍後列工具時它已在清單上——推測外掛 MCP server 在登入後才載入（log 同秒有「Not reloading plugin MCP servers」再登入成功；未能直接證明）。agy 自己用 shell 手動跑 MCP server 繞過，經 PowerShell 管線把中文職稱寫成「???」
+- **commit**：（本版）
+- **issue**：無
+
 ## 0.30.1 — 2026-10-29
 
 - **改了什麼**：agy 的 skill `office` 與送進 agy 的信，寫明確切的 `call_mcp_tool(ServerName="pixel-office_office", ToolName=…, Arguments=…)` 格式，並講明「清單裡看不到也照叫」
