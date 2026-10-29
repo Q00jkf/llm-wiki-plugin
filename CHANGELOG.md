@@ -216,6 +216,13 @@
 
 # pixel-office
 
+## 0.30.3 — 2026-10-29
+
+- **改了什麼**：agy 看守程序（`agy_office.py watch`）續心跳時，把停在「完成」超過 5 秒的 agy 改回「閒置」（`DONE_MS = 5000`，同 `register.tsx` 的 `revertLater`）
+- **為什麼**：jacky 2026-10-29 發現 agy 停下來後在辦公室一直顯示完成（綠條＋星星）；Claude 端 Stop 後 5 秒會回閒置，agy 端只有 hook 會改 mode，停下來就沒有 hook 了
+- **commit**：（本版）
+- **issue**：無
+
 ## 0.30.2 — 2026-10-29
 
 - **改了什麼**：agy skill `office` 加一條：`call_mcp_tool` 回「unknown tool」時等約 10 秒重試一次，不要自己從 shell 啟動 `agy_office.py mcp`
