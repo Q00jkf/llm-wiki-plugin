@@ -216,6 +216,17 @@
 
 # pixel-office
 
+## 0.30.0 — 2026-10-29
+
+- **改了什麼**：`agy/` 改成一個 agy 外掛（`plugin.json`、`hooks.json`、`mcp_config.json`、`skills/office/SKILL.md`）
+  - agy 有自己的 MCP 工具：`office_profile`（名牌、職稱）、`office_roster`（誰在線）、`office_send`（寄信，寄完照樣等回信 90 秒）；呼叫者的對話 id 取自 `_meta`
+  - 預設名牌跟在線 agy 撞名時接對話 id 前 4 碼
+  - `install` 改成移除舊版全域 hook＋`agy plugin install`；hook 每次把腳本同步到 `~/.claude/pixel-office/agy/`（Claude 端寄信用固定路徑）；看守改在那裡跑，不佔外掛資料夾
+  - 送進 agy 的信改成指示用 `office_send` 回覆；使用者筆記 `docs/agy-寄件協作.md` 改寫安裝與用法
+- **為什麼**：jacky 2026-10-29「同名稱的問題」→「給 agy 一個外掛件讓 agy 也可以用 office 的功能」；探測外掛實測見 `docs/designs/agy.md`
+- **commit**：（本版）
+- **issue**：無
+
 ## 0.29.0 — 2026-10-29
 
 - **改了什麼**：agy 寄完信等回信。PostToolUse 看到 agy 跑了 `agy_office.py … send` 就標記；這一輪結束時 Stop hook 每秒看收件夾、最多 90 秒，等到就 `continue` 帶著信，沒等到就停。沒有使用者介入最多自動續跑 5 輪。Stop 的 hook timeout 改 110 秒（要重跑 `install`）
