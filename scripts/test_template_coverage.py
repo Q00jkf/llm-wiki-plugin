@@ -29,17 +29,20 @@ NOT_VAULT_CONTENT = {
     "wiki/ops/",
     # 舊格式單檔，只用於一次性遷移成每機一檔（_guard_status.py:32）。新 vault 不該有它
     "wiki/meta/_guard-status.json",
+    # 1.16.0 前的協作檔位置，只給 role_cards.py migrate 與還沒搬的 vault 當退路。新 vault 不該有它們
+    "wiki/meta/coordination.md",
+    "wiki/meta/roles",
 }
 
 
 def referenced_paths():
-    """腳本裡寫死的 vault 相對路徑：`"wiki/…"` 字面值與 *_REL 常數。"""
+    """腳本（含 _lib/）裡寫死的 vault 相對路徑：`"wiki/…"`、`".claude/office…"` 字面值與 *_REL 常數。"""
     out = {}
-    for py in sorted(SCRIPTS.glob("*.py")):
+    for py in sorted([*SCRIPTS.glob("*.py"), *SCRIPTS.glob("_lib/*.py")]):
         if py.name.startswith("test_"):
             continue
         text = io.open(py, encoding="utf-8", errors="replace").read()
-        for m in re.finditer(r'["\'](wiki/[A-Za-z0-9_./一-鿿-]+)["\']', text):
+        for m in re.finditer(r'["\']((?:wiki/|\.claude/office)[A-Za-z0-9_./一-鿿-]*)["\']', text):
             p = m.group(1)
             if p not in NOT_VAULT_CONTENT:
                 out.setdefault(p, set()).add(py.name)

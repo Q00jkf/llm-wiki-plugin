@@ -55,7 +55,7 @@
 所以：**skill 的行為一旦依賴 vault 的某個檔或某種格式，那個格式要同時寫進樣板的對應檔**
 （上例：樣板的 `coordination.md` 表頭要帶出登記日欄位）。樣板一改，所有 vault 下次對帳就看得到。
 
-被 `.skeleton-policy` 排除的檔（coordination、log、hot…）連格式變更也偵測不到 ——
+被 `.skeleton-policy` 排除的檔（log、hot…）與不在樣板裡的 `.claude/office/collab.md` 連格式變更也偵測不到 ——
 那些檔只能靠 skill 在使用當下帶新格式，不能靠升級推送。寫規則時要知道這個邊界。
 
 ---

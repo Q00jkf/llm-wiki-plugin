@@ -79,7 +79,7 @@ wiki/log.md            ← 操作日誌（只增不減，只能 Grep）
 wiki/{catalog,topics,questions,projects}/   ← projects/ 是專案頁，不是知識頁
 wiki/ops/{ingest,query,naming,collab,rulings,start,end}.md  ← 規則模組（空殼，有東西才寫；start／end 由 `wiki-day` 讀）
 wiki/agenda.md         ← 日程唯一真相來源
-wiki/meta/{coordination,agenda-system}.md
+wiki/meta/agenda-system.md
 Templates/             ← _README模板、AI對話紀錄模板、_folder-template（/wiki-new 用）
 .gitignore
 ```
@@ -90,7 +90,7 @@ Templates/             ← _README模板、AI對話紀錄模板、_folder-templa
 |---|---|---|
 | `raw/<對象>/` ＋ `Templates/_folder-template/` | **專案／產品線**。`_README.md` 是該夾的執行節點（進度儀表板）| `/wiki-new <name>` 開夾 |
 | `wiki/agenda.md` ＋ `wiki/meta/agenda-system.md` | **日程**。唯一真相來源，開場自動印窗口 | `/wiki-agenda add "…"` |
-| `wiki/meta/coordination.md` | **多 session 分工**。第二個 session 開起來就啟用主管制 | 說「你來當主管」 |
+| （不預建）`.claude/office/` | **多 session 分工**：`collab.md` 狀態、`roles/` 角色卡。有人當主管時才建（pixel-office skill `team`） | 說「你來當主管」 |
 | `raw/.manifest.json` 的 `repos` | **檔案資產**。散在各處的專案掛進來，檔案留原地；多人權限看擁有者 | `/wiki-repo discover`／`add` |
 | `wiki/{catalog,topics}/` ＋ `hot/index/log` | **知識庫**。raw → wiki 的編譯產物 | `/wiki-ingest` |
 | `wiki/ops/*.md` | 按需規則模組（空殼，有東西才寫）| 彈性層，隨用隨填 |
@@ -175,7 +175,7 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/skeleton_check.py" <vault> --json
 3. **建議怎麼融合** —— 插在哪一段後面；或判斷「不用融合」（他的寫法已經涵蓋）
 
 > `wiki/ops/collab.md`
-> 　新版多了 `## 分工` 一段：角色卡放 `wiki/meta/roles/`、在線狀態看 `coordination.md`
+> 　新版多了 `## 分工` 一段：角色卡放 `.claude/office/roles/`、在線狀態看 `.claude/office/collab.md`
 > 　你這份加了 R-collab-1～10（本 vault 的協作裁示）
 > 　建議：新段插在 §格式 後面，你的 R- 條款完全不動
 > 　這樣合？[y / n / 改]
@@ -196,9 +196,9 @@ python "${CLAUDE_PLUGIN_ROOT}/scripts/skeleton_check.py" <vault> --apply-safe
 
 ## 🔴 這套對帳看不到什麼（要照實說，不要讓使用者以為升完就齊了）
 
-- **skill 層的格式要求**：plugin 的 skill 改了規則（例如「coordination 狀態欄要寫登記日」），
+- **skill 層的格式要求**：plugin 的 skill 改了規則（例如「collab.md 狀態欄要寫登記日」），
   但那個要求沒有反映在 `templates/vault/` 的檔上 → 對帳偵測不到。
-- **被 `.skeleton-policy` 排除的檔**（`coordination.md`、`log.md`、`hot.md`…）：
+- **被 `.skeleton-policy` 排除的檔**（`log.md`、`hot.md`…）與**不在樣板裡的** `.claude/office/collab.md`：
   它們的內容本來就每個 vault 不同，所以連格式變更也不比對。新格式只能靠 skill 在使用當下帶進來。
 - **降級模式**（第一次跑、沒有 `.skeleton.json`）：看不出 plugin 這版「刪掉」了哪些樣板檔。
 

@@ -7,16 +7,16 @@
 為什麼量 token 不量行數：行數與重量不成比例（56 行可以 4,500 tok），成本是 context 不是行。
 🔴 踩線時的正確動作是清理，不是把 POLICY 數字調大 —— 調大只是把過期往後推。
 
-  T0 快照區未宣告  hot.md／coordination.md 存在卻沒寫 maintenance
+  T0 快照區未宣告  hot.md／協作狀態檔存在卻沒寫 maintenance
   T1 已結案列      表格列含 ✅／⚪／🟢／已裁示／已解／已完成／不做，且無未結案標記
   T2 斷掉的引用    內文寫「缺口 №N」但本檔表上已無此列
   T3 數量不符      「目錄內容（N 份…）」vs 同夾 `_manifest.json` 條目數（無 manifest 則數檔案）
   T4 檔名過期      反引號內的檔名在磁碟上不存在
   T5 列內殘留      整列未結案，但列內 ①②③ 子項已標 ✅
   T6 超出型別上限  依 maintenance 型別查 token／項數上限（POLICY），外加檔頭自訂「≤N 行」
-  T7 跨檔編號斷鏈  引用 coordination 的 `#N` 已不存在（僅 wiki/meta/coordination.md 存在時）
-  T8 裁示未清登記  log.md 說「不得再提」的 `#N` 在 coordination 仍未結案（同上）
-  T9 登記逾期提醒  coordination 未結案列的登記日超過 STALE_DAYS 天（提醒用，不計入待整理）
+  T7 跨檔編號斷鏈  引用協作狀態檔（collab.md／舊 coordination）的 `#N` 已不存在（僅該檔存在時）
+  T8 裁示未清登記  log.md 說「不得再提」的 `#N` 在協作狀態檔仍未結案（同上）
+  T9 登記逾期提醒  協作狀態檔未結案列的登記日超過 STALE_DAYS 天（提醒用，不計入待整理）
 
 用法：tidy_check.py [path] [--quiet]。exit 一律 0，只列候選不擋 git。
 """
@@ -29,7 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 import _guard_status  # noqa: E402
-from _lib.vaultpaths import find_vault_root, resolve_source  # noqa: E402
+from _lib.vaultpaths import collab_path, find_vault_root, resolve_source  # noqa: E402
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -53,8 +53,9 @@ POLICY = {
 STALE_DAYS = 1
 LOGGED_ON = re.compile(r"^(\d{4}-\d{2}-\d{2})")
 
-SNAPSHOT_FILES = ("wiki/hot.md", "wiki/meta/coordination.md")
-COORD = "wiki/meta/coordination.md"
+# 協作狀態檔：.claude/office/collab.md，舊 vault 是 wiki/meta/coordination.md；main() 依 vault 設定
+COORD = ".claude/office/collab.md"
+COORD_NAMES = re.compile(r"coordination|collab\.md")
 XREF_HASH = re.compile(r"#(\d{1,3})\b")
 XREF_CLAIM = re.compile(r"待辦\s*(\d+)\s*項")
 QUOTED = re.compile(r"「[^」]*」")
@@ -307,15 +308,15 @@ def check_xref(lines, md: Path, rows):
         return []
     hits = []
     for i, l in enumerate(lines, 1):
-        if "coordination" not in l:
+        if not COORD_NAMES.search(l):
             continue
         bare = QUOTED.sub("", l)
         for m in XREF_HASH.finditer(bare):
             if m.group(1) not in rows:
-                hits.append((i, f"#{m.group(1)} 在 coordination 已無此列 —— {_WS.sub(' ', bare).strip()[:48]}"))
+                hits.append((i, f"#{m.group(1)} 在 {Path(COORD).name} 已無此列 —— {_WS.sub(' ', bare).strip()[:48]}"))
         for m in XREF_CLAIM.finditer(bare):
             if int(m.group(1)) != len(rows):
-                hits.append((i, f"宣稱待辦 {m.group(1)} 項，coordination 實際 {len(rows)} 條 —— 指標不該複寫內容"))
+                hits.append((i, f"宣稱待辦 {m.group(1)} 項，{Path(COORD).name} 實際 {len(rows)} 條 —— 指標不該複寫內容"))
     return hits
 
 
@@ -337,7 +338,7 @@ def check_archived(md: Path, rows):
 
 def check_undeclared():
     hits = []
-    for rel in SNAPSHOT_FILES:
+    for rel in ("wiki/hot.md", COORD):
         p = ROOT / rel
         if not p.is_file():
             continue
@@ -350,8 +351,10 @@ def check_undeclared():
 
 
 def main():
-    global ROOT
+    global ROOT, COORD
     ROOT = find_vault_root(Path(os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()))
+    if ROOT is not None:
+        COORD = collab_path(ROOT).relative_to(ROOT).as_posix()
     quiet = "--quiet" in sys.argv
     if ROOT is None:
         if not quiet:                       # hook 用 --quiet：非 vault 目錄完全安靜
@@ -405,7 +408,7 @@ def main():
     kinds = ", ".join(sorted({k for _, _, k, _ in files})) or "—"
     if not quiet:
         print("=== tidy-check ===")
-        print(f"input   : {len(files)} 檔有 maintenance 宣告（{kinds}）｜coordination {len(rows)} 條編號列")
+        print(f"input   : {len(files)} 檔有 maintenance 宣告（{kinds}）｜{Path(COORD).name} {len(rows)} 條編號列")
         if undeclared:
             print(f"\n🟡 [T0 快照區未宣告] {len(undeclared)}")
             for u in undeclared:
@@ -428,7 +431,7 @@ def main():
         print()
         print("-" * 60)
     if stale or undated:
-        head = f"📌 coordination 登記逾 {STALE_DAYS} 天未結案：{len(stale)} 條"
+        head = f"📌 {Path(COORD).name} 登記逾 {STALE_DAYS} 天未結案：{len(stale)} 條"
         if stale:
             head += "　" + "、".join(f"#{n}({d}天) {t}" for _, d, n, t in stale[:3])
             if len(stale) > 3:

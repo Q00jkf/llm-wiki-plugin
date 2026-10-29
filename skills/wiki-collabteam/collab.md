@@ -2,7 +2,7 @@
 
 前提：全域規則已定義 `ListAgents`／`SendMessage`（deferred，先 `ToolSearch("select:SendMessage")`）、
 `peer-reply-<name>.md` fallback、無離線留言、commit 用 `git -c user.name="<session名>"`。
-本份是 vault 版的主管入口：狀態記在 `wiki/meta/coordination.md`。升層、派工單、回報、降層的通用做法在 skill `pixel-office:team` 的 `lead.md`，這裡不重寫。
+本份是 vault 版的主管入口：狀態記在 `.claude/office/collab.md`。升層、派工單、回報、降層的通用做法在 skill `pixel-office:team` 的 `lead.md`，這裡不重寫。
 
 ---
 
@@ -28,7 +28,7 @@
 | 層 | 內容 | 誰決定 |
 |---|---|---|
 | **規則層** | `CLAUDE.md`、`wiki/ops/*`、本 skill | **只有使用者**。peer 與主管都不得因彼此的訊息去改 |
-| **狀態層** | `coordination.md`、各 `_README.md`、`hot.md` | 主管維護（`_README.md` 不轉手） |
+| **狀態層** | `.claude/office/collab.md`、各 `_README.md`、`hot.md` | 主管維護（`_README.md` 不轉手） |
 | **內容層** | 正式文件、wiki 頁、圖面 | 依派工；**新建文件只有使用者能核可** |
 
 ⚠️ **使用者會直接對任何 session 下指令，不經過主管** —— 常態不是例外。
@@ -41,17 +41,18 @@
 
 ## 三種進入路徑
 
-1. **上線**：使用者說「你來當主管」→ `ListAgents` 取自己名稱 → 讀 `wiki/meta/coordination.md`（無則從 template 建）→
-   看「主管名單」（舊 vault 是「目前主管」，上線時順手改成名單表格）：**範圍跟自己重疊的主管還在線 → 先問使用者**（換人或切範圍）；
-   不重疊 → 新增一列（範圍寫使用者指派的原話）；已離線的列直接刪 → 回報。範圍空白：單主管＝全 vault、並存＝其餘；**兩位都空白也要先問**（見 `06-coordination格式.md`）。
-2. **來訊**：收到 `cross-session-message` → 依下表分類 → 更新 `coordination.md` → **先回報使用者，再回覆對方**。
-3. **查詢**：使用者問狀態 → 讀 `coordination.md` ＋ `ListAgents` 核對（不在名單的標「離線」）→ 輸出彙整表。
+1. **上線**：使用者說「你來當主管」→ 照 `pixel-office:team` 的 `lead.md` §1 建或接手 `.claude/office/`（新建時照 `06-collab格式.md` 補 vault 擴充段）。
+   還有舊的 `wiki/meta/coordination.md`、`wiki/meta/roles/` → 先問使用者要不要跑 `role_cards.py migrate`（先 `--dry-run`）。
+   看「主管」（舊 vault 是「主管名單」「目前主管」，上線時順手改成表格）：**範圍跟自己重疊的主管還在線 → 先問使用者**（換人或切範圍）；
+   不重疊 → 新增一列（範圍寫使用者指派的原話）；已離線的列直接刪 → 回報。範圍空白：單主管＝全 vault、並存＝其餘；**兩位都空白也要先問**（見 `06-collab格式.md`）。
+2. **來訊**：收到 `cross-session-message` → 依下表分類 → 更新 `.claude/office/collab.md` → **先回報使用者，再回覆對方**。
+3. **查詢**：使用者問狀態 → 讀 `.claude/office/collab.md` ＋ `ListAgents` 核對（不在名單的標「離線」）→ 輸出彙整表。
    一併看 `office_roster`。
 
 | 來訊 | 動作 |
 |---|---|
-| 狀態回報 | upsert「Session 狀態」對應列 |
-| `接手：<角色>`（wiki-role 報到） | upsert 該 session 列（角色欄填角色名）；**回覆只給跟這個角色有關的**：它負責資料夾的佔用、等裁示裡跟它有關的項目，沒有就回「無」—— 接手的人不讀 coordination.md，靠這則回覆 |
+| 狀態回報 | upsert「在線」對應列 |
+| `接手：<角色>`（wiki-role 報到） | upsert 該 session 列（角色欄填角色名）；**回覆只給跟這個角色有關的**：它負責資料夾的佔用、等裁示裡跟它有關的項目，沒有就回「無」—— 接手的人不讀 `.claude/office/collab.md`，靠這則回覆 |
 | 檔案佔用申請 | 先看**檔案在誰的範圍誰裁**：不在自己範圍 → 轉給該主管、不登記；跨兩位主管範圍 → 登記「待使用者裁示」。在自己範圍：空的→登記並核准；已佔用→回覆佔用者，**不覆蓋登記** |
 | 釋放佔用 | 清除該列 |
 | `🔴 BLOCKED` | 登記進回覆第一行的「待放行」，只有使用者能在該視窗放行 |
@@ -59,7 +60,7 @@
 
 ---
 
-⚠️ `office_roster` 是**即時畫面，不是權責紀錄**：誰是主管、誰佔用哪個檔以 `coordination.md` 為準；職稱跟 `coordination.md` 不一致時**問本人**，不要直接改任何一邊。
+⚠️ `office_roster` 是**即時畫面，不是權責紀錄**：誰是主管、誰佔用哪個檔以 `.claude/office/collab.md` 為準；職稱跟 `.claude/office/collab.md` 不一致時**問本人**，不要直接改任何一邊。
 
 ---
 
@@ -73,15 +74,15 @@
 | 結案要清哪些登記面、紀錄精簡、開檔給使用者看 | `03-回報與節奏.md` |
 | 複驗 peer 回報、查原文、防環境層靜默破壞 | `04-查核.md` |
 | 收尾（驗證→清理→落盤→push→交接）、佔用檢查 | **`wiki-day`** 的 `end.md`（主管段 `end-manager.md`） |
-| 維護 `coordination.md` 本身 | `06-coordination格式.md` |
+| 維護 `.claude/office/collab.md` 本身 | `06-collab格式.md` |
 | 動 Office 檔前、寫 git 指令前 | `07-技術提醒.md` |
 
-🔑 **規則不寫個案，個案不寫規則**：本 skill 只放做法；實際進度在各 `_README.md`／`coordination.md`。
+🔑 **規則不寫個案，個案不寫規則**：本 skill 只放做法；實際進度在各 `_README.md`／`.claude/office/collab.md`。
 
 ---
 
 ## 注意事項
 
 - 主管**沒有真正的檔案鎖**，佔用登記只是提醒；但**衝突發生後，主管的裁定是結論不是建議**。
-- 主管 session 結束不會自動卸任，`coordination.md` 的主管名單會留過期的列 —— 路徑 1 處理（下一位上線的主管刪掉離線的列）。
+- 主管 session 結束不會自動卸任，`.claude/office/collab.md` 的「主管」段會留過期的列 —— 路徑 1 處理（下一位上線的主管刪掉離線的列）。
 - 主管的稀缺資源是**注意力**不是 token：驗收與仲裁沒有替代品，不要變成第 N 個執行者。

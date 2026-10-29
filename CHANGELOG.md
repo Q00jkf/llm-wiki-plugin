@@ -15,6 +15,20 @@
 
 # llm-wiki
 
+## 1.16.0 — 2026-10-29
+
+- **改了什麼**：vault 的協作檔搬到 `.claude/office/`，格式跟 pixel-office skill `team` 一致
+  - 角色卡 `wiki/meta/roles/` → `.claude/office/roles/`（進 git），只放定義：職責、邊界、必讀、用到才查、守門腳本、可用 skill、交付；`agent`／`taken`／`office_team` 拿掉
+  - 卡上「進行中事項」→ `.claude/office/checkpoints/<角色>.md`（只往後加、不進 git）；誰持有改看 `collab.md`「在線」（主管寫）
+  - `wiki/meta/coordination.md` → `.claude/office/collab.md`（不進 git）；標題「主管名單／目前主管」→「主管」、「Session 狀態」→「在線」；vault 多的段（凍結中、主管裁定、等使用者本人動手、未指派）留作擴充，「主管」表多一欄 peer（依表頭找）
+  - `role_cards.py`：新增 `migrate [--dry-run]`（原文一字不改、只重新歸段）；`claim` 不再寫卡，改印最後檢查點、前一位持有者、辦公室登記與報到對象；`list` 持有者取自「在線」、改顯示最後檢查點日期；`check` 也看最後一筆檢查點
+  - `_lib/vaultpaths.py` 加 `collab_path()`／`roles_dir()`：新位置優先、還沒搬的 vault 退回舊位置；`tidy_check`（T0/T7/T8/T9）、`occupancy_check` 改用它
+  - 樣板：刪 `wiki/meta/coordination.md`、`wiki/meta/roles/README.md`（`.claude/office/` 有人當主管才建）；`角色卡模板.md` 改 team 格式；`CLAUDE.md`、`wiki/ops/collab.md`、`wiki/ops/start.md` 指向新位置
+  - skill：`wiki-collabteam` 的 `role.md` 改寫、`06-coordination格式.md` → `06-collab格式.md`（只寫 vault 擴充）；`wiki-day`、`wiki-core`、`wiki-init`、`wiki-doctor` 換路徑；`test_template_coverage` 也掃 `_lib/` 與 `.claude/office` 路徑
+- **為什麼**：jacky 2026-10-29 選 A「完全統一」：只留一套規則，`wiki-collabteam` 縮到只剩 vault 專屬；舊 vault 角色卡 1.15.0 時說「等等就搬」
+- **commit**：（本版）
+- **issue**：無
+
 ## 1.15.0 — 2026-10-29
 
 - **改了什麼**：`wiki-collabteam` 精簡成 vault 補充：通用的派工（`02-派工.md`）、開會（`meet.md`）刪除，改指向 pixel-office skill `team`；`03-回報與節奏.md` 只留 vault 專屬（開檔、紀錄精簡、結案清 hot／coordination／_README、流程強度）；`SKILL.md`、`collab.md` 改成指向 `team`。`coordination.md`、`role.md`／`role_cards.py` 等 vault 機制不動，等舊 vault 角色卡搬到 `.claude/office/` 時再換
@@ -201,6 +215,13 @@
 ---
 
 # pixel-office
+
+## 0.25.1 — 2026-10-29
+
+- **改了什麼**：skill `team` 的 `SKILL.md`「在知識庫裡」補一句：vault 卡多「用到才查」「守門腳本」、`collab.md` 有 vault 擴充段、舊 vault 用 `role_cards.py migrate` 搬
+- **為什麼**：llm-wiki 1.16.0 把 vault 協作檔搬到 `.claude/office/`（jacky 2026-10-29）
+- **commit**：（本版）
+- **issue**：無
 
 ## 0.25.0 — 2026-10-29
 

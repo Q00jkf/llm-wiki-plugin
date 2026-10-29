@@ -22,7 +22,7 @@
 
 | 檔 | 刪什麼 |
 |---|---|
-| `wiki/meta/coordination.md` | ① 退休／離線的 session 列（含卸任前主管；多主管時只清自己 peer 的）② 已釋放的佔用列（多主管時只清自己範圍的） ③ 已裁示／不做／已消解的待辦列 ④ **展開成多行的列**：原文搬進當天 log（`<details>` 包）、本頁縮成一行指向 log（見 `wiki-collabteam` 的 `06-coordination格式.md`）；本頁超過約 8 KB 時逐列檢查 |
+| `.claude/office/collab.md` | ① 退休／離線的 session 列（含卸任前主管；多主管時只清自己 peer 的）② 已釋放的佔用列（多主管時只清自己範圍的） ③ 已裁示／不做／已消解的待辦列 ④ **展開成多行的列**：原文搬進當天 log（`<details>` 包）、本頁縮成一行指向 log（見 `wiki-collabteam` 的 `06-collab格式.md`）；本頁超過約 8 KB 時逐列檢查 |
 | 當天用過的 `_README.md` | ① 已完成的缺口列與工作順序列 ② 已被裁示不做的列 ③ 與現況矛盾的過期敘述 |
 | `wiki/hot.md` | 依檔頭輪替規則修剪（≤150 行；標「里程碑保留」者不刪） |
 
@@ -32,7 +32,7 @@
 
 **刪除紀律**
 - 直接刪整列，不留「✅ 已完成」「已併入 №X」墓碑（見 03 §4）。
-- **編號沿用不重編** —— `_README.md`／`coordination.md`／`log.md` 以號碼交叉引用，重編會斷。空號是正常的。
+- **編號沿用不重編** —— `_README.md`／`.claude/office/collab.md`／`log.md` 以號碼交叉引用，重編會斷。空號是正常的。
 - 刪完檢查引用完整性：正文若還引用剛刪的號碼 → 那是缺口在流失，補回來。
 - 腳本抓不到的一類：整列講的事已在別處結案但沒有 ✅ 標記 —— 只能靠真的重讀一遍。
 
@@ -40,11 +40,11 @@
 
 | 檔 | 寫什麼 | 不寫什麼 |
 |---|---|---|
-| `wiki/meta/coordination.md` | 當前狀態快照 | 工作歷程 |
+| `.claude/office/collab.md` | 當前狀態快照 | 工作歷程 |
 | `wiki/log.md` | **當日歷程**：發現路徑、誰踩到什麼坑、裁示理由 | 規則本身 |
-| `wiki/hot.md` | **主管寫一塊今日結論**（格式見 `SKILL.md`），peer 不寫；多主管時各寫一塊、開頭標自己名稱（分工見 `wiki-collabteam` 的 `06-coordination格式.md`「多主管分工」） | 完整清單 |
+| `wiki/hot.md` | **主管寫一塊今日結論**（格式見 `SKILL.md`），peer 不寫；多主管時各寫一塊、開頭標自己名稱（分工見 `wiki-collabteam` 的 `06-collab格式.md`「多主管分工」） | 完整清單 |
 | 各 `_README.md` | 由主管維護（見 01） | |
-| `wiki/meta/roles/*.md` | **不改**：各卡進行中事項由持有者收工時寫；主管只讀來彙整（`role_cards.py list` 看進行中行數，持有者已離線而卡沒更新的，在 hot.md 標出來） | 別人的卡 |
+| `.claude/office/checkpoints/*.md` | **不改**：檢查點由持有者收工時加；主管只讀最後一筆來彙整（`role_cards.py list` 看最後檢查點日期，持有者今天有做事卻沒加的，在 hot.md 標出來） | 別人的檢查點、角色卡 |
 
 ⚠️ **`wiki/log.md` 最常被漏** —— peer 各自寫了片段，主管的裁示與跨案脈絡沒人記。收尾時補。
 
@@ -68,7 +68,7 @@ git push
 
 ## occupancy_check
 
-比對 `coordination.md` 佔用表 vs 各檔的 git author：**起始日期之後有非佔用者動過 → WARN**。
+比對 `.claude/office/collab.md` 佔用表 vs 各檔的 git author：**起始日期之後有非佔用者動過 → WARN**。
 三類：`O1` 佔用違規（凍結列另標）｜`O2` 檔案欄解析失敗｜`O3` 佔用者不明。exit 一律 0，是提醒不是閘門。
 
 - 🔑 **只在收尾跑，不要開場跑** —— 它查的是「這段期間有沒有人越界」，開場沒有新資訊。

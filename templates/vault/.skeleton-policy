@@ -12,7 +12,6 @@ wiki/log.md                 # 歷程，append-only
 wiki/hot.md                 # 每日輪替
 wiki/index.md               # 導航，隨 vault 內容長
 wiki/agenda.md              # 日程
-wiki/meta/coordination.md   # 登記簿
 raw/.manifest.json          # ingest 來源紀錄
 .claude/settings.json       # 每台機器自己的權限與設定
 #

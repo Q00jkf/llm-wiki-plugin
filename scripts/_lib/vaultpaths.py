@@ -18,6 +18,27 @@ def find_vault_root(start: Path, limit: int = 6):
     return None
 
 
+# 協作檔（pixel-office skill team 的格式，1.16.0 起）。舊 vault 還沒搬時退回 wiki/meta/ —— `role_cards.py migrate` 搬
+OFFICE_REL = ".claude/office"
+COLLAB_REL = ".claude/office/collab.md"
+ROLES_REL = ".claude/office/roles"
+CHECKPOINTS_REL = ".claude/office/checkpoints"
+OLD_COORD_REL = "wiki/meta/coordination.md"
+OLD_ROLES_REL = "wiki/meta/roles"
+
+
+def collab_path(root: Path) -> Path:
+    """協作狀態檔：有 .claude/office/collab.md 用它，否則舊的 coordination.md（兩個都沒有回新路徑）。"""
+    new, old = Path(root) / COLLAB_REL, Path(root) / OLD_COORD_REL
+    return old if not new.is_file() and old.is_file() else new
+
+
+def roles_dir(root: Path) -> Path:
+    """角色卡資料夾：同上，新的優先。"""
+    new, old = Path(root) / ROLES_REL, Path(root) / OLD_ROLES_REL
+    return old if not new.is_dir() and old.is_dir() else new
+
+
 def manifest_path(root: Path) -> Path:
     return Path(root) / MANIFEST_REL
 

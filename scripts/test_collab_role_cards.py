@@ -156,6 +156,89 @@ class Managers(unittest.TestCase):
     def test_no_coordination_file(self):
         self.assertIsNone(rc.current_manager(self.tmp, "w-9"))
 
+    def test_team_format_upper_column_is_not_peer(self):
+        write(self.tmp / rc.COLLAB_REL, "# 主管" + NL + "| 主管 | 範圍 | 上層 | 上線 |" + NL + "|---|---|---|---|" + NL
+              + "| lead-1 | 實作 | boss-1 | 10-29 |" + NL + "| boss-1 | 全專案 |  | 10-29 |" + NL)
+        self.assertIsNone(rc.current_manager(self.tmp, "boss-1"), "上層欄不是 peer：boss-1 不屬於 lead-1")
+
+
+OLD_CARD = NL.join([
+    "---", "role: QA", "agent: s-1", "taken: 2026-10-01 09:00", "office_name: QA", "office_title: 品保", "office_team: 主管", "---",
+    "<!-- 舊卡 -->", "", "## 定義", "",
+    "- 職責範圍：品保文件。", "- 必讀（最多 5 份）：", "  - [[wiki/qa]] —— 規則", "- 接手時讀什麼：主管摘要（`collab.md` 接手那列）",
+    "- 用到才查：", "  - `raw/QA/` —— 原始檔", "- 🔴 客戶資料唯讀", "- 守門腳本：無", "",
+    "## 進行中事項", "", "- [[wiki/qa#待辦]]（A 件）：下一步送審", ""])
+
+
+class Migrate(unittest.TestCase):
+    """1.16.0：wiki/meta/roles/、coordination.md → .claude/office/（pixel-office skill team 的格式）。"""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="migrate-"))
+        write(self.tmp / "wiki" / "qa.md", "# QA" + NL + "## 待辦" + NL)
+        write(self.tmp / rc.OLD_ROLES_REL / "QA.md", OLD_CARD)
+        write(self.tmp / rc.OLD_COORD_REL, "---" + NL + "maintenance: transactional" + NL + "---" + NL
+              + "# 主管名單" + NL + "| 主管 | 範圍 | peer | 上線 |" + NL + "|---|---|---|---|" + NL + "| boss-1 |  | s-2 | 10-29 |" + NL
+              + "# Session 狀態" + NL + "| session | 專長 | 任務 | 上次回報 | 狀態 |" + NL + "|---|---|---|---|---|" + NL + "| s-2 | QA | 送審 | 10-29 | 在線 |" + NL)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def run_cmd(self, fn, *a):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            fn(self.tmp, *a)
+        return buf.getvalue()
+
+    def test_old_location_still_reads_before_migrate(self):
+        self.assertEqual(rc.roles_dir(self.tmp), self.tmp / rc.OLD_ROLES_REL)
+        self.assertEqual(rc.must_reads(rc.load(self.tmp / rc.OLD_ROLES_REL / "QA.md")[2]), ["wiki/qa"])
+        self.assertIn("還在舊位置", self.run_cmd(rc.cmd_check, True))
+
+    def test_dry_run_writes_nothing(self):
+        self.run_cmd(rc.cmd_migrate, True)
+        self.assertFalse((self.tmp / rc.OFFICE_REL).exists())
+        self.assertTrue((self.tmp / rc.OLD_COORD_REL).is_file())
+
+    def test_migrate_moves_and_regroups_verbatim(self):
+        self.run_cmd(rc.cmd_migrate, False)
+        card = (self.tmp / rc.ROLES_REL / "QA.md").read_text(encoding="utf-8")
+        self.assertFalse((self.tmp / rc.OLD_ROLES_REL / "QA.md").exists())
+        self.assertNotIn("agent:", card)
+        self.assertIn("reports_to: 主管", card)
+        self.assertIn("## 職責" + NL + "品保文件。", card)
+        self.assertIn("## 邊界" + NL + "- 🔴 客戶資料唯讀", card, "沒對到的條目進邊界，原文不改")
+        self.assertIn("## 用到才查" + NL + "- 用到才查：" + NL + "  - `raw/QA/` —— 原始檔", card)
+        self.assertEqual(rc.must_reads(rc.load(self.tmp / rc.ROLES_REL / "QA.md")[2]), ["wiki/qa"], "用到才查、說明句裡的 `collab.md` 都不算必讀")
+        cp = (self.tmp / rc.CHECKPOINTS_REL / "QA.md").read_text(encoding="utf-8")
+        self.assertIn("  - [[wiki/qa#待辦]]（A 件）：下一步送審", cp)
+        self.assertEqual((self.tmp / rc.OFFICE_REL / ".gitignore").read_text(encoding="utf-8"), "collab.md" + NL + "checkpoints/" + NL)
+
+    def test_collab_headings_renamed_and_still_read(self):
+        self.run_cmd(rc.cmd_migrate, False)
+        self.assertFalse((self.tmp / rc.OLD_COORD_REL).exists())
+        text = (self.tmp / rc.COLLAB_REL).read_text(encoding="utf-8")
+        self.assertIn("# 主管" + NL, text)
+        self.assertIn("# 在線" + NL, text)
+        self.assertIn("maintenance: transactional", text, "tidy_check 靠 frontmatter")
+        self.assertEqual(rc.current_manager(self.tmp, "s-2"), "boss-1")
+        self.assertEqual(rc.holder_of(self.tmp, "QA"), "s-2")
+
+    def test_after_migrate_list_check_claim(self):
+        self.run_cmd(rc.cmd_migrate, False)
+        self.assertIn("| QA | s-2 | 品保 | 1 | 2026-", self.run_cmd(rc.cmd_list))
+        self.assertIn("角色卡沒有斷掉的指標", self.run_cmd(rc.cmd_check, False))
+        out = self.run_cmd(rc.cmd_claim, "QA", "s-3")
+        self.assertIn("由 s-2 持有", out)
+        self.assertIn("team=boss-1", out)
+        self.assertNotIn("s-3", (self.tmp / rc.ROLES_REL / "QA.md").read_text(encoding="utf-8"), "claim 不寫卡")
+
+    def test_migrate_twice_does_not_clobber(self):
+        self.run_cmd(rc.cmd_migrate, False)
+        write(self.tmp / rc.OLD_ROLES_REL / "QA.md", OLD_CARD)
+        self.assertIn("已存在", self.run_cmd(rc.cmd_migrate, False))
+        self.assertTrue((self.tmp / rc.OLD_ROLES_REL / "QA.md").exists())
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

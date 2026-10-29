@@ -115,7 +115,7 @@ wiki/ 只是目錄                              coordination 有人看、健檢�
 | A3 = 進度不透明 | 重點放 `_README.md` 執行節點 ＋ `wiki/agenda.md` |
 | A3 = 東西找不到 | 重點放 `wiki-repo` 掛載 ＋ 指標卡 |
 | A3 = 稽核交不出證據 | 重點放制度夾 ＋ Tier 1 指標卡 ＋ `wiki/log.md` 可追溯 |
-| B1 > 1 人 | 一開始就要有 `wiki/meta/coordination.md`，不要等撞車才補 |
+| B1 > 1 人 | 一開始就要有主管（`.claude/office/collab.md`），不要等撞車才補 |
 | C1 有制度 | 制度獨立一個 `raw/<制度名>/`，`wiki/` 下開對應區（如 `qms/`）|
 | C4 = 索引既有系統 | `wiki-repo add`，檔案留原地、預設唯讀 |
 | D2 > 30 份 | 按需單份 ingest，不批次 |
@@ -140,7 +140,7 @@ raw/<產品B>/...
 raw/shared/
 wiki/products/<產品>.md        ← 每條線一頁
 wiki/projects/                  ← 跨線的專案頁
-wiki/agenda.md ＋ meta/coordination.md
+wiki/agenda.md ＋ .claude/office/collab.md
 ```
 每條線一個 `_README.md` 執行節點。**PM 的主場。**
 
@@ -165,7 +165,7 @@ wiki/synthesis/                 ← 查核點報告、決策、競品、年報
 
 1. 跑 `init_vault.py`（先 `--dry-run` 給使用者看）
 2. 把階段 A–D 的答案填進 `CLAUDE.md`：管理對象、術語、資料夾用途、查詢路由
-3. B1 > 1 人 → 初始化 `wiki/meta/coordination.md`，寫上誰維護什麼
+3. B1 > 1 人 → 告訴使用者第二個 session 開起來時說「你來當主管」，會建 `.claude/office/`（pixel-office skill `team`）
 4. C3／C5 有既有資產 → 跑 `/wiki-repo discover`，**只掛第一批**
 5. D1 的第一批 → 挑 1–2 份做示範 ingest，讓使用者看見成果
 6. D3 的判準寫進 `wiki/agenda.md`（驗收日）與 `CLAUDE.md`

@@ -8,5 +8,5 @@ vault 自訂的開工項目在 **`wiki/ops/start.md`**（每個 vault 自己寫�
 
 1. 讀 `wiki/hot.md` 最上面一塊今日結論 —— 上次停在哪、卡誰、待使用者。
 2. 照 `wiki/ops/start.md` 做 vault 自訂項目。
-3. 協作模式：讀 `wiki/meta/coordination.md` 的「主管名單」（舊 vault 是「目前主管」），找出所屬主管（所屬主管照 `wiki-collabteam` 的 `06-coordination格式.md`「誰是我的主管」判斷；判斷不出報名單第一列，訊息寫「不確定歸屬，請轉」），`ListAgents` 確認在線 → 在線就 `SendMessage` 報到（我是誰、今天打算做什麼）；不在線就照常工作。
+3. 協作模式：讀 `.claude/office/collab.md` 的「主管」（舊 vault 是「主管名單」或「目前主管」），找出所屬主管（所屬主管照 `wiki-collabteam` 的 `06-collab格式.md`「誰是我的主管」判斷；判斷不出報名單第一列，訊息寫「不確定歸屬，請轉」），`ListAgents` 確認在線 → 在線就 `SendMessage` 報到（我是誰、今天打算做什麼）；不在線就照常工作。
 4. 回報使用者，三行以內：上次停在哪、今天日程（取 hook 已印的窗口）、vault 開工項目的結果。

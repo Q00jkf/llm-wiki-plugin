@@ -2,7 +2,7 @@
 """occupancy_check —— 檔案佔用違規偵測（防無聲覆蓋）
 
 xlsx／docx 不會提示衝突，後存檔的無聲覆蓋先存檔的，雙方都不會發現。
-`wiki/meta/coordination.md` 的「# 檔案佔用」表登記誰持有哪個檔，
+協作狀態檔（`.claude/office/collab.md`，舊 vault 是 `wiki/meta/coordination.md`）的「# 檔案佔用」表登記誰持有哪個檔，
 本腳本把它跟 git author 機械比對，不做語意判斷、不改任何檔案。
 
   O1 佔用違規   起始日期後，有「非佔用者」的 author 動過該檔
@@ -20,7 +20,7 @@ xlsx／docx 不會提示衝突，後存檔的無聲覆蓋先存檔的，雙方�
 用法：
   python occupancy_check.py            # 完整報告
   python occupancy_check.py --quiet    # 只印 verdict
-  python occupancy_check.py <路徑>     # 指定替代的 coordination.md（測試用）
+  python occupancy_check.py <路徑>     # 指定替代的協作狀態檔（測試用）
 
 只在收尾跑。exit code 一律 0 —— 提醒不是閘門。
 """
@@ -31,12 +31,11 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _lib.vaultpaths import find_vault_root, load_manifest  # noqa: E402
+from _lib.vaultpaths import collab_path, find_vault_root, load_manifest  # noqa: E402
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-COORD_REL = "wiki/meta/coordination.md"
 MAX_MATCHES = 8
 
 SECTION = re.compile(r"^#{1,3}\s*檔案佔用\s*$")
@@ -147,15 +146,16 @@ def main():
     if root is None:
         print("找不到 vault（往上找不到含 wiki/ 或 raw/.manifest.json 的目錄）")
         return 0
-    coord = Path(args[0]).resolve() if args else root / COORD_REL
+    coord = Path(args[0]).resolve() if args else collab_path(root)
+    rel = coord.relative_to(root).as_posix() if coord.is_relative_to(root) else str(coord)
     if not coord.is_file():
-        print(f"沒有 {COORD_REL} —— 本 vault 尚未啟用主管制，略過佔用檢查")
+        print(f"沒有 {rel} —— 本 vault 尚未啟用主管制，略過佔用檢查")
         return 0
 
     ignored = set(load_manifest(root).get("config", {}).get("occupancy_ignore_authors", []))
     rows = read_rows(coord.read_text(encoding="utf-8"))
     if not rows:
-        print(f"{COORD_REL} 存在但「檔案佔用」表 0 列 —— 主管制已建骨架、目前無人登記佔用，略過")
+        print(f"{rel} 存在但「檔案佔用」表 0 列 —— 主管制已建骨架、目前無人登記佔用，略過")
         return 0
     cache = []
 
@@ -222,7 +222,7 @@ def main():
         print(f"verdict : 🟢 CLEAN —— {checked} 個檔無佔用違規{note}{ign}")
     else:
         print(f"verdict : 🟡 {total} 項（違規 {len(violations)}／無法解析 {len(unresolved)}／"
-              f"佔用者不明 {len(unknown)}）{ign} —— 提醒不是閘門；違規請回報主管，不要自行改 coordination.md")
+              f"佔用者不明 {len(unknown)}）{ign} —— 提醒不是閘門；違規請回報主管，不要自行改協作狀態檔")
     return 0
 
 

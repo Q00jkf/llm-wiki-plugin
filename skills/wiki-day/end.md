@@ -4,7 +4,7 @@ vault 自訂的收尾項目在 **`wiki/ops/end.md`**（每個 vault 自己寫，
 
 ## 0. 先判斷走哪一段
 
-讀 `wiki/meta/coordination.md` 的「主管名單」（舊 vault 是「目前主管」），所屬主管照 `wiki-collabteam` 的 `06-coordination格式.md`「誰是我的主管」判斷（判斷不出報名單第一列，訊息寫「不確定歸屬，請轉」），再 `ListAgents` 看誰在線。
+讀 `.claude/office/collab.md` 的「主管」（舊 vault 是「主管名單」或「目前主管」），所屬主管照 `wiki-collabteam` 的 `06-collab格式.md`「誰是我的主管」判斷（判斷不出報名單第一列，訊息寫「不確定歸屬，請轉」），再 `ListAgents` 看誰在線。
 
 | 情況 | 走 |
 |---|---|
@@ -15,23 +15,23 @@ vault 自訂的收尾項目在 **`wiki/ops/end.md`**（每個 vault 自己寫，
 
 ## 收工前先問自己一句（MUST，三條路都要）
 
-**今天有沒有發現、但還沒登記的問題？** 有就先進 `wiki/meta/coordination.md` 再收工
-（進哪一區、「等誰」怎麼填 → `wiki-collabteam` 的 `06-coordination格式.md`）。
-只寫在角色卡、`log.md` 或產出物裡的，等於沒有收件人，收工後就沉掉。
+**今天有沒有發現、但還沒登記的問題？** 有就先進 `.claude/office/collab.md` 再收工
+（進哪一區、「等誰」怎麼填 → `wiki-collabteam` 的 `06-collab格式.md`）。
+只寫在檢查點、`log.md` 或產出物裡的，等於沒有收件人，收工後就沉掉。
 
 ## A. 單一 session
 
 1. 照 `wiki/ops/end.md` 做 vault 自訂項目。
 2. `wiki/log.md` 最上方補今天的條目（已寫過就不重複），append 後跑 `python "${CLAUDE_PLUGIN_ROOT}/scripts/log_index.py" --apply`。
 3. 寫 `wiki/hot.md` 今日結論一塊（格式見下），再依 hot.md 檔頭輪替規則修剪；刪舊塊前先 grep `wiki/log.md` 有記載。
-4. 本 session 持有角色（`wiki/meta/roles/` 有卡的 `agent`＝你的 ListAgents 名稱）→ 走 `wiki-collabteam` 的 `role.md` save，更新該卡「進行中事項」。
+4. 本 session 持有角色（今天照卡接手過）→ 走 `wiki-collabteam` 的 `role.md` save，在 `.claude/office/checkpoints/<角色>.md` 加一筆。
 5. commit 只 add 自己動過的檔；`git push`。
 6. 回報使用者：做完什麼、卡在誰身上、明天第一件事。
 
 ## B. peer（協作模式，主管在線）
 
 1. 照 `wiki/ops/end.md` 做 vault 自訂項目中屬於自己的部分。
-2. 持有角色 → `wiki-collabteam` 的 `role.md` save，更新該卡「進行中事項」。
+2. 持有角色 → `wiki-collabteam` 的 `role.md` save，在 `.claude/office/checkpoints/<角色>.md` 加一筆。
 3. commit 自己動過的檔（含角色卡）。
 4. `SendMessage` 給主管：今天完成什麼（附 commit sha）、手上還有沒有佔用、遺留什麼。
 5. **不寫 hot.md**（多個 session 同時寫會互相覆蓋，由主管統一寫）。
