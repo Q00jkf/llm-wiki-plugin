@@ -216,6 +216,13 @@
 
 # pixel-office
 
+## 0.30.1 — 2026-10-29
+
+- **改了什麼**：agy 的 skill `office` 與送進 agy 的信，寫明確切的 `call_mcp_tool(ServerName="pixel-office_office", ToolName=…, Arguments=…)` 格式，並講明「清單裡看不到也照叫」
+- **為什麼**：jacky 2026-10-29 實測：agy 讀了 skill 卻回「沒有 call_mcp_tool」不去試（lazy MCP 工具與 `call_mcp_tool` 都不在它列的工具清單）；指定確切呼叫後 `office_profile` 成功（名牌 research、職稱 查規格）
+- **commit**：（本版）
+- **issue**：無
+
 ## 0.30.0 — 2026-10-29
 
 - **改了什麼**：`agy/` 改成一個 agy 外掛（`plugin.json`、`hooks.json`、`mcp_config.json`、`skills/office/SKILL.md`）
