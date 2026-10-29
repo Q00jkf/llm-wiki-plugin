@@ -20,18 +20,8 @@
 | 腳本邏輯（角色卡、日程、對帳…） | `scripts/<名>.py`，共用函式在 `scripts/_lib/`：`vaultpaths`（路徑）、`filehash`（雜湊）、`logparse`（log 解析）、`derived`（推導值） |
 | 新 vault 建出來長什麼樣 | `templates/vault/`（`CLAUDE.md`、`wiki/`、`raw/`、`Templates/`） |
 | 版本號、marketplace 條目 | `.claude-plugin/plugin.json`、`.claude-plugin/marketplace.json` |
-| **像素辦公室** | `plugins/pixel-office/` —— 獨立 plugin、獨立版本號，見下 |
+| 像素辦公室 | **已搬到 Q00jkf/pixel-office**（2026-10-29），這個 repo 不再有 |
 | 可選裝模組（Obsidian 外掛＋腳本） | `addons/<id>/`（`addon.json`、`obsidian/`、`scripts/`）；安裝／檢查邏輯 `scripts/addons.py`；用法 `skills/wiki-addons/` |
-
-### plugins/pixel-office/ 內部
-
-| 我要改… | 檔 |
-|---|---|
-| hook、MCP 工具（`office_profile`／`office_roster`／`office_meeting`）、`/office` 指令、名單輸出 | `hooks/register.tsx` —— **全部邏輯都在這一支**（約 900 行） |
-| 像素畫、座位配置、走路路徑、貓 | `hooks/scene.ts` |
-| Desktop 畫面長相（素材圖、名牌、泡泡） | `hooks/vector.ts`；素材表由 `assets/build_sheet.py` 產生 `assets/office-sheet.png`＋`hooks/sheet.ts`（不要手改 sheet.ts） |
-| `Coworker` 等型別 | `types/index.d.ts` ← **不在 `hooks/` 裡**；2026-10-08 在這裡繞了 5 次 grep |
-| 測試 | `hooks/office.test.tsx` |
 
 ---
 
@@ -103,7 +93,6 @@
 1. **跑測試**（全綠才算改完。不要手列清單 —— 列了就會漏）：
    ```bash
    for f in scripts/test_*.py; do python "$f" || break; done   # Git Bash
-   claude plugin test plugins/pixel-office                     # 辦公室（bun 測試，不是 python）
    ```
    行為改動要實跑驗證，不要宣告「應該可以」。**合併或刪 skill／command 時，第二組會抓出文件裡的死引用。**
 2. 改了行為就 bump 對應的 `.claude-plugin/plugin.json` 版本號

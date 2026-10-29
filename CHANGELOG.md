@@ -15,6 +15,13 @@
 
 # llm-wiki
 
+## 凍結 — 2026-10-29（版號停在 1.16.1）
+
+- **改了什麼**：llm-wiki 停止更新；pixel-office 搬到 Q00jkf/pixel-office（歷史以 subtree split 帶過去），這裡刪掉 `plugins/pixel-office/`、marketplace 拿掉 pixel-office 條目；README 加停更公告、辦公室段改成一行連結；`wiki-coach` 指向舊路徑的那一句改成新 repo 網址（只改文字，版號不動）。刪除前的最後一版在 tag `final-with-pixel-office`
+- **為什麼**：jacky 2026-10-29 定：llm-wiki 停更（由 willy 接續）、office 開新 repo；llm-wiki 維持裝得起來，所以 repo archive 不刪
+- **commit**：（本筆）
+- **issue**：#3（停更公告）
+
 ## 1.16.0 — 2026-10-29
 
 - **改了什麼**：vault 的協作檔搬到 `.claude/office/`，格式跟 pixel-office skill `team` 一致
