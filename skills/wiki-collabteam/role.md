@@ -35,6 +35,7 @@ vault 卡比 `team` 多兩段：**`## 用到才查`**（不算必讀，用 Grep 
 - 讀卡前：`role_cards.py cost <角色>`，記下合計 token。
 - 讀完必讀與最後一筆檢查點：**跑守門腳本**（卡上有寫才跑）。不翻 `wiki/log.md`、不讀 `hot.md`、不讀 `collab.md`。
 - 登記與報到：`role_cards.py claim <角色> <你的 ListAgents 名稱>` —— 不寫卡；它印出最後一筆檢查點、collab.md 記的前一位持有者、**已解析好主管的 `office_profile` 那行**與報到對象，照印的跑。
+  小隊成員（卡在 `~/.claude/office/squads/`，`team` 的 `roles.md` §5）不跑 `claim`：照 `team` 的 `roles.md` §3 報到給派工的部門主管。
   主管不在線 → 改讀 `wiki/hot.md` 最上面一塊今日結論（只讀一塊），再開始。
 
 回報使用者三行內：接手了什麼角色、讀了哪些檔（約多少 token）、檢查點的下一步與守門腳本結果。
