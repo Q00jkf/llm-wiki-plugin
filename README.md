@@ -201,8 +201,10 @@ plugin 升級時 skills 會自動更新，但**你的 vault 那些檔不會** �
 - **有組織**：主管坐主管室，主管的 peer 坐 TEAM 區，傳訊息時有紙飛機飛過去
 - **對外動作看得到**：寄信走去影印機、上傳文件走去檔案櫃、`git push` 走去郵筒
 - **模型也看得到**：用 `office_roster` 查「誰是誰、該傳訊息給誰、誰在等放行」
+- **一人多 session 協作**（skill `team`）：升層當主管、從你指定的規則（AIMM、gstack、專案流程）產生角色卡、派工與回報、開會；第 2 層「部門主管＋小隊」——小隊是整台電腦共用、可複製的角色組（例如研發＋測試、PM＋採購），用到才開人
+- **Antigravity CLI（agy）也能進辦公室**：裝上 agy 那一半的外掛後，agy 的對話會出現在辦公室，能自己取名牌、看名單，跟 Claude session 互相寄信（agy 寄完會等回信 90 秒）。安裝與用法：[plugins/pixel-office/docs/agy-寄件協作.md](plugins/pixel-office/docs/agy-寄件協作.md)
 
-畫面全由程式即時畫出，不花 token。不裝不影響 llm-wiki。
+畫面全由程式即時畫出，不花 token。只要畫面可以不裝、不影響 llm-wiki；**要多 session 協作就要裝**（llm-wiki 的 `wiki-collabteam` 只補 vault 專屬規則）。
 
 ```
 /plugin install pixel-office@llm-wiki
