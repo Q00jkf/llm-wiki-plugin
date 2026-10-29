@@ -216,6 +216,13 @@
 
 # pixel-office
 
+## 0.29.0 — 2026-10-29
+
+- **改了什麼**：agy 寄完信等回信。PostToolUse 看到 agy 跑了 `agy_office.py … send` 就標記；這一輪結束時 Stop hook 每秒看收件夾、最多 90 秒，等到就 `continue` 帶著信，沒等到就停。沒有使用者介入最多自動續跑 5 輪。Stop 的 hook timeout 改 110 秒（要重跑 `install`）
+- **為什麼**：jacky 2026-10-29「至少把時間稍微拉長」。agy 回覆 Stop hook 等待中會凍結輸入，所以只在寄過信的輪等，不每輪都等；「需要時由 Claude 啟動 py 點視窗」（模擬按鍵）先不做：要搶前景、Windows Terminal 分頁難定位、會撞上使用者打字
+- **commit**：（本版）
+- **issue**：無
+
 ## 0.28.0 — 2026-10-29
 
 - **改了什麼**：agy 跟 Claude session 互傳訊息（A 案：互動視窗＋收件夾）
