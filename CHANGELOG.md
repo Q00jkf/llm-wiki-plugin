@@ -216,6 +216,16 @@
 
 # pixel-office
 
+## 0.28.0 — 2026-10-29
+
+- **改了什麼**：agy 跟 Claude session 互傳訊息（A 案：互動視窗＋收件夾）
+  - `agy_office.py send <收件者> <訊息> --from <寄件者>`：收件者是 agy → `agy/inbox/<對話>.jsonl`，hook 在 `PreInvocation`（`injectSteps` userMessage）或 `Stop`（`decision: continue`＋reason）塞進對話；是 Claude → 寫 `commands/<session>.json` 並帶 `from`
+  - `takeCommand` 帶 `from` 的命令顯示「📨 <寄件者>：…」而不是 📱（`commandText`），標明不是使用者本人
+  - 名單上 agy 那列改寫成怎麼寄給它；新增設計筆記 `docs/designs/agy.md`
+- **為什麼**：jacky 2026-10-29「看得到了但為什麼不能跟它說話」；agy 自查確認閒置的互動視窗從外部叫不醒，jacky 選 A（不改用 stream-json 橋接常駐，那是 B 案）
+- **commit**：（本版）
+- **issue**：無
+
 ## 0.27.0 — 2026-10-29
 
 - **改了什麼**：Antigravity CLI（agy）的對話也畫進辦公室（只顯示，不能傳訊）
